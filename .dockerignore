@@ -1,0 +1,11 @@
+.git
+node_modules
+dist
+.DS_Store
+*.md
+.editorconfig
+.eslintrc
+.prettierrc
+.gitignore
+.dockerignore
+LICENSE
