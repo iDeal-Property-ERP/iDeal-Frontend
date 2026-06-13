@@ -1,0 +1,19 @@
+{
+  "RootLayout": {
+    "home_link": "Home"
+  },
+  "BaseTemplate": {
+    "description": "Starter code for your Nextjs Boilerplate with Tailwind CSS",
+    "footer_text": "© {year} {name}. Made with <author></author>.",
+    "main_navigation_label": "Main navigation"
+  },
+  "Index": {
+    "meta_title": "iDeal",
+    "meta_description": "iDeal - Property Platform",
+    "heading": "Welcome to iDeal",
+    "description": "Your property platform."
+  },
+  "LocaleSwitcher": {
+    "change_language": "Change language"
+  }
+}

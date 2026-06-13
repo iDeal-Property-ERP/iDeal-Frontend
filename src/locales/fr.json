@@ -1,0 +1,19 @@
+{
+  "RootLayout": {
+    "home_link": "Accueil"
+  },
+  "BaseTemplate": {
+    "description": "Code de démarrage pour Next.js avec Tailwind CSS",
+    "footer_text": "© {year} {name}. Fait avec <author></author>.",
+    "main_navigation_label": "Navigation principale"
+  },
+  "Index": {
+    "meta_title": "iDeal",
+    "meta_description": "iDeal - Plateforme Immobilière",
+    "heading": "Bienvenue sur iDeal",
+    "description": "Votre plateforme immobilière."
+  },
+  "LocaleSwitcher": {
+    "change_language": "Changer de langue"
+  }
+}
