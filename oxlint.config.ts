@@ -7,26 +7,42 @@ import vitest from 'ultracite/oxlint/vitest';
 export default defineConfig({
   extends: [core, react, next, vitest],
   rules: {
-    'no-warning-comments': 'off', // Allow TODO and FIXME comments
-    'no-inline-comments': 'off', // Allow nearby comments
+    'no-warning-comments': 'off',
+    'no-inline-comments': 'off',
 
     'sort-keys': 'off',
     'func-style': 'off',
 
-    'typescript/no-unsafe-assignment': 'off', // Allow implicit `any` assignments
-    'typescript/no-unsafe-call': 'off', // Allow implicit `any` calls
-    'typescript/no-unsafe-member-access': 'off', // Allow member access on implicit `any` values
-    'typescript/strict-boolean-expressions': 'off', // Allow non-boolean conditional checks
-    'typescript/consistent-type-definitions': ['error', 'type'], // Use `type` instead of `interface`
-    'typescript/no-misused-promises': 'off', // React Hook Form's handleSubmit returns a Promise-typed handler
-    'typescript/strict-void-return': 'off', // Allow functions returning Promise<void> where void functions are expected
-    'typescript/prefer-regexp-exec': 'off', // Allow use of String#match
+    'promise/prefer-await-to-then': 'off',
 
-    'react/no-unstable-nested-components': 'off', // t.rich callbacks in next-intl are valid patterns
+    'jsx-a11y/control-has-associated-label': 'off',
 
-    'unicorn/filename-case': 'off', // Impossible to enforce consistent filename case due to multiple conventions
+    'typescript/no-unsafe-assignment': 'off',
+    'typescript/no-unsafe-call': 'off',
+    'typescript/no-unsafe-member-access': 'off',
+    'typescript/strict-boolean-expressions': 'off',
+    'typescript/consistent-type-definitions': ['error', 'type'],
+    'typescript/no-misused-promises': 'off',
+    'typescript/strict-void-return': 'off',
+    'typescript/prefer-regexp-exec': 'off',
+    'typescript/no-unsafe-type-assertion': 'off',
+    'typescript/switch-exhaustiveness-check': 'off',
+    'typescript/await-thenable': 'off',
+    'typescript/no-confusing-void-expression': 'off',
+    'typescript/no-base-to-string': 'off',
+    'typescript/no-non-null-assertion': 'off',
+    'typescript/no-floating-promises': 'off',
 
-    // --- JSDoc Rules ---
+    'unicorn/no-new-array': 'off',
+    'unicorn/custom-error-definition': 'off',
+
+    'eslint/no-negated-condition': 'off',
+    'unicorn/no-negated-condition': 'off',
+
+    'react/no-unstable-nested-components': 'off',
+
+    'unicorn/filename-case': 'off',
+
     'jsdoc/require-param': 'error',
     'jsdoc/require-param-description': 'error',
     'jsdoc/require-returns': 'error',

@@ -1,0 +1,2469 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Makon — Property Management Platform</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      :root {
+        --navy: #0b1622;
+        --navy2: #11202f;
+        --navy3: #16293b;
+        --navy4: #1d3650;
+        --teal: #00d1a7;
+        --teal2: #00b391;
+        --tealfade: rgba(0, 209, 167, 0.12);
+        --gold: #ffc94d;
+        --goldfade: rgba(255, 201, 77, 0.12);
+        --red: #ff5e62;
+        --redfade: rgba(255, 94, 98, 0.12);
+        --blue: #52a8ff;
+        --bluefade: rgba(82, 168, 255, 0.12);
+        --purple: #a78bfa;
+        --purplefade: rgba(167, 139, 250, 0.12);
+        --green: #34d399;
+        --greenfade: rgba(52, 211, 153, 0.12);
+        --text: #eaf2fb;
+        --text2: #93a8c0;
+        --text3: #5c748f;
+        --border: rgba(255, 255, 255, 0.06);
+        --border2: rgba(255, 255, 255, 0.11);
+        --card: rgba(255, 255, 255, 0.035);
+        --card2: rgba(255, 255, 255, 0.06);
+        --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+        --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.35);
+        --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.5);
+        --radius: 14px;
+        --radius-sm: 10px;
+        --radius-lg: 20px;
+      }
+      body {
+        background: var(--navy);
+        color: var(--text);
+        font-family: 'DM Sans', sans-serif;
+        min-height: 100vh;
+        -webkit-font-smoothing: antialiased;
+      }
+      h1,
+      h2,
+      h3,
+      h4,
+      .fd {
+        font-family: 'Syne', sans-serif;
+      }
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--border2);
+        border-radius: 4px;
+      }
+
+      /* TOP NAV */
+      .topnav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 22px;
+        background: rgba(17, 32, 47, 0.85);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--border);
+        position: sticky;
+        top: 0;
+        z-index: 200;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .brand-mark {
+        width: 32px;
+        height: 32px;
+        border-radius: 9px;
+        background: linear-gradient(135deg, var(--teal), var(--teal2));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Syne';
+        font-weight: 800;
+        color: var(--navy);
+        font-size: 18px;
+        box-shadow: 0 0 20px rgba(0, 209, 167, 0.4);
+      }
+      .brand-name {
+        font-family: 'Syne';
+        font-size: 20px;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+      }
+      .brand-sub {
+        font-size: 11px;
+        color: var(--text3);
+        margin-left: 4px;
+        font-weight: 400;
+      }
+      .role-tabs {
+        display: flex;
+        gap: 3px;
+        background: var(--navy);
+        padding: 4px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+      }
+      .role-tab {
+        padding: 8px 14px;
+        border-radius: 9px;
+        border: none;
+        background: transparent;
+        color: var(--text2);
+        font-family: 'DM Sans';
+        font-size: 12.5px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .role-tab.active {
+        background: linear-gradient(135deg, var(--teal), var(--teal2));
+        color: var(--navy);
+        font-weight: 700;
+        box-shadow: 0 2px 12px rgba(0, 209, 167, 0.3);
+      }
+      .role-tab:hover:not(.active) {
+        background: var(--card2);
+        color: var(--text);
+      }
+      .demo-pill {
+        background: var(--goldfade);
+        color: var(--gold);
+        font-size: 10.5px;
+        font-weight: 700;
+        padding: 5px 11px;
+        border-radius: 20px;
+        border: 1px solid rgba(255, 201, 77, 0.3);
+        font-family: 'Syne';
+        letter-spacing: 0.5px;
+      }
+
+      /* LAYOUT */
+      .shell {
+        display: flex;
+        min-height: calc(100vh - 61px);
+      }
+      .sidebar {
+        width: 230px;
+        background: var(--navy2);
+        border-right: 1px solid var(--border);
+        padding: 18px 12px;
+        flex-shrink: 0;
+        overflow-y: auto;
+      }
+      .content {
+        flex: 1;
+        padding: 26px 30px;
+        overflow-y: auto;
+        max-width: 100%;
+      }
+      .view {
+        animation: fadein 0.25s ease;
+      }
+      @keyframes fadein {
+        from {
+          opacity: 0;
+          transform: translateY(6px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* SIDEBAR */
+      .nav-sec {
+        margin-bottom: 22px;
+      }
+      .nav-sec-t {
+        font-size: 10px;
+        font-weight: 700;
+        color: var(--text3);
+        text-transform: uppercase;
+        letter-spacing: 1.2px;
+        padding: 0 12px;
+        margin-bottom: 8px;
+        font-family: 'Syne';
+      }
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        cursor: pointer;
+        color: var(--text2);
+        font-size: 13px;
+        font-weight: 500;
+        transition: all 0.15s;
+        margin-bottom: 2px;
+        position: relative;
+      }
+      .nav-item:hover {
+        background: var(--card2);
+        color: var(--text);
+      }
+      .nav-item.active {
+        background: var(--tealfade);
+        color: var(--teal);
+        font-weight: 600;
+      }
+      .nav-item.active::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 8px;
+        bottom: 8px;
+        width: 3px;
+        background: var(--teal);
+        border-radius: 2px;
+      }
+      .nav-ic {
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
+      }
+      .nav-badge {
+        margin-left: auto;
+        background: var(--red);
+        color: #fff;
+        font-size: 10px;
+        font-weight: 700;
+        padding: 2px 7px;
+        border-radius: 10px;
+      }
+
+      /* HEADINGS */
+      .page-title {
+        font-size: 25px;
+        font-weight: 800;
+        letter-spacing: -0.6px;
+        margin-bottom: 3px;
+      }
+      .page-sub {
+        font-size: 13.5px;
+        color: var(--text2);
+        margin-bottom: 24px;
+      }
+      .sec-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin: 26px 0 14px;
+      }
+      .sec-title {
+        font-size: 15px;
+        font-weight: 700;
+        font-family: 'Syne';
+      }
+      .sec-title-sm {
+        font-size: 11px;
+        color: var(--text3);
+        font-weight: 500;
+        margin-top: 2px;
+      }
+
+      /* WELCOME BANNER */
+      .welcome {
+        background: linear-gradient(120deg, var(--navy3), var(--navy2));
+        border: 1px solid var(--border2);
+        border-radius: var(--radius-lg);
+        padding: 24px 28px;
+        margin-bottom: 26px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: relative;
+        overflow: hidden;
+        box-shadow: var(--shadow-md);
+      }
+      .welcome::after {
+        content: '';
+        position: absolute;
+        right: -40px;
+        top: -40px;
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        background: radial-gradient(circle, var(--tealfade), transparent 70%);
+      }
+      .welcome h2 {
+        font-size: 22px;
+        font-weight: 800;
+        margin-bottom: 5px;
+      }
+      .welcome p {
+        font-size: 13.5px;
+        color: var(--text2);
+      }
+      .welcome-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: var(--tealfade);
+        color: var(--teal);
+        font-size: 12px;
+        font-weight: 600;
+        padding: 6px 12px;
+        border-radius: 20px;
+        margin-top: 10px;
+        border: 1px solid rgba(0, 209, 167, 0.2);
+      }
+
+      /* STATS */
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        margin-bottom: 8px;
+      }
+      .stat {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 18px 20px;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.2s;
+        box-shadow: var(--shadow-sm);
+      }
+      .stat:hover {
+        border-color: var(--border2);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+      }
+      .stat::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        opacity: 0.8;
+      }
+      .stat.teal::before {
+        background: linear-gradient(90deg, var(--teal), transparent);
+      }
+      .stat.gold::before {
+        background: linear-gradient(90deg, var(--gold), transparent);
+      }
+      .stat.blue::before {
+        background: linear-gradient(90deg, var(--blue), transparent);
+      }
+      .stat.red::before {
+        background: linear-gradient(90deg, var(--red), transparent);
+      }
+      .stat.purple::before {
+        background: linear-gradient(90deg, var(--purple), transparent);
+      }
+      .stat-ic {
+        width: 38px;
+        height: 38px;
+        border-radius: 11px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 14px;
+      }
+      .stat.teal .stat-ic {
+        background: var(--tealfade);
+        color: var(--teal);
+      }
+      .stat.gold .stat-ic {
+        background: var(--goldfade);
+        color: var(--gold);
+      }
+      .stat.blue .stat-ic {
+        background: var(--bluefade);
+        color: var(--blue);
+      }
+      .stat.red .stat-ic {
+        background: var(--redfade);
+        color: var(--red);
+      }
+      .stat.purple .stat-ic {
+        background: var(--purplefade);
+        color: var(--purple);
+      }
+      .stat-val {
+        font-family: 'Syne';
+        font-size: 27px;
+        font-weight: 800;
+        letter-spacing: -1px;
+        line-height: 1;
+      }
+      .stat-label {
+        font-size: 12px;
+        color: var(--text2);
+        margin-top: 6px;
+        font-weight: 500;
+      }
+      .stat-trend {
+        font-size: 11px;
+        font-weight: 600;
+        margin-top: 8px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .stat-trend.up {
+        color: var(--green);
+      }
+      .stat-trend.down {
+        color: var(--red);
+      }
+      .stat-trend.flat {
+        color: var(--text3);
+      }
+
+      /* BUTTONS */
+      .btn {
+        padding: 9px 16px;
+        border-radius: 10px;
+        border: none;
+        font-family: 'DM Sans';
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.15s;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+      }
+      .btn-primary {
+        background: linear-gradient(135deg, var(--teal), var(--teal2));
+        color: var(--navy);
+        box-shadow: 0 2px 12px rgba(0, 209, 167, 0.25);
+      }
+      .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 18px rgba(0, 209, 167, 0.4);
+      }
+      .btn-ghost {
+        background: var(--card2);
+        color: var(--text);
+        border: 1px solid var(--border2);
+      }
+      .btn-ghost:hover {
+        background: var(--navy4);
+        border-color: var(--text3);
+      }
+      .btn-sm {
+        padding: 6px 12px;
+        font-size: 12px;
+      }
+      .btn-xs {
+        padding: 5px 10px;
+        font-size: 11px;
+        border-radius: 8px;
+      }
+
+      /* TWO/THREE COL */
+      .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+        margin-bottom: 8px;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+      }
+      .grid-12 {
+        display: grid;
+        grid-template-columns: 1.4fr 1fr;
+        gap: 18px;
+      }
+
+      /* PANEL */
+      .panel {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+        box-shadow: var(--shadow-sm);
+      }
+      .panel-head {
+        padding: 15px 18px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .panel-head h3 {
+        font-size: 14px;
+        font-weight: 700;
+      }
+      .panel-body {
+        padding: 6px 0;
+      }
+
+      /* TABLE */
+      .trow {
+        display: grid;
+        padding: 13px 18px;
+        align-items: center;
+        font-size: 13px;
+        border-bottom: 1px solid var(--border);
+        transition: all 0.12s;
+        position: relative;
+        cursor: default;
+      }
+      .trow:last-child {
+        border-bottom: none;
+      }
+      .trow:hover {
+        background: var(--card2);
+      }
+      .trow:hover.hoverable::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: var(--teal);
+      }
+      .trow.head {
+        background: var(--navy3);
+        font-size: 10.5px;
+        font-weight: 700;
+        color: var(--text3);
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        cursor: default;
+      }
+      .trow.head:hover {
+        background: var(--navy3);
+      }
+      .t-strong {
+        font-weight: 600;
+        color: var(--text);
+      }
+      .t-dim {
+        color: var(--text2);
+      }
+      .t-teal {
+        color: var(--teal);
+        font-weight: 600;
+      }
+      .t-gold {
+        color: var(--gold);
+        font-weight: 600;
+      }
+      .t-red {
+        color: var(--red);
+        font-weight: 600;
+      }
+      .t-mini {
+        font-size: 11px;
+        color: var(--text3);
+      }
+
+      /* CHIPS */
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      .chip::before {
+        content: '';
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+      .chip.teal {
+        background: var(--tealfade);
+        color: var(--teal);
+      }
+      .chip.gold {
+        background: var(--goldfade);
+        color: var(--gold);
+      }
+      .chip.red {
+        background: var(--redfade);
+        color: var(--red);
+      }
+      .chip.blue {
+        background: var(--bluefade);
+        color: var(--blue);
+      }
+      .chip.purple {
+        background: var(--purplefade);
+        color: var(--purple);
+      }
+      .chip.plain {
+        background: var(--card2);
+        color: var(--text2);
+      }
+      .chip.nodot::before {
+        display: none;
+      }
+
+      /* PROPERTY CARDS w/ CSS photos */
+      .prop-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+      }
+      .prop-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+        transition: all 0.22s;
+        cursor: pointer;
+        box-shadow: var(--shadow-sm);
+      }
+      .prop-card:hover {
+        border-color: var(--teal);
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-lg);
+      }
+      .prop-photo {
+        height: 150px;
+        position: relative;
+        overflow: hidden;
+      }
+      .prop-photo .win {
+        position: absolute;
+        background: linear-gradient(160deg, rgba(255, 240, 200, 0.85), rgba(255, 210, 140, 0.35));
+        border-radius: 3px;
+      }
+      .prop-photo .floor {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 30%;
+        background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.25));
+      }
+      .prop-status {
+        position: absolute;
+        top: 11px;
+        right: 11px;
+        z-index: 3;
+      }
+      .prop-fav {
+        position: absolute;
+        top: 11px;
+        left: 11px;
+        z-index: 3;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: rgba(11, 22, 34, 0.6);
+        backdrop-filter: blur(6px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+      }
+      .prop-body {
+        padding: 15px 16px;
+      }
+      .prop-name {
+        font-family: 'Syne';
+        font-size: 14.5px;
+        font-weight: 700;
+        margin-bottom: 3px;
+      }
+      .prop-addr {
+        font-size: 12px;
+        color: var(--text2);
+        margin-bottom: 11px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .prop-meta {
+        display: flex;
+        gap: 14px;
+        font-size: 11.5px;
+        color: var(--text3);
+        margin-bottom: 12px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--border);
+      }
+      .prop-meta b {
+        color: var(--text2);
+        font-weight: 600;
+      }
+      .prop-foot {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .prop-price {
+        font-family: 'Syne';
+        font-size: 18px;
+        font-weight: 800;
+        color: var(--text);
+      }
+      .prop-price span {
+        font-size: 12px;
+        color: var(--text3);
+        font-weight: 400;
+      }
+      .prop-margin {
+        font-size: 11px;
+        color: var(--teal);
+        font-weight: 600;
+        background: var(--tealfade);
+        padding: 4px 9px;
+        border-radius: 8px;
+      }
+
+      /* SPLIT FLOW (payments) */
+      .flow-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 3px 9px;
+        border-radius: 7px;
+      }
+      .flow-in {
+        background: var(--greenfade);
+        color: var(--green);
+      }
+      .flow-out {
+        background: var(--bluefade);
+        color: var(--blue);
+      }
+
+      /* PROGRESS */
+      .pbar {
+        height: 6px;
+        background: var(--navy4);
+        border-radius: 4px;
+        overflow: hidden;
+      }
+      .pbar i {
+        display: block;
+        height: 100%;
+        border-radius: 4px;
+        background: var(--teal);
+        transition: width 0.6s ease;
+      }
+      .pbar i.gold {
+        background: var(--gold);
+      }
+      .pbar i.red {
+        background: var(--red);
+      }
+      .pbar i.blue {
+        background: var(--blue);
+      }
+
+      /* SVG MAP */
+      .map-wrap {
+        background: linear-gradient(160deg, var(--navy3), var(--navy2));
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 0;
+        overflow: hidden;
+        position: relative;
+        box-shadow: var(--shadow-sm);
+      }
+      .map-legend {
+        position: absolute;
+        bottom: 14px;
+        left: 14px;
+        display: flex;
+        gap: 14px;
+        background: rgba(11, 22, 34, 0.8);
+        backdrop-filter: blur(8px);
+        padding: 9px 14px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+      }
+      .map-leg {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11.5px;
+        color: var(--text2);
+      }
+      .map-leg i {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+      }
+      .maptip {
+        position: absolute;
+        background: var(--navy);
+        border: 1px solid var(--border2);
+        border-radius: 10px;
+        padding: 9px 12px;
+        font-size: 12px;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.15s;
+        z-index: 10;
+        box-shadow: var(--shadow-lg);
+        min-width: 150px;
+      }
+      .maptip.show {
+        opacity: 1;
+      }
+      .maptip .mt-name {
+        font-weight: 700;
+        font-size: 12.5px;
+        margin-bottom: 3px;
+      }
+      .maptip .mt-row {
+        color: var(--text2);
+        font-size: 11px;
+      }
+
+      /* FORM */
+      .form-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 20px;
+        margin-bottom: 16px;
+        box-shadow: var(--shadow-sm);
+      }
+      .form-step {
+        font-size: 13px;
+        font-weight: 700;
+        font-family: 'Syne';
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 9px;
+      }
+      .form-step .num {
+        width: 24px;
+        height: 24px;
+        border-radius: 7px;
+        background: var(--tealfade);
+        color: var(--teal);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+      }
+      .fg {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 13px;
+      }
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .field label {
+        font-size: 10.5px;
+        font-weight: 600;
+        color: var(--text2);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .field input,
+      .field select,
+      .field textarea {
+        background: var(--navy);
+        border: 1px solid var(--border2);
+        border-radius: 9px;
+        padding: 10px 12px;
+        color: var(--text);
+        font-family: 'DM Sans';
+        font-size: 13px;
+        outline: none;
+        transition: border-color 0.15s;
+      }
+      .field input:focus,
+      .field select:focus,
+      .field textarea:focus {
+        border-color: var(--teal);
+      }
+      .field input::placeholder {
+        color: var(--text3);
+      }
+      .field select option {
+        background: var(--navy2);
+      }
+
+      /* ALERT */
+      .alert {
+        padding: 12px 16px;
+        border-radius: 11px;
+        font-size: 13px;
+        margin-bottom: 14px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        line-height: 1.5;
+      }
+      .alert.teal {
+        background: var(--tealfade);
+        border: 1px solid rgba(0, 209, 167, 0.25);
+        color: var(--teal);
+      }
+      .alert.gold {
+        background: var(--goldfade);
+        border: 1px solid rgba(255, 201, 77, 0.25);
+        color: var(--gold);
+      }
+      .alert.red {
+        background: var(--redfade);
+        border: 1px solid rgba(255, 94, 98, 0.25);
+        color: var(--red);
+      }
+
+      /* MODAL */
+      .modal-bg {
+        position: fixed;
+        inset: 0;
+        background: rgba(5, 12, 20, 0.7);
+        backdrop-filter: blur(4px);
+        z-index: 500;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+      .modal-bg.show {
+        display: flex;
+        animation: fadein 0.2s;
+      }
+      .modal {
+        background: var(--navy2);
+        border: 1px solid var(--border2);
+        border-radius: var(--radius-lg);
+        padding: 26px;
+        max-width: 440px;
+        width: 100%;
+        box-shadow: var(--shadow-lg);
+      }
+      .modal h3 {
+        font-size: 18px;
+        font-weight: 800;
+        margin-bottom: 8px;
+      }
+      .modal p {
+        font-size: 13.5px;
+        color: var(--text2);
+        line-height: 1.6;
+        margin-bottom: 18px;
+      }
+
+      /* INLINE EXPAND */
+      .expand {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+        background: var(--navy);
+        border-radius: 0;
+      }
+      .expand.open {
+        max-height: 240px;
+      }
+      .expand-inner {
+        padding: 14px 18px;
+        border-top: 1px dashed var(--border2);
+      }
+
+      /* PNL bars */
+      .pnl-spark {
+        display: flex;
+        align-items: flex-end;
+        gap: 6px;
+        height: 90px;
+        padding: 10px 0;
+      }
+      .pnl-bar {
+        flex: 1;
+        border-radius: 5px 5px 0 0;
+        background: linear-gradient(180deg, var(--teal), var(--teal2));
+        position: relative;
+        min-height: 8px;
+        transition: height 0.5s;
+      }
+      .pnl-bar.proj {
+        background: linear-gradient(180deg, var(--navy4), var(--navy3));
+        border: 1px dashed var(--text3);
+      }
+      .pnl-bar:hover {
+        opacity: 0.85;
+      }
+      .pnl-lbl {
+        font-size: 9.5px;
+        color: var(--text3);
+        text-align: center;
+        margin-top: 5px;
+      }
+
+      /* RING */
+      .ring-wrap {
+        display: flex;
+        align-items: center;
+        gap: 22px;
+      }
+      .ring {
+        position: relative;
+        width: 120px;
+        height: 120px;
+        flex-shrink: 0;
+      }
+      .ring svg {
+        transform: rotate(-90deg);
+      }
+      .ring-center {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+      .ring-center .v {
+        font-family: 'Syne';
+        font-size: 24px;
+        font-weight: 800;
+      }
+      .ring-center .l {
+        font-size: 10px;
+        color: var(--text3);
+      }
+
+      /* BOTTOM TAB (mobile) */
+      .bottom-tabs {
+        display: none;
+      }
+
+      /* RESPONSIVE */
+      @media (max-width: 1100px) {
+        .stats {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .prop-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .grid-12,
+        .grid-2 {
+          grid-template-columns: 1fr;
+        }
+        .grid-3 {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      @media (max-width: 768px) {
+        .topnav {
+          padding: 12px 14px;
+          flex-wrap: wrap;
+          gap: 10px;
+        }
+        .role-tabs {
+          order: 3;
+          width: 100%;
+          overflow-x: auto;
+        }
+        .brand-sub {
+          display: none;
+        }
+        .sidebar {
+          display: none;
+        }
+        .content {
+          padding: 18px 14px;
+          padding-bottom: 80px;
+        }
+        .prop-grid {
+          grid-template-columns: 1fr;
+        }
+        .fg {
+          grid-template-columns: 1fr;
+        }
+        .bottom-tabs {
+          display: flex;
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          background: rgba(17, 32, 47, 0.95);
+          backdrop-filter: blur(14px);
+          border-top: 1px solid var(--border2);
+          z-index: 300;
+          padding: 8px 0;
+        }
+        .bt {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 3px;
+          padding: 6px 0;
+          color: var(--text3);
+          font-size: 10px;
+          font-weight: 600;
+          cursor: pointer;
+          border: none;
+          background: none;
+        }
+        .bt.active {
+          color: var(--teal);
+        }
+        .demo-pill {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="topnav">
+      <div class="brand">
+        <div class="brand-mark">M</div>
+        <div>
+          <span class="brand-name">Makon</span><span class="brand-sub">Property Platform</span>
+        </div>
+      </div>
+      <div class="role-tabs" id="roleTabs"></div>
+      <div class="demo-pill">DEMO</div>
+    </div>
+
+    <div class="shell">
+      <div class="sidebar" id="sidebar"></div>
+      <div class="content" id="content"></div>
+    </div>
+
+    <div class="bottom-tabs" id="bottomTabs"></div>
+
+    <div class="modal-bg" id="modalBg" onclick="if (event.target === this) closeModal();">
+      <div class="modal" id="modalInner"></div>
+    </div>
+
+    <svg width="0" height="0" style="position: absolute">
+      <defs>
+        <linearGradient id="g-rented" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#1a3a2e" />
+          <stop offset="1" stop-color="#16293B" />
+        </linearGradient>
+      </defs>
+    </svg>
+
+    <script>
+      // ============ ICONS (inline SVG) ============
+      const IC = {
+        dashboard: '<path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/>',
+        building:
+          '<path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-3"/><path d="M9 9v.01M9 12v.01M9 15v.01M9 18v.01"/>',
+        plus: '<path d="M12 5v14M5 12h14"/>',
+        map: '<path d="M9 20l-6 3V6l6-3 6 3 6-3v17l-6 3-6-3zM9 3v17M15 6v17"/>',
+        card: '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>',
+        wrench:
+          '<path d="M14.7 6.3a4 4 0 00-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 005.4-5.4l-2.8 2.8-2-2 2.8-2.8z"/>',
+        users:
+          '<path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>',
+        chart: '<path d="M3 3v18h18M18 9l-5 5-3-3-4 4"/>',
+        calendar:
+          '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+        alert:
+          '<path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L14.7 3.9a2 2 0 00-3.4 0zM12 9v4M12 17h.01"/>',
+        doc: '<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6"/>',
+        home: '<path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><path d="M9 22V12h6v10"/>',
+        money:
+          '<circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5h3.5a1.5 1.5 0 010 3h-2a1.5 1.5 0 000 3H15"/>',
+        search: '<circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/>',
+        heart:
+          '<path d="M19 14c1.5-1.5 3-3.3 3-5.5A4.5 4.5 0 0012 5 4.5 4.5 0 002 8.5c0 2.2 1.5 4 3 5.5l7 7z"/>',
+        pin: '<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>',
+        check: '<path d="M20 6L9 17l-5-5"/>',
+        bell: '<path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0"/>',
+        shield: '<path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/>',
+        scale: '<path d="M12 3v18M5 7h14M7 7l-3 7h6zM17 7l-3 7h6zM5 21h14"/>',
+        globe:
+          '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 010 18 15 15 0 010-18z"/>',
+        star: '<path d="M12 2l3 6.5 7 .9-5 4.8 1.3 7L12 18l-6.3 3.2L7 14.2l-5-4.8 7-.9z"/>',
+      };
+      function svg(name, sz) {
+        sz = sz || 18;
+        return (
+          '<svg class="nav-ic" width="' +
+          sz +
+          '" height="' +
+          sz +
+          '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+          IC[name] +
+          '</svg>'
+        );
+      }
+
+      // ============ DATA ============
+      const DATA = {
+        properties: [
+          {
+            id: 1,
+            name: 'Yunusobod 12-kvartal',
+            addr: 'Amir Temur 15',
+            dist: 'Yunusobod',
+            rooms: 2,
+            area: 65,
+            floor: 5,
+            owner: 'Shamsiyev Bobur',
+            ask: 500,
+            pay: 380,
+            charge: 500,
+            status: 'rented',
+            tenant: 'James Wilson',
+            nat: '🇬🇧',
+            natName: 'UK',
+            leaseEnd: '2025-12-01',
+            score: 9.2,
+            paid: true,
+            hue: 28,
+            vacDays: 0,
+            mapX: 560,
+            mapY: 90,
+          },
+          {
+            id: 2,
+            name: "Mirzo Ulug'bek Plaza",
+            addr: 'Navoiy 44',
+            dist: "Mirzo Ulug'bek",
+            rooms: 3,
+            area: 85,
+            floor: 8,
+            owner: 'Nazarova Dilnoza',
+            ask: 700,
+            pay: 520,
+            charge: 700,
+            status: 'rented',
+            tenant: 'Chen Wei',
+            nat: '🇨🇳',
+            natName: 'China',
+            leaseEnd: '2026-03-15',
+            score: 8.7,
+            paid: true,
+            hue: 200,
+            vacDays: 0,
+            mapX: 430,
+            mapY: 150,
+          },
+          {
+            id: 3,
+            name: 'Sergeli Yangi Uy',
+            addr: 'Bunyodkor 77',
+            dist: 'Sergeli',
+            rooms: 1,
+            area: 45,
+            floor: 3,
+            owner: 'Tursunov Alisher',
+            ask: 350,
+            pay: 265,
+            charge: 350,
+            status: 'vacant',
+            tenant: null,
+            nat: null,
+            natName: null,
+            leaseEnd: null,
+            score: 7.1,
+            paid: false,
+            hue: 42,
+            vacDays: 12,
+            mapX: 330,
+            mapY: 330,
+          },
+          {
+            id: 4,
+            name: 'Yashnobod Oltin',
+            addr: 'Olmazor 3',
+            dist: 'Yashnobod',
+            rooms: 2,
+            area: 72,
+            floor: 2,
+            owner: 'Raimov Sanjar',
+            ask: 450,
+            pay: 340,
+            charge: 450,
+            status: 'rented',
+            tenant: 'Aiko Tanaka',
+            nat: '🇯🇵',
+            natName: 'Japan',
+            leaseEnd: '2025-08-20',
+            score: 8.9,
+            paid: false,
+            hue: 280,
+            vacDays: 0,
+            mapX: 600,
+            mapY: 250,
+          },
+          {
+            id: 5,
+            name: 'Chilonzor Comfort',
+            addr: 'Mustaqillik 120',
+            dist: 'Chilonzor',
+            rooms: 2,
+            area: 68,
+            floor: 6,
+            owner: 'Komilov Davron',
+            ask: 420,
+            pay: 315,
+            charge: 420,
+            status: 'maintenance',
+            tenant: 'Raj Patel',
+            nat: '🇮🇳',
+            natName: 'India',
+            leaseEnd: '2026-01-10',
+            score: 7.8,
+            paid: true,
+            hue: 14,
+            vacDays: 0,
+            mapX: 280,
+            mapY: 230,
+          },
+          {
+            id: 6,
+            name: 'Uchtepa Residence',
+            addr: "Farg'ona yo'li 8",
+            dist: 'Uchtepa',
+            rooms: 3,
+            area: 90,
+            floor: 4,
+            owner: 'Ergashev Timur',
+            ask: 600,
+            pay: 450,
+            charge: 600,
+            status: 'rented',
+            tenant: 'Maria Schmidt',
+            nat: '🇩🇪',
+            natName: 'Germany',
+            leaseEnd: '2026-06-01',
+            score: 9.5,
+            paid: true,
+            hue: 160,
+            vacDays: 0,
+            mapX: 200,
+            mapY: 170,
+          },
+          {
+            id: 7,
+            name: 'Shaykhontohur Loft',
+            addr: 'Zarqaynar 22',
+            dist: 'Shaykhontohur',
+            rooms: 1,
+            area: 50,
+            floor: 7,
+            owner: 'Yusupova Kamola',
+            ask: 480,
+            pay: 360,
+            charge: 480,
+            status: 'vacant',
+            tenant: null,
+            nat: null,
+            natName: null,
+            leaseEnd: null,
+            score: 8.3,
+            paid: false,
+            hue: 340,
+            vacDays: 5,
+            mapX: 360,
+            mapY: 180,
+          },
+        ],
+        agents: [
+          { name: 'Sarvar Umarov', deals: 8, rev: 1240 },
+          { name: 'Dilshod Nazarov', deals: 3, rev: 450 },
+        ],
+        requests: [
+          {
+            id: 1,
+            apt: 'Chilonzor Comfort',
+            tenant: 'Raj Patel',
+            type: 'Plumbing',
+            ic: 'wrench',
+            desc: 'Kitchen sink dripping continuously since yesterday. Water pooling under cabinet.',
+            prio: 'medium',
+            date: '3 Jun',
+            status: 'in_progress',
+          },
+          {
+            id: 2,
+            apt: 'Yunusobod 12-kvartal',
+            tenant: 'James Wilson',
+            type: 'Electric',
+            ic: 'alert',
+            desc: 'Bedroom socket not working. Possibly tripped circuit. Tenant needs it for work setup.',
+            prio: 'high',
+            date: '5 Jun',
+            status: 'open',
+          },
+          {
+            id: 3,
+            apt: "Mirzo Ulug'bek Plaza",
+            tenant: 'Chen Wei',
+            type: 'AC',
+            ic: 'home',
+            desc: 'Air conditioner making rattling noise. Still cools but noisy at night.',
+            prio: 'low',
+            date: '6 Jun',
+            status: 'resolved',
+          },
+        ],
+      };
+
+      // ============ STATE ============
+      let role = 'mgmt',
+        nav = 'dashboard';
+      const STORE = { paid: {}, resolved: {}, renewed: {} };
+
+      // ============ SIDEBAR CONFIG ============
+      const NAVS = {
+        mgmt: [
+          {
+            sec: 'OVERVIEW',
+            items: [
+              { id: 'dashboard', ic: 'dashboard', label: 'Dashboard' },
+              { id: 'pnl', ic: 'chart', label: 'P&L Summary' },
+              { id: 'map', ic: 'map', label: 'Portfolio Map' },
+            ],
+          },
+          {
+            sec: 'PORTFOLIO',
+            items: [
+              { id: 'properties', ic: 'building', label: 'Properties' },
+              { id: 'leases', ic: 'calendar', label: 'Lease Expiry', badge: 1 },
+              { id: 'vacancy', ic: 'alert', label: 'Vacancy Cost', badge: 2 },
+              { id: 'add', ic: 'plus', label: 'Add Property' },
+            ],
+          },
+          {
+            sec: 'OPERATIONS',
+            items: [
+              { id: 'payments', ic: 'card', label: 'Payments', badge: 2 },
+              { id: 'maint', ic: 'wrench', label: 'Maintenance', badge: 1 },
+              { id: 'agents', ic: 'users', label: 'Agents' },
+            ],
+          },
+        ],
+        owner: [
+          {
+            sec: 'MY ACCOUNT',
+            items: [
+              { id: 'o-props', ic: 'home', label: 'My Properties' },
+              { id: 'o-earn', ic: 'money', label: 'Earnings' },
+              { id: 'o-why', ic: 'shield', label: 'How It Works' },
+            ],
+          },
+        ],
+        tenant: [
+          {
+            sec: 'MY HOME',
+            items: [
+              { id: 't-home', ic: 'home', label: 'My Apartment' },
+              { id: 't-pay', ic: 'card', label: 'Pay Rent' },
+              { id: 't-service', ic: 'wrench', label: 'Request Service' },
+            ],
+          },
+          {
+            sec: 'EXPLORE',
+            items: [{ id: 't-browse', ic: 'search', label: 'Browse Other Homes' }],
+          },
+        ],
+        listings: [
+          {
+            sec: 'FIND A HOME',
+            items: [
+              { id: 'l-browse', ic: 'search', label: 'Available Now' },
+              { id: 'l-map', ic: 'map', label: 'Map Search' },
+            ],
+          },
+        ],
+        tax: [
+          {
+            sec: 'COMPLIANCE',
+            items: [
+              { id: 'x-overview', ic: 'scale', label: 'Overview' },
+              { id: 'x-contracts', ic: 'doc', label: 'Registered Contracts' },
+              { id: 'x-decl', ic: 'chart', label: 'Declarations' },
+            ],
+          },
+        ],
+      };
+      const ROLE_TABS = [
+        { id: 'mgmt', label: 'Management', ic: 'dashboard' },
+        { id: 'owner', label: 'Owner', ic: 'home' },
+        { id: 'tenant', label: 'Tenant', ic: 'users' },
+        { id: 'listings', label: 'Marketplace', ic: 'search' },
+        { id: 'tax', label: 'Tax Inspector', ic: 'scale' },
+      ];
+      const ROLE_DEFAULT = {
+        mgmt: 'dashboard',
+        owner: 'o-props',
+        tenant: 't-home',
+        listings: 'l-browse',
+        tax: 'x-overview',
+      };
+
+      // ============ HELPERS ============
+      const fmt = (n) => '$' + n.toLocaleString();
+      const sum = (arr, f) => arr.reduce((s, x) => s + f(x), 0);
+      function photoStyle(p) {
+        const h = p.hue;
+        return `background:
+    linear-gradient(180deg, hsla(${h},35%,28%,0.4), hsla(${h},30%,12%,0.7)),
+    linear-gradient(135deg, hsl(${h},38%,32%), hsl(${(h + 30) % 360},32%,18%));`;
+      }
+      function windows(p) {
+        // generate a few "windows" suggesting an interior
+        let w = '';
+        const cols = p.rooms + 1;
+        for (let i = 0; i < cols; i++) {
+          const left = 12 + i * (76 / cols);
+          w += `<div class="win" style="left:${left}%;top:22%;width:${52 / cols}%;height:42%;"></div>`;
+        }
+        return w;
+      }
+      function daysUntil(d) {
+        if (!d) return null;
+        return Math.round((new Date(d) - new Date('2025-06-07')) / 86400000);
+      }
+
+      // ============ RENDER SHELL ============
+      function renderTabs() {
+        document.getElementById('roleTabs').innerHTML = ROLE_TABS.map(
+          (r) =>
+            `<button class="role-tab ${r.id === role ? 'active' : ''}" onclick="setRole('${r.id}')">${svg(r.ic, 15)}<span>${r.label}</span></button>`,
+        ).join('');
+      }
+      function renderSidebar() {
+        const cfg = NAVS[role] || [];
+        document.getElementById('sidebar').innerHTML = cfg
+          .map(
+            (s) =>
+              `<div class="nav-sec"><div class="nav-sec-t">${s.sec}</div>` +
+              s.items
+                .map(
+                  (i) =>
+                    `<div class="nav-item ${i.id === nav ? 'active' : ''}" onclick="setNav('${i.id}')">${svg(i.ic)}<span>${i.label}</span>${i.badge ? `<span class="nav-badge">${i.badge}</span>` : ''}</div>`,
+                )
+                .join('') +
+              `</div>`,
+          )
+          .join('');
+      }
+      function renderBottom() {
+        const cfg = (NAVS[role] || []).flatMap((s) => s.items).slice(0, 4);
+        document.getElementById('bottomTabs').innerHTML = cfg
+          .map(
+            (i) =>
+              `<button class="bt ${i.id === nav ? 'active' : ''}" onclick="setNav('${i.id}')">${svg(i.ic, 20)}<span>${i.label}</span></button>`,
+          )
+          .join('');
+      }
+      function setRole(r) {
+        role = r;
+        nav = ROLE_DEFAULT[r];
+        renderTabs();
+        renderSidebar();
+        renderBottom();
+        renderContent();
+      }
+      function setNav(n) {
+        nav = n;
+        renderSidebar();
+        renderBottom();
+        renderContent();
+        window.scrollTo(0, 0);
+      }
+
+      function renderContent() {
+        const R = {
+          dashboard: vDashboard,
+          pnl: vPnl,
+          map: vMap,
+          properties: vProps,
+          leases: vLeases,
+          vacancy: vVacancy,
+          add: vAdd,
+          payments: vPayments,
+          maint: vMaint,
+          agents: vAgents,
+          'o-props': vOwnerProps,
+          'o-earn': vOwnerEarn,
+          'o-why': vOwnerWhy,
+          't-home': vTenantHome,
+          't-pay': vTenantPay,
+          't-service': vTenantService,
+          't-browse': vBrowse,
+          'l-browse': vBrowse,
+          'l-map': vMap,
+          'x-overview': vTaxOverview,
+          'x-contracts': vTaxContracts,
+          'x-decl': vTaxDecl,
+        };
+        document.getElementById('content').innerHTML =
+          `<div class="view">${(R[nav] || (() => '<p>Soon</p>'))()}</div>`;
+        if (nav === 'map' || nav === 'l-map') initMap();
+        if (nav === 'add') initAddForm();
+      }
+
+      // ============ MODAL ============
+      function openModal(html) {
+        document.getElementById('modalInner').innerHTML = html;
+        document.getElementById('modalBg').classList.add('show');
+      }
+      function closeModal() {
+        document.getElementById('modalBg').classList.remove('show');
+      }
+
+      // ============ MANAGEMENT VIEWS ============
+      function statRow(stats) {
+        return (
+          `<div class="stats">` +
+          stats
+            .map(
+              (s) =>
+                `<div class="stat ${s.c}"><div class="stat-ic">${svg(s.ic, 18)}</div><div class="stat-val">${s.val}</div><div class="stat-label">${s.label}</div>${s.trend ? `<div class="stat-trend ${s.td}">${s.trend}</div>` : ''}</div>`,
+            )
+            .join('') +
+          `</div>`
+        );
+      }
+
+      function vDashboard() {
+        const rented = DATA.properties.filter((p) => p.status === 'rented');
+        const vacant = DATA.properties.filter((p) => p.status === 'vacant');
+        const net = sum(rented, (p) => p.charge - p.pay);
+        const payouts = sum(rented, (p) => p.pay);
+        const occ = Math.round((rented.length / DATA.properties.length) * 100);
+        return `
+  <div class="welcome">
+    <div><h2>Xush kelibsiz, Akbar 👋</h2><p>7-iyun, 2025 · Toshkent · 7 obyekt boshqaruvda</p>
+    <div class="welcome-badge">${svg('check', 13)} Barcha to'lovlar joriy oy uchun rejada</div></div>
+  </div>
+  ${statRow([
+    {
+      c: 'teal',
+      ic: 'building',
+      val: rented.length + '/' + DATA.properties.length,
+      label: 'Ijaradagi obyektlar',
+      trend: '▲ +2 bu oy',
+      td: 'up',
+    },
+    { c: 'gold', ic: 'money', val: fmt(net), label: 'Oylik sof foyda', trend: '▲ +$340', td: 'up' },
+    {
+      c: 'blue',
+      ic: 'card',
+      val: fmt(payouts),
+      label: "Egalarga to'lov (25-kun)",
+      trend: "100% o'z vaqtida",
+      td: 'up',
+    },
+    {
+      c: 'red',
+      ic: 'alert',
+      val: vacant.length + ' ta',
+      label: "Hozir bo'sh",
+      trend: "$17/kun yo'qotish",
+      td: 'down',
+    },
+  ])}
+  <div class="grid-12">
+    <div>
+      <div class="sec-head"><div><div class="sec-title">So'nggi to'lovlar</div></div><button class="btn btn-ghost btn-sm" onclick="setNav('payments')">Hammasi</button></div>
+      <div class="panel"><div class="panel-body">
+        ${DATA.properties
+          .filter((p) => p.tenant)
+          .slice(0, 4)
+          .map((p) => {
+            const paid = STORE.paid[p.id] || p.paid;
+            return `<div class="trow hoverable" style="grid-template-columns:1.6fr 1fr auto">
+            <div><div class="t-strong">${p.tenant} ${p.nat}</div><div class="t-mini">${p.name}</div></div>
+            <div class="flow-tag flow-in">${svg('check', 11)} +${fmt(p.charge)}</div>
+            <span class="chip ${paid ? 'teal' : 'gold'}">${paid ? "To'langan" : 'Kutilmoqda'}</span>
+          </div>`;
+          })
+          .join('')}
+      </div></div>
+    </div>
+    <div>
+      <div class="sec-head"><div><div class="sec-title">Bandlik darajasi</div></div></div>
+      <div class="panel" style="padding:22px"><div class="ring-wrap">
+        <div class="ring">
+          <svg width="120" height="120">
+            <circle cx="60" cy="60" r="50" fill="none" stroke="var(--navy4)" stroke-width="11"/>
+            <circle cx="60" cy="60" r="50" fill="none" stroke="var(--teal)" stroke-width="11" stroke-linecap="round" stroke-dasharray="${occ * 3.14} 314"/>
+          </svg>
+          <div class="ring-center"><div class="v">${occ}%</div><div class="l">band</div></div>
+        </div>
+        <div style="flex:1">
+          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:8px"><span class="t-dim">Ijarada</span><span class="t-teal">${rented.length} obyekt</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:8px"><span class="t-dim">Bo'sh</span><span class="t-gold">${vacant.length} obyekt</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:12px"><span class="t-dim">Ta'mirda</span><span class="t-red">1 obyekt</span></div>
+        </div>
+      </div></div>
+    </div>
+  </div>
+  <div class="sec-head"><div><div class="sec-title">Texnik so'rovlar</div><div class="sec-title-sm">Bajarilishi kerak</div></div><button class="btn btn-ghost btn-sm" onclick="setNav('maint')">Hammasi</button></div>
+  <div class="panel"><div class="panel-body">
+    ${DATA.requests
+      .map((r) => {
+        const res = STORE.resolved[r.id] || r.status === 'resolved';
+        return `<div class="trow hoverable" style="grid-template-columns:auto 1.4fr 1fr auto">
+      <div style="width:34px;height:34px;border-radius:9px;background:var(--goldfade);display:flex;align-items:center;justify-content:center;color:var(--${r.prio === 'high' ? 'red' : 'gold'})">${svg(r.ic, 16)}</div>
+      <div><div class="t-strong">${r.type} — ${r.apt}</div><div class="t-mini">${r.tenant}</div></div>
+      <span class="chip ${r.prio === 'high' ? 'red' : r.prio === 'medium' ? 'gold' : 'teal'}">${r.prio}</span>
+      <span class="chip ${res ? 'teal' : r.status === 'in_progress' ? 'gold' : 'red'}">${res ? 'hal qilindi' : r.status === 'in_progress' ? 'jarayonda' : 'ochiq'}</span>
+    </div>`;
+      })
+      .join('')}
+  </div></div>`;
+      }
+
+      function vPnl() {
+        const rented = DATA.properties.filter((p) => p.status === 'rented');
+        const gross = sum(rented, (p) => p.charge),
+          payouts = sum(rented, (p) => p.pay),
+          netM = gross - payouts;
+        const taxUzs = Math.round(gross * 0.04 * 12650);
+        const months = [
+          { m: 'Yan', g: 1200, proj: false },
+          { m: 'Fev', g: 1450, proj: false },
+          { m: 'Mar', g: 1900, proj: false },
+          { m: 'Apr', g: 2300, proj: false },
+          { m: 'May', g: 2670, proj: false },
+          { m: 'Iyun', g: gross, proj: false },
+          { m: 'Iyul', g: 3400, proj: true },
+          { m: 'Avg', g: 4100, proj: true },
+          { m: 'Sen', g: 4800, proj: true },
+        ];
+        const max = Math.max(...months.map((m) => m.g));
+        return `
+  <div class="page-title">Foyda & Zarar (P&L)</div>
+  <div class="page-sub">Oylik moliyaviy ko'rsatkichlar — investorlar uchun asosiy ekran</div>
+  ${statRow([
+    { c: 'teal', ic: 'money', val: fmt(gross), label: 'Yalpi daromad (ijarachilar)' },
+    { c: 'blue', ic: 'card', val: fmt(payouts), label: "Egalarga to'lov" },
+    {
+      c: 'gold',
+      ic: 'chart',
+      val: fmt(netM),
+      label: 'Sof margin (' + Math.round((netM / gross) * 100) + '%)',
+    },
+    {
+      c: 'purple',
+      ic: 'scale',
+      val: Math.round(netM * 0.04 * 12.65) + "K so'm",
+      label: 'Soliq (4%)',
+    },
+  ])}
+  <div class="grid-12">
+    <div class="panel">
+      <div class="panel-head"><h3>Oylik taqsimot</h3><span class="chip plain nodot">2025</span></div>
+      <div class="panel-body">
+        <div class="trow head" style="grid-template-columns:1fr 1fr 1fr 1fr 1fr"><span>Oy</span><span>Daromad</span><span>To'lov</span><span>Margin</span><span>Soliq 4%</span></div>
+        ${months
+          .slice(0, 6)
+          .map((mo) => {
+            const g = mo.g,
+              p = Math.round(g * 0.75),
+              n = g - p;
+            return `<div class="trow" style="grid-template-columns:1fr 1fr 1fr 1fr 1fr">
+          <span class="t-strong">${mo.m}</span><span class="t-teal">${fmt(g)}</span><span class="t-dim">${fmt(p)}</span><span class="t-gold">${fmt(n)}</span><span class="t-mini">${Math.round(n * 0.04 * 12.65)}K</span>
+        </div>`;
+          })
+          .join('')}
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h3>O'sish</h3><span class="chip plain nodot">jun→sen proyeksiya</span></div>
+      <div style="padding:16px 18px">
+        <div class="pnl-spark" style="height:150px">
+          ${months
+            .map(
+              (
+                mo,
+              ) => `<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%">
+            <div style="font-size:9px;color:var(--text3);text-align:center;margin-bottom:4px">${'$' + (mo.g / 1000).toFixed(1) + 'k'}</div>
+            <div class="pnl-bar ${mo.proj ? 'proj' : ''}" style="height:${Math.round((mo.g / max) * 110)}px" title="${fmt(mo.g)}"></div>
+            <div class="pnl-lbl">${mo.m}</div>
+          </div>`,
+            )
+            .join('')}
+        </div>
+        <div style="display:flex;gap:14px;margin-top:10px;font-size:11px;color:var(--text3)">
+          <span style="display:flex;align-items:center;gap:5px"><i style="width:10px;height:10px;border-radius:3px;background:var(--teal);display:inline-block"></i>Haqiqiy</span>
+          <span style="display:flex;align-items:center;gap:5px"><i style="width:10px;height:10px;border-radius:3px;background:var(--navy4);border:1px dashed var(--text3);display:inline-block"></i>Proyeksiya</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="alert teal" style="margin-top:18px">${svg('check', 16)} <div><b>Take-home (sof qo'lga tegadigan):</b> ${fmt(netM)}/oy soliqdan keyin. Yillik proyeksiya: ${fmt(netM * 12)} — bu 7 obyektdan. 50 obyektda: ~${fmt(Math.round((netM / 7) * 50 * 12))}/yil.</div></div>`;
+      }
+
+      function vMap() {
+        return `
+  <div class="page-title">Portfolio Map</div>
+  <div class="page-sub">Toshkent tumanlari bo'yicha obyektlar joylashuvi</div>
+  <div class="map-wrap" id="mapWrap" style="height:420px"></div>`;
+      }
+
+      function vProps() {
+        return `
+  <div class="sec-head"><div><div class="page-title">Obyektlar (${DATA.properties.length})</div></div><button class="btn btn-primary" onclick="setNav('add')">${svg('plus', 15)} Obyekt qo'shish</button></div>
+  <div class="prop-grid">${DATA.properties.map(propCard).join('')}</div>`;
+      }
+      function propCard(p) {
+        const st = p.status === 'rented' ? 'teal' : p.status === 'vacant' ? 'gold' : 'red';
+        const stLabel =
+          p.status === 'rented' ? 'Ijarada' : p.status === 'vacant' ? "Bo'sh" : "Ta'mirda";
+        return `<div class="prop-card" onclick="openPropModal(${p.id})">
+    <div class="prop-photo" style="${photoStyle(p)}">
+      ${windows(p)}<div class="floor"></div>
+      <span class="prop-status chip ${st}">${stLabel}</span>
+    </div>
+    <div class="prop-body">
+      <div class="prop-name">${p.name}</div>
+      <div class="prop-addr">${svg('pin', 12)} ${p.addr}, ${p.dist}</div>
+      <div class="prop-meta"><span><b>${p.rooms}</b> xona</span><span><b>${p.area}</b> m²</span><span><b>${p.floor}</b>-qavat</span></div>
+      <div class="prop-foot">
+        <div class="prop-price">${fmt(p.charge - p.pay)}<span>/oy foyda</span></div>
+        ${p.tenant ? `<span class="t-mini">${p.nat} ${p.tenant.split(' ')[0]}</span>` : `<span class="prop-margin">Ijarachi kutilmoqda</span>`}
+      </div>
+    </div>
+  </div>`;
+      }
+      function openPropModal(id) {
+        const p = DATA.properties.find((x) => x.id === id);
+        openModal(`
+    <div class="prop-photo" style="${photoStyle(p)};height:120px;border-radius:12px;margin-bottom:16px;position:relative">${windows(p)}<div class="floor"></div></div>
+    <h3>${p.name}</h3><p style="margin-bottom:14px">${svg('pin', 13)} ${p.addr}, ${p.dist} · ${p.rooms} xona · ${p.area}m²</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+      <div class="form-card" style="margin:0;padding:14px"><div class="t-mini">Egasi to'lovi</div><div style="font-family:Syne;font-size:18px;font-weight:800;color:var(--blue)">${fmt(p.pay)}</div></div>
+      <div class="form-card" style="margin:0;padding:14px"><div class="t-mini">Ijarachi narxi</div><div style="font-family:Syne;font-size:18px;font-weight:800;color:var(--teal)">${fmt(p.charge)}</div></div>
+    </div>
+    <div class="alert teal">${svg('money', 15)} Oylik foyda: <b>${fmt(p.charge - p.pay)}</b> · Yillik: <b>${fmt((p.charge - p.pay) * 12)}</b></div>
+    <button class="btn btn-ghost" style="width:100%;justify-content:center" onclick="closeModal()">Yopish</button>`);
+      }
+
+      function vLeases() {
+        const withLease = DATA.properties
+          .filter((p) => p.leaseEnd)
+          .map((p) => ({ ...p, days: daysUntil(p.leaseEnd) }))
+          .sort((a, b) => a.days - b.days);
+        return `
+  <div class="page-title">Ijara muddatlari</div>
+  <div class="page-sub">Tugash sanasi bo'yicha tartiblangan — muddati yaqinlashganlar tepada</div>
+  <div class="alert gold">${svg('alert', 16)} <div><b>1 ta ijara</b> 60 kun ichida tugaydi. Hoziroq uzaytirish bo'yicha ish boshlang.</div></div>
+  <div class="panel"><div class="panel-body">
+    <div class="trow head" style="grid-template-columns:1.5fr 1fr 1.4fr 1fr auto"><span>Obyekt</span><span>Ijarachi</span><span>Qolgan vaqt</span><span>Tugash</span><span></span></div>
+    ${withLease
+      .map((p) => {
+        const renewed = STORE.renewed[p.id];
+        const c = renewed ? 'teal' : p.days < 60 ? 'red' : p.days < 120 ? 'gold' : 'teal';
+        const pct = Math.max(5, Math.min(100, Math.round((p.days / 365) * 100)));
+        return `<div class="trow hoverable" id="lease-${p.id}" style="grid-template-columns:1.5fr 1fr 1.4fr 1fr auto">
+        <div><div class="t-strong">${p.name}</div><div class="t-mini">${p.dist}</div></div>
+        <span class="t-dim">${p.nat} ${p.tenant.split(' ')[0]}</span>
+        <div><div style="font-size:12px;margin-bottom:5px" class="t-${c === 'teal' ? 'teal' : c === 'gold' ? 'gold' : 'red'}">${renewed ? 'Uzaytirildi ✓' : p.days + ' kun'}</div><div class="pbar"><i class="${c}" style="width:${renewed ? 100 : pct}%"></i></div></div>
+        <span class="t-mini">${p.leaseEnd}</span>
+        <button class="btn ${renewed ? 'btn-ghost' : 'btn-primary'} btn-xs" ${renewed ? 'disabled' : ''} onclick="renewLease(${p.id})">${renewed ? '✓ OK' : 'Uzaytirish'}</button>
+      </div>`;
+      })
+      .join('')}
+  </div></div>`;
+      }
+      function renewLease(id) {
+        STORE.renewed[id] = true;
+        renderContent();
+      }
+
+      function vVacancy() {
+        const vac = DATA.properties.filter((p) => p.status === 'vacant');
+        const totalLost = sum(vac, (p) => Math.round((p.charge / 30) * p.vacDays));
+        return `
+  <div class="page-title">Bo'sh turish narxi</div>
+  <div class="page-sub">Har bir bo'sh kun real pul yo'qotish — bu ekran uni ko'rsatadi</div>
+  <div class="alert red">${svg('alert', 16)} <div>Hozir <b>${vac.length} obyekt bo'sh</b> — jami yo'qotilgan imkoniyat: <b>${fmt(totalLost)}</b>. Tezroq ijaraga bering.</div></div>
+  <div class="grid-2">
+  ${vac
+    .map((p) => {
+      const lost = Math.round((p.charge / 30) * p.vacDays);
+      return `
+    <div class="panel" style="padding:18px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+        <div><div class="t-strong" style="font-size:15px">${p.name}</div><div class="t-mini">${p.dist} · ${p.rooms} xona</div></div>
+        <span class="chip gold">Bo'sh</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
+        <div><div class="t-mini">Bo'sh kunlar</div><div style="font-family:Syne;font-size:20px;font-weight:800;color:var(--gold)">${p.vacDays}</div></div>
+        <div><div class="t-mini">Kunlik daromad</div><div style="font-family:Syne;font-size:20px;font-weight:800">${fmt(Math.round(p.charge / 30))}</div></div>
+        <div><div class="t-mini">Yo'qotilgan</div><div style="font-family:Syne;font-size:20px;font-weight:800;color:var(--red)">${fmt(lost)}</div></div>
+      </div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="listNow('${p.name}')">${svg('search', 14)} Hoziroq e'lon qilish</button>
+    </div>`;
+    })
+    .join('')}
+  </div>`;
+      }
+      function listNow(name) {
+        openModal(`<div style="text-align:center"><div style="width:60px;height:60px;border-radius:50%;background:var(--tealfade);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;color:var(--teal)">${svg('check', 30)}</div>
+  <h3>E'lon joylandi! ✅</h3><p><b>${name}</b> quyidagi platformalarga avtomatik joylandi:</p>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px">
+    <div class="alert teal" style="margin:0">${svg('check', 14)} OLX.uz — 15 soniyada</div>
+    <div class="alert teal" style="margin:0">${svg('check', 14)} Joymee — 15 soniyada</div>
+    <div class="alert teal" style="margin:0">${svg('check', 14)} Bir-Bir — 15 soniyada</div>
+  </div>
+  <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="closeModal()">Ajoyib</button></div>`);
+      }
+
+      function vAdd() {
+        return `
+  <div class="sec-head"><div><div class="page-title">Obyekt qo'shish</div><div class="page-sub" style="margin:0">1 daqiqada — egasi bilan kelishuvdan e'lon joylashtirishgacha</div></div><div class="chip teal nodot" id="addTimer">⏱ 0:00</div></div>
+  <div class="form-card"><div class="form-step"><span class="num">1</span> Joylashuv</div>
+    <div class="fg">
+      <div class="field"><label>Tuman</label><select><option>Yunusobod</option><option>Mirzo Ulug'bek</option><option>Chilonzor</option><option>Sergeli</option><option>Yashnobod</option><option>Uchtepa</option><option>Shaykhontohur</option></select></div>
+      <div class="field"><label>Manzil</label><input placeholder="Navoiy ko'chasi 12"></div>
+      <div class="field"><label>Qavat</label><input type="number" placeholder="3"></div>
+    </div>
+  </div>
+  <div class="form-card"><div class="form-step"><span class="num">2</span> Tafsilotlar</div>
+    <div class="fg">
+      <div class="field"><label>Xonalar</label><select><option>1 xona</option><option>2 xona</option><option>3 xona</option><option>4+ xona</option></select></div>
+      <div class="field"><label>Maydon (m²)</label><input type="number" placeholder="65"></div>
+      <div class="field"><label>Tarif</label><select><option>Standart</option><option>Komfort</option><option>Premium</option></select></div>
+    </div>
+  </div>
+  <div class="form-card"><div class="form-step"><span class="num">3</span> Narx kelishuvi</div>
+    <div class="fg">
+      <div class="field"><label>Egasi so'rovi (OLX)</label><input type="number" id="f_ask" placeholder="500"></div>
+      <div class="field"><label>Bizning taklif (avto -24%)</label><input type="number" id="f_offer" placeholder="380" style="color:var(--teal)"></div>
+      <div class="field"><label>Ijarachi narxi</label><input type="number" id="f_charge" placeholder="500"></div>
+    </div>
+    <div class="alert gold" id="marginCalc" style="margin-top:14px">${svg('money', 15)} Narxlarni kiriting — foyda hisoblanadi</div>
+  </div>
+  <div class="form-card"><div class="form-step"><span class="num">4</span> Shartnoma va egasi</div>
+    <div class="fg">
+      <div class="field"><label>Egasi F.I.Sh.</label><input placeholder="Tursunov Alisher"></div>
+      <div class="field"><label>Telefon</label><input placeholder="+998 90 123 45 67"></div>
+      <div class="field"><label>Shartnoma muddati</label><select><option>12 oy</option><option>24 oy</option><option>36 oy</option></select></div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;margin-top:14px;flex-wrap:wrap">
+      <span class="chip plain nodot">Shartnoma turi: Mulkni Ishonchli Boshqarish</span>
+      <span class="chip gold">Notarial tasdiq: kutilmoqda</span>
+      <span class="chip blue">OLX e'lon: avto</span>
+    </div>
+  </div>
+  <div style="display:flex;gap:12px"><button class="btn btn-primary" onclick="saveProp()">${svg('check', 15)} Saqlash va e'lon qilish</button><button class="btn btn-ghost" onclick="setNav('properties')">Bekor qilish</button></div>`;
+      }
+      function initAddForm() {
+        let s = 0;
+        const tEl = () => document.getElementById('addTimer');
+        if (window._addT) clearInterval(window._addT);
+        window._addT = setInterval(() => {
+          if (!document.getElementById('addTimer')) {
+            clearInterval(window._addT);
+            return;
+          }
+          s++;
+          const m = Math.floor(s / 60),
+            sc = s % 60;
+          tEl().textContent = '⏱ ' + m + ':' + (sc < 10 ? '0' : '') + sc;
+          if (s > 60) tEl().style.color = 'var(--red)';
+        }, 1000);
+        const ask = document.getElementById('f_ask'),
+          off = document.getElementById('f_offer'),
+          ch = document.getElementById('f_charge');
+        function calc() {
+          const a = +ask.value;
+          if (a && !off.dataset.touched) {
+            off.value = Math.round(a * 0.76);
+          }
+          if (a && !ch.dataset.touched) {
+            ch.value = a;
+          }
+          const o = +off.value,
+            c = +ch.value;
+          const el = document.getElementById('marginCalc');
+          if (a && o && c) {
+            const margin = c - o,
+              disc = Math.round((1 - o / a) * 100);
+            el.className = 'alert teal';
+            el.innerHTML = `${svg('money', 15)} <div>Oylik foyda: <b>${fmt(margin)}</b> · Egaga chegirma: <b>${disc}%</b> · Yillik foyda: <b>${fmt(margin * 12)}</b></div>`;
+          }
+        }
+        ask.oninput = calc;
+        off.oninput = () => {
+          off.dataset.touched = 1;
+          calc();
+        };
+        ch.oninput = () => {
+          ch.dataset.touched = 1;
+          calc();
+        };
+      }
+      function saveProp() {
+        openModal(
+          `<div style="text-align:center"><div style="width:60px;height:60px;border-radius:50%;background:var(--tealfade);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;color:var(--teal)">${svg('check', 30)}</div><h3>Obyekt qo'shildi!</h3><p>Shartnoma egaga Telegram orqali yuborildi. E'lon OLX, Joymee, Bir-Bir'ga avtomatik joylandi.</p><div class="chip teal nodot" style="margin-bottom:16px">⏱ Jami vaqt: ~48 soniya</div><br><button class="btn btn-primary" style="width:100%;justify-content:center" onclick="closeModal();setNav('properties')">Obyektlarni ko'rish</button></div>`,
+        );
+      }
+
+      function vPayments() {
+        const tenants = DATA.properties.filter((p) => p.tenant);
+        const collected = sum(
+          tenants.filter((p) => STORE.paid[p.id] || p.paid),
+          (p) => p.charge,
+        );
+        const pending = sum(
+          tenants.filter((p) => !(STORE.paid[p.id] || p.paid)),
+          (p) => p.charge,
+        );
+        return `
+  <div class="page-title">To'lovlar</div>
+  <div class="page-sub">Ijarachidan kelgan va egaga to'langan pullar alohida ko'rsatilgan</div>
+  ${statRow([
+    { c: 'teal', ic: 'money', val: fmt(collected), label: "Ijarachilardan yig'ildi" },
+    {
+      c: 'blue',
+      ic: 'card',
+      val: fmt(
+        sum(
+          DATA.properties.filter((p) => p.status === 'rented'),
+          (p) => p.pay,
+        ),
+      ),
+      label: "Egalarga to'lov (25-kun)",
+    },
+    {
+      c: 'gold',
+      ic: 'chart',
+      val: fmt(
+        collected -
+          sum(
+            DATA.properties.filter((p) => p.status === 'rented'),
+            (p) => p.pay,
+          ),
+      ),
+      label: 'Sof bu oy',
+    },
+    { c: 'red', ic: 'alert', val: fmt(pending), label: 'Kutilayotgan' },
+  ])}
+  <div class="sec-head"><div><div class="sec-title">${svg('check', 13)} Kirim — ijarachilardan</div></div></div>
+  <div class="panel"><div class="panel-body">
+    <div class="trow head" style="grid-template-columns:1.6fr 1.4fr 1fr 1fr auto"><span>Ijarachi</span><span>Obyekt</span><span>Summa</span><span>Holat</span><span></span></div>
+    ${tenants
+      .map((p) => {
+        const paid = STORE.paid[p.id] || p.paid;
+        return `<div class="trow hoverable" id="pay-${p.id}" style="grid-template-columns:1.6fr 1.4fr 1fr 1fr auto;${paid ? '' : ''}">
+      <div class="t-strong">${p.nat} ${p.tenant}</div><span class="t-dim">${p.name}</span>
+      <span class="flow-tag flow-in">+${fmt(p.charge)}</span>
+      <span class="chip ${paid ? 'teal' : 'gold'}">${paid ? "to'langan" : 'kutilmoqda'}</span>
+      ${paid ? '<span></span>' : `<button class="btn btn-primary btn-xs" onclick="markPaid(${p.id})">To'landi deb belgilash</button>`}
+    </div>`;
+      })
+      .join('')}
+  </div></div>
+  <div class="sec-head"><div><div class="sec-title">${svg('card', 13)} Chiqim — egalarga (25-iyun)</div></div></div>
+  <div class="panel"><div class="panel-body">
+    ${DATA.properties
+      .filter((p) => p.status === 'rented')
+      .map(
+        (p) =>
+          `<div class="trow" style="grid-template-columns:1.6fr 1.4fr 1fr 1fr"><div class="t-strong">${p.owner}</div><span class="t-dim">${p.name}</span><span class="flow-tag flow-out">−${fmt(p.pay)}</span><span class="chip blue">rejada</span></div>`,
+      )
+      .join('')}
+  </div></div>`;
+      }
+      function markPaid(id) {
+        STORE.paid[id] = true;
+        const row = document.getElementById('pay-' + id);
+        if (row) {
+          row.style.borderLeft = '3px solid var(--teal)';
+          row.style.background = 'var(--tealfade)';
+        }
+        setTimeout(() => renderContent(), 350);
+      }
+
+      function vMaint() {
+        return `
+  <div class="page-title">Texnik so'rovlar</div>
+  <div class="page-sub">Bosing — to'liq tafsilot ochiladi</div>
+  <div class="panel"><div class="panel-body">
+    ${DATA.requests
+      .map((r) => {
+        const res = STORE.resolved[r.id] || r.status === 'resolved';
+        return `
+    <div onclick="toggleReq(${r.id})" style="cursor:pointer">
+      <div class="trow hoverable" style="grid-template-columns:auto 1.5fr 1fr 1fr auto">
+        <div style="width:34px;height:34px;border-radius:9px;background:var(--goldfade);display:flex;align-items:center;justify-content:center;color:var(--gold)">${svg(r.ic, 16)}</div>
+        <div><div class="t-strong">${r.type} — ${r.apt}</div><div class="t-mini">${r.tenant} · ${r.date}</div></div>
+        <span class="chip ${r.prio === 'high' ? 'red' : r.prio === 'medium' ? 'gold' : 'teal'}">${r.prio}</span>
+        <span class="chip ${res ? 'teal' : r.status === 'in_progress' ? 'gold' : 'red'}">${res ? 'hal qilindi' : r.status === 'in_progress' ? 'jarayonda' : 'ochiq'}</span>
+        <span class="t-dim" style="font-size:16px">⌄</span>
+      </div>
+      <div class="expand" id="req-${r.id}"><div class="expand-inner">
+        <p style="font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.6">${r.desc}</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-xs" onclick="event.stopPropagation()">${svg('users', 12)} Texnik biriktirish</button>
+          <button class="btn btn-primary btn-xs" onclick="event.stopPropagation();resolveReq(${r.id})">${svg('check', 12)} Hal qilindi</button>
+          <button class="btn btn-ghost btn-xs" onclick="event.stopPropagation()">${svg('alert', 12)} Eskalatsiya</button>
+        </div>
+      </div></div>
+    </div>`;
+      })
+      .join('')}
+  </div></div>`;
+      }
+      function toggleReq(id) {
+        const el = document.getElementById('req-' + id);
+        if (el) el.classList.toggle('open');
+      }
+      function resolveReq(id) {
+        STORE.resolved[id] = true;
+        renderContent();
+      }
+
+      function vAgents() {
+        return `
+  <div class="page-title">Agentlar (Maklerlik)</div>
+  <div class="page-sub">Komissiya asosidagi sotuv jamoasi</div>
+  ${statRow([
+    { c: 'teal', ic: 'users', val: '2', label: 'Faol agent' },
+    { c: 'gold', ic: 'chart', val: '11', label: 'Bu oygi bitimlar' },
+    { c: 'blue', ic: 'money', val: '$1,690', label: 'Jami komissiya' },
+    { c: 'purple', ic: 'plus', val: '5→10', label: 'Maqsadli agent' },
+  ])}
+  <div class="panel"><div class="panel-body">
+    ${DATA.agents
+      .map(
+        (a) => `<div class="trow hoverable" style="grid-template-columns:auto 1.5fr 1fr 1fr auto">
+      <div style="width:38px;height:38px;border-radius:50%;background:var(--tealfade);display:flex;align-items:center;justify-content:center;color:var(--teal);font-weight:700;font-family:Syne">${a.name[0]}</div>
+      <div class="t-strong">${a.name}</div><span class="t-dim">${a.deals} bitim</span><span class="t-teal">${fmt(a.rev)}</span>
+      <span class="chip teal">faol</span>
+    </div>`,
+      )
+      .join('')}
+  </div></div>`;
+      }
+
+      // ============ OWNER VIEWS ============
+      function vOwnerProps() {
+        const mine = DATA.properties.slice(0, 2);
+        const income = sum(mine, (p) => p.pay);
+        return `
+  <div class="welcome"><div><h2>Xush kelibsiz, Shamsiyev Bobur 👋</h2><p>Kvartiralaringiz Makon tomonidan boshqariladi</p>
+  <div class="welcome-badge">${svg('shield', 13)} Kafolatlangan oylik daromad</div></div></div>
+  ${statRow([
+    { c: 'teal', ic: 'home', val: mine.length, label: 'Mening kvartiralarim' },
+    { c: 'gold', ic: 'money', val: fmt(income), label: 'Oylik daromad (kafolatlangan)' },
+    { c: 'blue', ic: 'calendar', val: '25-kun', label: "To'lov sanasi (har oy)" },
+    { c: 'teal', ic: 'star', val: '100%', label: "O'z vaqtida to'lov" },
+  ])}
+  <div class="alert teal">${svg('check', 16)} Apt "${mine[0].name}" uchun ${fmt(mine[0].pay)} to'lov yuborildi. Yetib borishi: 25-iyun, 2025.</div>
+  <div class="sec-head"><div><div class="sec-title">Mening kvartiralarim</div></div></div>
+  <div class="panel"><div class="panel-body">
+    <div class="trow head" style="grid-template-columns:1.5fr 1fr 1fr 1fr 1fr"><span>Obyekt</span><span>Holat</span><span>Bozor narxi</span><span>Siz olasiz</span><span>Ijarachi</span></div>
+    ${mine
+      .map(
+        (p) => `<div class="trow hoverable" style="grid-template-columns:1.5fr 1fr 1fr 1fr 1fr">
+      <div><div class="t-strong">${p.name}</div><div class="t-mini">${p.addr}</div></div>
+      <span class="chip teal">ijarada</span>
+      <span class="t-dim">${fmt(p.ask)}/oy</span>
+      <span class="t-teal">${fmt(p.pay)}/oy</span>
+      <span class="t-dim">${p.nat} ${p.tenant.split(' ')[0]}</span>
+    </div>`,
+      )
+      .join('')}
+  </div></div>`;
+      }
+      function vOwnerEarn() {
+        return `<div class="page-title">Daromad tarixi</div><div class="page-sub">Har oy kafolatlangan to'lov</div>
+  <div class="panel"><div class="panel-body">
+  ${['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun'].map((m, i) => `<div class="trow hoverable" style="grid-template-columns:2fr 1fr 1fr 1fr"><span class="t-strong">${m} 2025</span><span class="t-teal">$380</span><span class="t-mini">${20 + i}-${m.slice(0, 3)}</span><span class="chip teal">to'langan</span></div>`).join('')}
+  </div></div>`;
+      }
+      function vOwnerWhy() {
+        const p = DATA.properties[0];
+        return `<div class="page-title">Nega daromadim bozordan past — va bu nega yaxshi</div><div class="page-sub">Ochiq-oydin tushuntirish</div>
+  <div class="grid-2">
+    <div class="form-card">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span class="t-dim">Bozor narxi</span><span class="t-strong">${fmt(p.ask)}/oy</span></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span class="t-dim">Siz olasiz</span><span class="t-teal">${fmt(p.pay)}/oy (kafolatlangan)</span></div>
+      <div class="pbar" style="margin:14px 0"><i style="width:${Math.round((p.pay / p.ask) * 100)}%"></i></div>
+      <div class="t-mini">Farq (${fmt(p.ask - p.pay)}/oy) quyidagilar uchun:</div>
+    </div>
+    <div class="form-card">
+      ${["Bo'sh turish xavfi — kvartira bo'sh tursa ham biz to'laymiz", "24/7 texnik xizmat — ijarachi bizga qo'ng'iroq qiladi, sizga emas", 'Xalqaro ijarachilar (Britaniya, Germaniya, Yaponiya)', 'Rasmiy shartnoma va himoya', 'Har choralik texnik tekshiruv'].map((x) => `<div style="display:flex;gap:9px;font-size:13px;margin-bottom:11px;color:var(--text2)">${svg('check', 15)}<span>${x}</span></div>`).join('')}
+    </div>
+  </div>
+  <div class="alert teal" style="margin-top:16px">${svg('shield', 16)} <div>Siz yiliga <b>${fmt(p.pay * 12)}</b> stresssiz olasiz. Bo'sh turish, buzilish, qarz — hammasi bizning muammomiz.</div></div>`;
+      }
+
+      // ============ TENANT VIEWS ============
+      function vTenantHome() {
+        const me = DATA.properties[0];
+        const days = daysUntil(me.leaseEnd);
+        return `
+  <div class="welcome"><div><h2>Salom, James Wilson 👋</h2><p>${me.name} · ${me.addr}, ${me.dist}</p>
+  <div class="welcome-badge">${svg('home', 13)} Premium ijarachi</div></div></div>
+  ${statRow([
+    { c: 'teal', ic: 'card', val: fmt(me.charge), label: 'Oylik ijara' },
+    { c: 'gold', ic: 'calendar', val: '1-kun', label: "To'lov muddati" },
+    { c: 'blue', ic: 'doc', val: days + ' kun', label: 'Ijara tugashiga' },
+    { c: 'teal', ic: 'star', val: me.score, label: 'Kvartira reytingi' },
+  ])}
+  <div class="alert teal">${svg('check', 16)} Iyun ijarangiz (${fmt(me.charge)}) qabul qilindi. Rahmat!</div>
+  <div class="grid-2">
+    <div class="panel"><div class="panel-head"><h3>Kvartira ma'lumoti</h3></div><div style="padding:16px 18px;font-size:13px;line-height:2.1;color:var(--text2)">
+      ${svg('home', 13)} <b style="color:var(--text)">${me.name}</b><br>${svg('pin', 13)} ${me.addr}, ${me.dist}<br>🛏 ${me.rooms} xona · 📐 ${me.area}m² · ${me.floor}-qavat<br>${svg('bell', 13)} Favqulodda: +998 78 888 88 88 (24/7)
+    </div></div>
+    <div class="panel"><div class="panel-head"><h3>Tezkor xizmatlar</h3></div><div style="padding:16px 18px;display:flex;flex-direction:column;gap:10px">
+      <button class="btn btn-primary" style="justify-content:center" onclick="setNav('t-pay')">${svg('card', 14)} Ijara to'lash</button>
+      <button class="btn btn-ghost" style="justify-content:center" onclick="setNav('t-service')">${svg('wrench', 14)} Muammo haqida xabar</button>
+      <button class="btn btn-ghost" style="justify-content:center" onclick="setNav('t-browse')">${svg('search', 14)} Boshqa uylarni ko'rish</button>
+    </div></div>
+  </div>`;
+      }
+      function vTenantPay() {
+        const me = DATA.properties[0];
+        return `<div class="page-title">Ijara to'lash</div><div class="page-sub">1 daqiqada, xavfsiz</div>
+  <div class="alert gold">${svg('calendar', 16)} Iyul ijarasi 1-iyul kuni to'lanishi kerak.</div>
+  <div class="form-card" style="max-width:460px">
+    <div style="font-size:13px;line-height:2;color:var(--text2);margin-bottom:16px">Kvartira: <b style="color:var(--text)">${me.name}</b><br>Davr: <b style="color:var(--text)">Iyul 2025</b><br>Summa: <b style="color:var(--teal);font-size:24px;font-family:Syne">${fmt(me.charge)}</b></div>
+    <div class="field" style="margin-bottom:14px"><label>To'lov usuli</label><select><option>💳 Uzcard / Humo</option><option>📱 Click</option><option>📱 Payme</option><option>🏦 Bank o'tkazma</option></select></div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="payOk(${me.charge})">${svg('card', 15)} ${fmt(me.charge)} to'lash</button>
+  </div>`;
+      }
+      function vTenantService() {
+        return `<div class="page-title">Muammo haqida xabar</div><div class="page-sub">4 soat ichida javob beramiz</div>
+  <div class="alert teal">${svg('check', 16)} Jiddiy muammolar (suv/elektr yo'q) — 1 soat ichida.</div>
+  <div class="form-card" style="max-width:500px">
+    <div class="field" style="margin-bottom:13px"><label>Muammo turi</label><select><option>⚡ Elektr</option><option>🔧 Santexnika</option><option>🌡️ Isitish / Konditsioner</option><option>🚪 Eshik / Qulf</option></select></div>
+    <div class="field" style="margin-bottom:13px"><label>Tavsif</label><textarea rows="3" placeholder="Oshxonadagi jo'mrak tunadan beri tomchilayapti..."></textarea></div>
+    <div class="field" style="margin-bottom:16px"><label>Shoshilinchlik</label><select><option>🟢 Past</option><option>🟡 O'rta</option><option>🔴 Yuqori</option></select></div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="serviceOk()">${svg('wrench', 15)} Yuborish</button>
+  </div>`;
+      }
+
+      // ============ MARKETPLACE (potential tenants + tenant browse) ============
+      function vBrowse() {
+        const avail = DATA.properties.filter((p) => p.status === 'vacant');
+        const isTenant = role === 'tenant';
+        return `
+  <div class="page-title">${isTenant ? "Boshqa uylarni ko'rish" : "Bo'sh kvartiralar"}</div>
+  <div class="page-sub">${isTenant ? 'Hozirgi kvartirangiz yoqmasa — boshqa variantlar' : 'Makon boshqaruvidagi — ishonchli, hujjatli, xizmatli'}</div>
+  <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap">
+    <div style="flex:1;min-width:200px;position:relative"><input class="" style="width:100%;background:var(--card);border:1px solid var(--border2);border-radius:10px;padding:11px 14px 11px 38px;color:var(--text);font-size:13px;outline:none" placeholder="Tuman, narx yoki xona soni bo'yicha qidirish..."><span style="position:absolute;left:13px;top:11px;color:var(--text3)">${svg('search', 16)}</span></div>
+    <button class="btn btn-ghost btn-sm">Narx ▾</button><button class="btn btn-ghost btn-sm">Xonalar ▾</button><button class="btn btn-ghost btn-sm" onclick="setNav('${isTenant ? 't-home' : 'l-map'}')">${svg('map', 14)} Xarita</button>
+  </div>
+  ${avail.length === 0 ? '<div class="alert gold">Hozircha barcha kvartiralar band. Tez orada yangilari qo\'shiladi.</div>' : ''}
+  <div class="prop-grid">
+    ${DATA.properties
+      .map((p) => {
+        const st = p.status === 'vacant';
+        return `<div class="prop-card" onclick="bookView(${p.id})">
+        <div class="prop-photo" style="${photoStyle(p)}">${windows(p)}<div class="floor"></div>
+          <div class="prop-fav">${svg('heart', 15)}</div>
+          <span class="prop-status chip ${st ? 'teal' : 'plain'}">${st ? "Bo'sh — tayyor" : 'Band'}</span>
+        </div>
+        <div class="prop-body">
+          <div class="prop-name">${p.name}</div>
+          <div class="prop-addr">${svg('pin', 12)} ${p.addr}, ${p.dist}</div>
+          <div class="prop-meta"><span><b>${p.rooms}</b> xona</span><span><b>${p.area}</b> m²</span><span><b>${p.floor}</b>-qavat</span></div>
+          <div class="prop-foot">
+            <div class="prop-price">${fmt(p.charge)}<span>/oy</span></div>
+            ${st ? `<button class="btn btn-primary btn-xs" onclick="event.stopPropagation();bookView(${p.id})">Ko'rishga yozilish</button>` : `<span class="chip plain nodot">${p.leaseEnd} gacha band</span>`}
+          </div>
+        </div>
+      </div>`;
+      })
+      .join('')}
+  </div>`;
+      }
+      function bookView(id) {
+        const p = DATA.properties.find((x) => x.id === id);
+        openModal(`
+    <div class="prop-photo" style="${photoStyle(p)};height:130px;border-radius:12px;margin-bottom:16px;position:relative">${windows(p)}<div class="floor"></div></div>
+    <h3>${p.name}</h3><p style="margin-bottom:14px">${svg('pin', 13)} ${p.addr}, ${p.dist}</p>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">
+      <div class="form-card" style="margin:0;padding:12px"><div class="t-mini">Narx</div><div style="font-family:Syne;font-weight:800;color:var(--teal)">${fmt(p.charge)}</div></div>
+      <div class="form-card" style="margin:0;padding:12px"><div class="t-mini">Xonalar</div><div style="font-family:Syne;font-weight:800">${p.rooms}</div></div>
+      <div class="form-card" style="margin:0;padding:12px"><div class="t-mini">Maydon</div><div style="font-family:Syne;font-weight:800">${p.area}m²</div></div>
+    </div>
+    <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:18px">
+      <span class="chip teal">${svg('shield', 11)} Rasmiy shartnoma</span><span class="chip blue">24/7 xizmat</span><span class="chip purple">Har choralik tekshiruv</span>
+    </div>
+    ${p.status === 'vacant' ? `<button class="btn btn-primary" style="width:100%;justify-content:center;margin-bottom:8px" onclick="closeModal();viewBooked()">${svg('calendar', 14)} Ko'rishga yozilish</button>` : `<div class="alert gold" style="margin-bottom:8px">Bu kvartira hozir band (${p.leaseEnd} gacha)</div>`}
+    <button class="btn btn-ghost" style="width:100%;justify-content:center" onclick="closeModal()">Yopish</button>`);
+      }
+
+      // ============ TAX VIEWS ============
+      function vTaxOverview() {
+        const rented = DATA.properties.filter((p) => p.status === 'rented');
+        const rev = sum(rented, (p) => p.charge);
+        return `
+  <div class="welcome"><div><h2>Soliq Inspektori Paneli 🏛️</h2><p>Makon MChJ · STIR: 123456789 · Ro'yxatdan o'tgan: Iyul 2025</p>
+  <div class="welcome-badge">${svg('shield', 13)} Ro'yxatdan o'tgan yuridik shaxs</div></div></div>
+  <div class="alert teal">${svg('check', 16)} Makon MChJ barcha tranzaksiyalarni rasmiy hujjatlashtiradi va 4% aylanma soliq to'laydi.</div>
+  ${statRow([
+    { c: 'teal', ic: 'building', val: rented.length, label: 'Boshqaruvdagi obyektlar' },
+    { c: 'gold', ic: 'money', val: fmt(rev), label: 'Oylik yalpi daromad' },
+    {
+      c: 'blue',
+      ic: 'doc',
+      val: Math.round(rev * 0.04 * 12.65) + 'K',
+      label: "Oylik soliq (4%, so'm)",
+    },
+    { c: 'teal', ic: 'check', val: 'Joriy', label: 'Soliq holati' },
+  ])}
+  <div class="sec-head"><div><div class="sec-title">Nega bu model soliq yig'imiga yordam beradi</div></div></div>
+  <div class="grid-2">
+    <div class="form-card"><div class="t-strong" style="color:var(--red);margin-bottom:10px">🔴 Makon'gacha</div><p style="font-size:13px;color:var(--text2);line-height:1.8">~95% ijara tranzaksiyalari norasmiy edi. Shartnoma yo'q, deklaratsiya yo'q, soliq yo'q. Hammasi naqd, ko'rinmas.</p></div>
+    <div class="form-card"><div class="t-strong" style="color:var(--teal);margin-bottom:10px">🟢 Makon bilan</div><div style="font-size:13px;color:var(--text2)">${['Rasmiy Mulkni Ishonchli Boshqarish shartnomasi', "Bank o'tkazmalari (kuzatiladigan)", '4% aylanma soliq har oy', "Chet ellik ijarachilar ro'yxati"].map((x) => `<div style="display:flex;gap:8px;margin-bottom:8px">${svg('check', 14)}<span>${x}</span></div>`).join('')}</div></div>
+  </div>`;
+      }
+      function vTaxContracts() {
+        return `<div class="page-title">Ro'yxatdan o'tgan shartnomalar</div><div class="page-sub">Barcha Mulkni Ishonchli Boshqarish shartnomalari</div>
+  <div class="panel"><div class="panel-body">
+    <div class="trow head" style="grid-template-columns:1.5fr 1fr 1fr 1.3fr"><span>Obyekt</span><span>Egasi</span><span>Oylik to'lov</span><span>Shartnoma turi</span></div>
+    ${DATA.properties.map((p) => `<div class="trow hoverable" style="grid-template-columns:1.5fr 1fr 1fr 1.3fr"><div class="t-strong">${p.name}</div><span class="t-dim">${p.owner}</span><span class="t-teal">${fmt(p.pay)}</span><span class="chip teal nodot">Ishonchli boshqarish</span></div>`).join('')}
+  </div></div>`;
+      }
+      function vTaxDecl() {
+        const rented = DATA.properties.filter((p) => p.status === 'rented');
+        const rev = sum(rented, (p) => p.charge);
+        return `<div class="page-title">Soliq deklaratsiyalari</div><div class="page-sub">Oylik hisobotlar</div>
+  <div class="panel"><div class="panel-body">
+    <div class="trow head" style="grid-template-columns:1fr 1fr 1fr 1fr 1fr"><span>Davr</span><span>Yalpi daromad</span><span>Stavka</span><span>Soliq</span><span>Holat</span></div>
+    ${[
+      ['Yan', 0],
+      ['Fev', 0],
+      ['Mar', 0],
+      ['Apr', 0],
+      ['May', 2670],
+      ['Iyun', rev],
+    ]
+      .map(
+        (r, i) =>
+          `<div class="trow" style="grid-template-columns:1fr 1fr 1fr 1fr 1fr"><span class="t-strong">${r[0]} 2025</span><span class="t-dim">${fmt(r[1])}</span><span class="t-dim">4%</span><span class="t-teal">${fmt(Math.round(r[1] * 0.04))}</span><span class="chip ${r[1] ? 'teal' : 'plain'}">${r[1] ? "to'langan" : '—'}</span></div>`,
+      )
+      .join('')}
+  </div></div>`;
+      }
+
+      // ============ SVG TASHKENT MAP ============
+      function vMapInit() {}
+      function initMap() {
+        const wrap = document.getElementById('mapWrap');
+        if (!wrap) return;
+        const districts = [
+          { n: 'Uchtepa', x: 150, y: 140, w: 130, h: 90 },
+          { n: 'Shaykhontohur', x: 300, y: 130, w: 120, h: 90 },
+          { n: "Mirzo Ulug'bek", x: 380, y: 110, w: 150, h: 100 },
+          { n: 'Yunusobod', x: 500, y: 50, w: 160, h: 110 },
+          { n: 'Yashnobod', x: 540, y: 200, w: 140, h: 110 },
+          { n: 'Chilonzor', x: 220, y: 200, w: 140, h: 110 },
+          { n: 'Sergeli', x: 280, y: 300, w: 160, h: 90 },
+        ];
+        let svgStr = `<svg viewBox="0 0 720 420" width="100%" height="100%" style="display:block">`;
+        // district zones
+        districts.forEach((d) => {
+          svgStr += `<rect x="${d.x}" y="${d.y}" width="${d.w}" height="${d.h}" rx="14" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>`;
+          svgStr += `<text x="${d.x + 12}" y="${d.y + 22}" fill="#5C748F" font-size="11" font-family="DM Sans" font-weight="600">${d.n}</text>`;
+        });
+        // roads
+        svgStr += `<path d="M0 180 L720 200" stroke="rgba(255,255,255,0.04)" stroke-width="3"/><path d="M360 0 L380 420" stroke="rgba(255,255,255,0.04)" stroke-width="3"/>`;
+        // pins
+        DATA.properties.forEach((p) => {
+          const col =
+            p.status === 'rented' ? '#00D1A7' : p.status === 'vacant' ? '#FFC94D' : '#FF5E62';
+          svgStr += `<g class="map-pin-g" data-id="${p.id}" style="cursor:pointer">
+      <circle cx="${p.mapX}" cy="${p.mapY}" r="14" fill="${col}" opacity="0.18"/>
+      <circle cx="${p.mapX}" cy="${p.mapY}" r="7" fill="${col}" stroke="#0B1622" stroke-width="2"/>
+    </g>`;
+        });
+        svgStr += `</svg>`;
+        wrap.innerHTML =
+          svgStr +
+          `<div class="map-legend"><div class="map-leg"><i style="background:#00D1A7"></i>Ijarada</div><div class="map-leg"><i style="background:#FFC94D"></i>Bo'sh</div><div class="map-leg"><i style="background:#FF5E62"></i>Ta'mirda</div></div><div class="maptip" id="maptip"></div>`;
+        // hover
+        wrap.querySelectorAll('.map-pin-g').forEach((g) => {
+          g.addEventListener('mouseenter', (e) => {
+            const p = DATA.properties.find((x) => x.id == g.dataset.id);
+            const tip = document.getElementById('maptip');
+            tip.innerHTML = `<div class="mt-name">${p.name}</div><div class="mt-row">${p.tenant ? p.nat + ' ' + p.tenant : "Bo'sh — tayyor"}</div><div class="mt-row" style="color:var(--teal)">${fmt(p.charge - p.pay)}/oy foyda</div>`;
+            const r = g.getBoundingClientRect(),
+              wr = wrap.getBoundingClientRect();
+            tip.style.left = r.left - wr.left + 15 + 'px';
+            tip.style.top = r.top - wr.top - 10 + 'px';
+            tip.classList.add('show');
+          });
+          g.addEventListener('mouseleave', () =>
+            document.getElementById('maptip').classList.remove('show'),
+          );
+          g.addEventListener('click', () => openPropModal(+g.dataset.id));
+        });
+      }
+
+      function okModal(title, msg) {
+        openModal(
+          '<div style="text-align:center"><div style="width:56px;height:56px;border-radius:50%;background:var(--tealfade);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;color:var(--teal)">' +
+            svg('check', 28) +
+            '</div><h3>' +
+            title +
+            '</h3><p>' +
+            msg +
+            '</p><button class="btn btn-primary" style="width:100%;justify-content:center" onclick="closeModal()">OK</button></div>',
+        );
+      }
+      function payOk(amt) {
+        okModal(
+          "To'lov tasdiqlandi",
+          '$' +
+            amt.toLocaleString() +
+            " muvaffaqiyatli to'landi. Kvitansiya emailingizga yuborildi.",
+        );
+      }
+      function serviceOk() {
+        okModal("So'rov yuborildi", "Texnigimiz 4 soat ichida siz bilan bog'lanadi.");
+      }
+      function viewBooked() {
+        okModal("Ko'rish belgilandi", "Operatorimiz siz bilan bog'lanib, qulay vaqtni kelishadi.");
+      }
+
+      // ============ INIT ============
+      renderTabs();
+      renderSidebar();
+      renderBottom();
+      renderContent();
+    </script>
+  </body>
+</html>

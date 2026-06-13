@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
+import { ThemeProvider } from '@/components/ui/ThemeProvider';
 import { routing } from '@/libs/I18nRouting';
 import { logger } from '@/libs/Logger';
 import '@/styles/global.css';
@@ -54,9 +55,11 @@ export default async function RootLayout(props: {
   logger.info(`Locale set to ${locale}`);
 
   return (
-    <html lang={locale}>
+    <html lang={locale} suppressHydrationWarning>
       <body>
-        <NextIntlClientProvider>{props.children}</NextIntlClientProvider>
+        <ThemeProvider>
+          <NextIntlClientProvider>{props.children}</NextIntlClientProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

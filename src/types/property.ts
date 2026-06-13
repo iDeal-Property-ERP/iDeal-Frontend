@@ -1,0 +1,68 @@
+import type { PropertyStatus, Tariff, Currency } from './enums';
+
+export type DistrictOutput = {
+  id: number;
+  name: string;
+  city: string;
+};
+
+export type OwnerBrief = {
+  id: number;
+  first_name: string;
+  last_name: string;
+};
+
+export type PropertyOutput = {
+  id: number;
+  name: string;
+  address: string;
+  district: DistrictOutput;
+  rooms: number;
+  area_sqm: number;
+  floor: number;
+  total_floors: number | null;
+  owner: OwnerBrief;
+  status: PropertyStatus;
+  score: string;
+  map_lat: string | null;
+  map_lon: string | null;
+  description: string | null;
+  tariff: Tariff;
+  ask_price: string;
+  ask_currency: Currency;
+  owner_guaranteed_price: string;
+  owner_guaranteed_currency: Currency;
+  tenant_charge_price: string;
+  tenant_charge_currency: Currency;
+  vacant_since: string | null;
+  vacant_days: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type PropertyCreatePayload = {
+  name: string;
+  address: string;
+  district_id: number;
+  rooms: number;
+  area_sqm: number;
+  floor: number;
+  total_floors?: number;
+  owner_id: number;
+  status?: PropertyStatus;
+  score?: string;
+  map_lat?: string;
+  map_lon?: string;
+  description?: string;
+  tariff?: Tariff;
+  ask_price: string;
+  ask_currency?: Currency;
+  owner_guaranteed_price: string;
+  owner_guaranteed_currency?: Currency;
+  tenant_charge_price: string;
+  tenant_charge_currency?: Currency;
+  vacant_since?: string;
+  vacant_days?: number;
+};
+
+export type PropertyUpdatePayload = Partial<PropertyCreatePayload>;

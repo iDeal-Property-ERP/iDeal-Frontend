@@ -98,7 +98,7 @@ and saved example responses.
 - Check response shapes when writing API client code or types
 - Verify auth requirements (Bearer token via `{{TOKEN}}` variable)
 - Find saved example responses (success/failure) for each endpoint
-**Collection ID:** `41924153-ba70da5d-fed9-4973-8e18-6f52381d9c7c`
+**Collection ID:** `47796254-67fe0405-7142-4fc5-8a5d-ccccd8807359`
 
 ## Backend Source
 - Path: `/home/mehroj/PycharmProjects/iDeal-Backend`

@@ -12,8 +12,9 @@
     "postman": {
       "type": "remote",
       "url": "https://mcp.postman.com/mcp",
+      "enabled": true,
       "headers": {
-        "Authorization": "Bearer PMAK-698d70e58901500001aacf83-dde15510d2809b930026b30b24fad54eea",
+        "Authorization": "Bearer PMAK-6a2d6ff6f6dceb000104a5f6-a1f71ef2141542b982093aa46009db3d62",
       },
     },
   },
