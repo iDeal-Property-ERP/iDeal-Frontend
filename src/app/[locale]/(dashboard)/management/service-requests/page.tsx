@@ -4,28 +4,21 @@ import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/Badge';
 import { DataTable } from '@/components/ui/DataTable';
+import { Input } from '@/components/ui/Input';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { Select } from '@/components/ui/Select';
 import { apiFetch } from '@/libs/api';
+import { maintenanceStatusVariant, priorityVariant } from '@/libs/badges';
 import type { PaginatedData } from '@/types/api';
 import type { ManagementServiceRequestOutput } from '@/types/management';
-
-const STATUS_VARIANT: Record<string, 'info' | 'warning' | 'success' | 'danger'> = {
-  open: 'info',
-  in_progress: 'warning',
-  resolved: 'success',
-  cancelled: 'danger',
-};
-
-const PRIORITY_VARIANT: Record<string, 'default' | 'warning' | 'danger'> = {
-  low: 'default',
-  medium: 'warning',
-  high: 'danger',
-  critical: 'danger',
-};
 
 const STATUSES = ['', 'open', 'in_progress', 'resolved', 'cancelled'];
 const PRIORITIES = ['', 'low', 'medium', 'high', 'critical'];
 
+/**
+ * Management service requests page — lists all service requests with filtering.
+ * @returns The management service requests page component.
+ */
 export default function ManagementServiceRequestsPage() {
   const t = useTranslations('Pages');
   const [data, setData] = useState<ManagementServiceRequestOutput[]>([]);
@@ -74,7 +67,9 @@ export default function ManagementServiceRequestsPage() {
 
   if (error) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">{error}</div>
+      <div className="rounded-lg border border-danger/30 bg-danger-subtle p-4 text-danger">
+        {error}
+      </div>
     );
   }
 
@@ -91,14 +86,16 @@ export default function ManagementServiceRequestsPage() {
             key: 'priority',
             header: 'Priority',
             render: (sr: ManagementServiceRequestOutput) => (
-              <Badge variant={PRIORITY_VARIANT[sr.priority]}>{sr.priority}</Badge>
+              <Badge variant={priorityVariant(sr.priority)}>{sr.priority}</Badge>
             ),
           },
           {
             key: 'status',
             header: 'Status',
             render: (sr: ManagementServiceRequestOutput) => (
-              <Badge variant={STATUS_VARIANT[sr.status]}>{sr.status.replace('_', ' ')}</Badge>
+              <Badge variant={maintenanceStatusVariant(sr.status)}>
+                {sr.status.replace('_', ' ')}
+              </Badge>
             ),
           },
           {
@@ -116,35 +113,35 @@ export default function ManagementServiceRequestsPage() {
         onPageChange={setPage}
         filters={
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <select
+            <Select
               value={statusFilter}
               onChange={(e) => {
                 setStatusFilter(e.target.value);
                 setPage(1);
               }}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+              className="w-auto"
             >
               {STATUSES.map((s) => (
                 <option key={s} value={s}>
                   {s ? s.replace('_', ' ') : 'All statuses'}
                 </option>
               ))}
-            </select>
-            <select
+            </Select>
+            <Select
               value={priorityFilter}
               onChange={(e) => {
                 setPriorityFilter(e.target.value);
                 setPage(1);
               }}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+              className="w-auto"
             >
               {PRIORITIES.map((p) => (
                 <option key={p} value={p}>
                   {p || 'All priorities'}
                 </option>
               ))}
-            </select>
-            <input
+            </Select>
+            <Input
               type="text"
               placeholder="Property ID..."
               value={propertyId}
@@ -152,9 +149,9 @@ export default function ManagementServiceRequestsPage() {
                 setPropertyId(e.target.value);
                 setPage(1);
               }}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none sm:w-36"
+              className="sm:w-36"
             />
-            <input
+            <Input
               type="text"
               placeholder="Tenant ID..."
               value={tenantId}
@@ -162,7 +159,7 @@ export default function ManagementServiceRequestsPage() {
                 setTenantId(e.target.value);
                 setPage(1);
               }}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none sm:w-36"
+              className="sm:w-36"
             />
           </div>
         }

@@ -3,18 +3,14 @@
 import { useTranslations } from 'next-intl';
 import { useState, useEffect, useCallback } from 'react';
 import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 import { DataTable } from '@/components/ui/DataTable';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { apiFetch } from '@/libs/api';
+import { propertyStatusVariant } from '@/libs/badges';
 import { useRouter } from '@/libs/I18nNavigation';
 import type { PaginatedData } from '@/types/api';
 import type { PropertyOutput } from '@/types/property';
-
-const STATUS_VARIANT: Record<string, 'success' | 'warning' | 'info'> = {
-  vacant: 'info',
-  rented: 'success',
-  maintenance: 'warning',
-};
 
 const TARIFF_LABEL: Record<string, string> = {
   standard: 'Standard',
@@ -22,6 +18,10 @@ const TARIFF_LABEL: Record<string, string> = {
   premium: 'Premium',
 };
 
+/**
+ * Renders the paginated properties list with navigation to create a new property.
+ * @returns Properties list page.
+ */
 export default function PropertiesPage() {
   const t = useTranslations('Pages');
   const router = useRouter();
@@ -54,12 +54,12 @@ export default function PropertiesPage() {
     { key: 'name', header: 'Name', sortable: true },
     { key: 'address', header: 'Address' },
     { key: 'rooms', header: 'Rooms' },
-    { key: 'area_sqm', header: 'Area (m\u00B2)' },
+    { key: 'area_sqm', header: 'Area (m²)' },
     {
       key: 'status',
       header: 'Status',
       render: (item: PropertyOutput) => (
-        <Badge variant={STATUS_VARIANT[item.status] ?? 'default'}>{item.status}</Badge>
+        <Badge variant={propertyStatusVariant(item.status)}>{item.status}</Badge>
       ),
     },
     {
@@ -76,18 +76,18 @@ export default function PropertiesPage() {
         title={t('properties')}
         description={t('properties_desc')}
         actions={
-          <button
+          <Button
+            intent="primary"
             onClick={() => {
               router.push('/properties/new');
             }}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
           >
             Add Property
-          </button>
+          </Button>
         }
       />
       {loading ? (
-        <p className="text-sm text-neutral-400">Loading...</p>
+        <p className="text-sm text-muted-foreground">Loading...</p>
       ) : (
         <DataTable
           columns={columns}

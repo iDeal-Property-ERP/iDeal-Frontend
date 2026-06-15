@@ -3,27 +3,20 @@
 import { useTranslations } from 'next-intl';
 import { useState, useEffect, useCallback } from 'react';
 import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 import { DataTable } from '@/components/ui/DataTable';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { Select } from '@/components/ui/Select';
 import { apiFetch } from '@/libs/api';
+import { maintenanceStatusVariant, priorityVariant } from '@/libs/badges';
 import { useRouter } from '@/libs/I18nNavigation';
 import type { PaginatedData } from '@/types/api';
 import type { ServiceRequestOutput } from '@/types/maintenance';
 
-const STATUS_VARIANT: Record<string, 'info' | 'warning' | 'success' | 'default'> = {
-  open: 'info',
-  in_progress: 'warning',
-  resolved: 'success',
-  cancelled: 'default',
-};
-
-const PRIORITY_VARIANT: Record<string, 'default' | 'warning' | 'danger'> = {
-  low: 'default',
-  medium: 'warning',
-  high: 'danger',
-  critical: 'danger',
-};
-
+/**
+ * Maintenance page — lists the current user's service requests.
+ * @returns The maintenance page component.
+ */
 export default function MaintenancePage() {
   const t = useTranslations('Pages');
   const router = useRouter();
@@ -66,14 +59,14 @@ export default function MaintenancePage() {
       key: 'priority',
       header: 'Priority',
       render: (item: ServiceRequestOutput) => (
-        <Badge variant={PRIORITY_VARIANT[item.priority] ?? 'default'}>{item.priority}</Badge>
+        <Badge variant={priorityVariant(item.priority)}>{item.priority}</Badge>
       ),
     },
     {
       key: 'status',
       header: 'Status',
       render: (item: ServiceRequestOutput) => (
-        <Badge variant={STATUS_VARIANT[item.status] ?? 'default'}>{item.status}</Badge>
+        <Badge variant={maintenanceStatusVariant(item.status)}>{item.status}</Badge>
       ),
     },
     { key: 'created_at', header: 'Created', sortable: true },
@@ -85,35 +78,37 @@ export default function MaintenancePage() {
         title={t('maintenance')}
         description={t('maintenance_desc')}
         actions={
-          <button
+          <Button
             onClick={() => {
               router.push('/maintenance/new');
             }}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
           >
             New Request
-          </button>
+          </Button>
         }
       />
       <div className="mb-4 flex items-center gap-3">
-        <label className="text-sm font-medium text-neutral-600">Filter:</label>
-        <select
+        <label htmlFor="status-filter" className="text-sm font-medium text-muted-foreground">
+          Filter:
+        </label>
+        <Select
+          id="status-filter"
           value={statusFilter}
           onChange={(e) => {
             setStatusFilter(e.target.value);
             setPage(1);
           }}
-          className="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm"
+          className="w-auto"
         >
           <option value="">All Statuses</option>
           <option value="open">Open</option>
           <option value="in_progress">In Progress</option>
           <option value="resolved">Resolved</option>
           <option value="cancelled">Cancelled</option>
-        </select>
+        </Select>
       </div>
       {loading ? (
-        <p className="text-sm text-neutral-400">Loading...</p>
+        <p className="text-sm text-muted-foreground">Loading...</p>
       ) : (
         <DataTable
           columns={columns}

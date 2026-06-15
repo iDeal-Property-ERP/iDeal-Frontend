@@ -5,9 +5,12 @@ import { useState, useEffect, use } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 import { DataTable } from '@/components/ui/DataTable';
 import { FormField } from '@/components/ui/FormField';
+import { Input } from '@/components/ui/Input';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { Select } from '@/components/ui/Select';
 import { apiFetch } from '@/libs/api';
 import type { AgentOutput, DealOutput } from '@/types/agent';
 import type { PaginatedData } from '@/types/api';
@@ -27,6 +30,11 @@ const dealSchema = z.object({
 
 type DealForm = z.infer<typeof dealSchema>;
 
+/**
+ * Agent detail page showing stats and deal management for a single agent.
+ * @param props - Page props containing the agent id route param.
+ * @returns Agent detail page element.
+ */
 export default function AgentDetailPage(props: { params: Promise<{ id: string }> }) {
   const params = use(props.params);
   const [agent, setAgent] = useState<AgentOutput | null>(null);
@@ -78,10 +86,10 @@ export default function AgentDetailPage(props: { params: Promise<{ id: string }>
   };
 
   if (loading) {
-    return <p className="text-sm text-neutral-400">Loading...</p>;
+    return <p className="text-sm text-muted-foreground">Loading...</p>;
   }
   if (!agent) {
-    return <p className="text-sm text-red-500">Agent not found</p>;
+    return <p className="text-sm text-danger">Agent not found</p>;
   }
 
   const dealColumns = [
@@ -101,67 +109,52 @@ export default function AgentDetailPage(props: { params: Promise<{ id: string }>
   return (
     <>
       <PageHeader title={agent.user_name} backHref="/agents" />
-      {error ? <p className="mb-4 rounded bg-red-50 p-3 text-sm text-red-600">{error}</p> : null}
+      {error ? (
+        <p className="mb-4 rounded bg-danger-subtle p-3 text-sm text-danger">{error}</p>
+      ) : null}
       <div className="mb-6 grid grid-cols-4 gap-4">
-        <div className="rounded-lg border border-neutral-200 bg-white p-4">
-          <p className="text-xs text-neutral-500">Total Deals</p>
+        <div className="rounded-lg border border-border bg-card p-4">
+          <p className="text-xs text-muted-foreground">Total Deals</p>
           <p className="text-xl font-bold">{agent.total_deals}</p>
         </div>
-        <div className="rounded-lg border border-neutral-200 bg-white p-4">
-          <p className="text-xs text-neutral-500">Total Revenue</p>
+        <div className="rounded-lg border border-border bg-card p-4">
+          <p className="text-xs text-muted-foreground">Total Revenue</p>
           <p className="text-xl font-bold">{agent.total_revenue}</p>
         </div>
-        <div className="rounded-lg border border-neutral-200 bg-white p-4">
-          <p className="text-xs text-neutral-500">Commission Rate</p>
+        <div className="rounded-lg border border-border bg-card p-4">
+          <p className="text-xs text-muted-foreground">Commission Rate</p>
           <p className="text-xl font-bold">{agent.commission_rate}</p>
         </div>
-        <div className="rounded-lg border border-neutral-200 bg-white p-4">
-          <p className="text-xs text-neutral-500">Active</p>
+        <div className="rounded-lg border border-border bg-card p-4">
+          <p className="text-xs text-muted-foreground">Active</p>
           <Badge variant={agent.is_active ? 'success' : 'default'}>
             {agent.is_active ? 'Yes' : 'No'}
           </Badge>
         </div>
       </div>
-      <div className="mb-6 rounded-lg border border-neutral-200 bg-white p-6">
-        <h3 className="mb-4 text-sm font-medium text-neutral-500">Create Deal</h3>
+      <div className="mb-6 rounded-lg border border-border bg-card p-6">
+        <h3 className="mb-4 text-sm font-medium text-muted-foreground">Create Deal</h3>
         <form onSubmit={handleSubmit(onCreateDeal)} className="flex items-end gap-4">
           <FormField label="Property ID" error={errors.property_id?.message} required>
-            <input
-              type="number"
-              {...register('property_id')}
-              className="w-32 rounded-lg border border-neutral-200 px-3 py-2 text-sm"
-            />
+            <Input type="number" {...register('property_id')} className="w-32" />
           </FormField>
           <FormField label="Deal Date" error={errors.deal_date?.message} required>
-            <input
-              type="date"
-              {...register('deal_date')}
-              className="w-40 rounded-lg border border-neutral-200 px-3 py-2 text-sm"
-            />
+            <Input type="date" {...register('deal_date')} className="w-40" />
           </FormField>
           <FormField label="Rent Amount" error={errors.rent_amount?.message} required>
-            <input
-              {...register('rent_amount')}
-              className="w-32 rounded-lg border border-neutral-200 px-3 py-2 text-sm"
-            />
+            <Input {...register('rent_amount')} className="w-32" />
           </FormField>
           <FormField label="Status" error={errors.status?.message} required>
-            <select
-              {...register('status')}
-              className="w-32 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm"
-            >
+            <Select {...register('status')} className="w-32">
               <option value="">--</option>
               <option value="pending">Pending</option>
               <option value="closed">Closed</option>
               <option value="cancelled">Cancelled</option>
-            </select>
+            </Select>
           </FormField>
-          <button
-            type="submit"
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-          >
+          <Button type="submit" intent="primary">
             Create Deal
-          </button>
+          </Button>
         </form>
       </div>
       <DataTable

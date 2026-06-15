@@ -6,27 +6,17 @@ import { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 import { DataTable } from '@/components/ui/DataTable';
 import { FormField } from '@/components/ui/FormField';
+import { Input } from '@/components/ui/Input';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { Select } from '@/components/ui/Select';
 import { apiFetch } from '@/libs/api';
+import { maintenanceStatusVariant, priorityVariant } from '@/libs/badges';
 import { useRouter } from '@/libs/I18nNavigation';
 import type { PaginatedData } from '@/types/api';
 import type { TenantServiceRequestOutput } from '@/types/tenant';
-
-const STATUS_VARIANT: Record<string, 'info' | 'warning' | 'success' | 'default'> = {
-  open: 'info',
-  in_progress: 'warning',
-  resolved: 'success',
-  cancelled: 'default',
-};
-
-const PRIORITY_VARIANT: Record<string, 'default' | 'warning' | 'danger'> = {
-  low: 'default',
-  medium: 'warning',
-  high: 'danger',
-  critical: 'danger',
-};
 
 const schema = z.object({
   property_id: z.coerce.number().min(1),
@@ -37,6 +27,10 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
+/**
+ * Tenant service requests page with new request form and paginated history.
+ * @returns Service requests page element.
+ */
 export default function TenantServiceRequestsPage() {
   const t = useTranslations('Pages');
   const router = useRouter();
@@ -98,14 +92,14 @@ export default function TenantServiceRequestsPage() {
       key: 'priority',
       header: 'Priority',
       render: (item: TenantServiceRequestOutput) => (
-        <Badge variant={PRIORITY_VARIANT[item.priority] ?? 'default'}>{item.priority}</Badge>
+        <Badge variant={priorityVariant(item.priority)}>{item.priority}</Badge>
       ),
     },
     {
       key: 'status',
       header: 'Status',
       render: (item: TenantServiceRequestOutput) => (
-        <Badge variant={STATUS_VARIANT[item.status] ?? 'default'}>{item.status}</Badge>
+        <Badge variant={maintenanceStatusVariant(item.status)}>{item.status}</Badge>
       ),
     },
     { key: 'created_at', header: 'Created', sortable: true },
@@ -117,62 +111,47 @@ export default function TenantServiceRequestsPage() {
         title={t('my_service_requests')}
         backHref="/tenant"
         actions={
-          <button
+          <Button
+            intent="outline"
             onClick={() => {
               router.push('/tenant');
             }}
-            className="rounded-lg border border-neutral-200 px-4 py-2 text-sm font-medium hover:bg-neutral-50"
           >
             Home
-          </button>
+          </Button>
         }
       />
-      {error ? <p className="mb-4 rounded bg-red-50 p-3 text-sm text-red-600">{error}</p> : null}
-      <div className="mb-6 rounded-lg border border-neutral-200 bg-white p-6">
-        <h3 className="mb-4 text-sm font-medium text-neutral-500">New Service Request</h3>
+      {error ? (
+        <p className="mb-4 rounded bg-danger-subtle p-3 text-sm text-danger">{error}</p>
+      ) : null}
+      <div className="mb-6 rounded-lg border border-border bg-card p-6">
+        <h3 className="mb-4 text-sm font-medium text-muted-foreground">New Service Request</h3>
         <form onSubmit={handleSubmit(onCreate)} className="flex items-end gap-4">
           <FormField label="Property ID" error={errors.property_id?.message} required>
-            <input
-              type="number"
-              {...register('property_id')}
-              className="w-28 rounded-lg border border-neutral-200 px-3 py-2 text-sm"
-            />
+            <Input type="number" {...register('property_id')} className="w-28" />
           </FormField>
           <FormField label="Title" error={errors.title?.message} required>
-            <input
-              {...register('title')}
-              className="w-40 rounded-lg border border-neutral-200 px-3 py-2 text-sm"
-            />
+            <Input {...register('title')} className="w-40" />
           </FormField>
           <FormField label="Description" error={errors.description?.message} required>
-            <input
-              {...register('description')}
-              className="w-48 rounded-lg border border-neutral-200 px-3 py-2 text-sm"
-            />
+            <Input {...register('description')} className="w-48" />
           </FormField>
           <FormField label="Priority" error={errors.priority?.message}>
-            <select
-              {...register('priority')}
-              className="w-28 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm"
-            >
+            <Select {...register('priority')} className="w-28">
               <option value="">--</option>
               <option value="low">Low</option>
               <option value="medium">Medium</option>
               <option value="high">High</option>
               <option value="critical">Critical</option>
-            </select>
+            </Select>
           </FormField>
-          <button
-            type="submit"
-            disabled={submitting}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-          >
+          <Button type="submit" intent="primary" disabled={submitting}>
             {submitting ? 'Creating...' : 'Create'}
-          </button>
+          </Button>
         </form>
       </div>
       {loading ? (
-        <p className="text-sm text-neutral-400">Loading...</p>
+        <p className="text-sm text-muted-foreground">Loading...</p>
       ) : (
         <DataTable
           columns={columns}

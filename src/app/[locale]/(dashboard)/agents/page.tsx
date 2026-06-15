@@ -9,6 +9,10 @@ import { apiFetch } from '@/libs/api';
 import type { AgentOutput } from '@/types/agent';
 import type { PaginatedData } from '@/types/api';
 
+/**
+ * Agents list page showing all agents with their stats.
+ * @returns Agents page element.
+ */
 export default function AgentsPage() {
   const t = useTranslations('Pages');
   const [data, setData] = useState<AgentOutput[]>([]);
@@ -56,7 +60,7 @@ export default function AgentsPage() {
     <>
       <PageHeader title={t('agents')} description={t('agents_desc')} />
       {loading ? (
-        <p className="text-sm text-neutral-400">Loading...</p>
+        <p className="text-sm text-muted-foreground">Loading...</p>
       ) : (
         <DataTable
           columns={columns}

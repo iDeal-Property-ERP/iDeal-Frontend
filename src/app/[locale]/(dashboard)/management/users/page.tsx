@@ -3,19 +3,16 @@
 import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 import { DataTable } from '@/components/ui/DataTable';
+import { Input } from '@/components/ui/Input';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { Select } from '@/components/ui/Select';
 import { apiFetch } from '@/libs/api';
+import { roleVariant } from '@/libs/badges';
 import type { PaginatedData } from '@/types/api';
 import type { Role } from '@/types/enums';
 import type { UserOutput, UserUpdatePayload } from '@/types/management';
-
-const ROLE_VARIANT: Record<string, 'info' | 'warning' | 'default'> = {
-  mgmt: 'info',
-  owner: 'warning',
-  tenant: 'default',
-  agent: 'info',
-};
 
 const ROLES: Role[] = ['mgmt', 'owner', 'tenant', 'agent'];
 
@@ -23,6 +20,10 @@ function isRole(value: string): value is Role {
   return (ROLES as string[]).includes(value);
 }
 
+/**
+ * Management users page — lists all users and allows editing role/status.
+ * @returns The management users page component.
+ */
 export default function ManagementUsersPage() {
   const t = useTranslations('Pages');
   const [data, setData] = useState<UserOutput[]>([]);
@@ -87,7 +88,9 @@ export default function ManagementUsersPage() {
 
   if (error) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">{error}</div>
+      <div className="rounded-lg border border-danger/30 bg-danger-subtle p-4 text-danger">
+        {error}
+      </div>
     );
   }
 
@@ -109,7 +112,7 @@ export default function ManagementUsersPage() {
             key: 'role',
             header: 'Role',
             render: (user: UserOutput) => (
-              <Badge variant={ROLE_VARIANT[user.role]}>{user.role}</Badge>
+              <Badge variant={roleVariant(user.role)}>{user.role}</Badge>
             ),
           },
           {
@@ -126,16 +129,17 @@ export default function ManagementUsersPage() {
             header: 'Actions',
             className: 'w-24',
             render: (user: UserOutput) => (
-              <button
+              <Button
                 type="button"
+                intent="ghost"
+                size="sm"
                 onClick={(e) => {
                   e.stopPropagation();
                   setEditingUser(user);
                 }}
-                className="text-sm font-medium text-blue-600 hover:text-blue-800"
               >
                 Edit
-              </button>
+              </Button>
             ),
           },
         ]}
@@ -154,7 +158,7 @@ export default function ManagementUsersPage() {
         onPageChange={setPage}
         filters={
           <div className="flex flex-col gap-3 sm:flex-row">
-            <input
+            <Input
               type="text"
               placeholder="Search by name, email, or phone..."
               aria-label="Search users"
@@ -163,15 +167,15 @@ export default function ManagementUsersPage() {
                 setSearch(e.target.value);
                 setPage(1);
               }}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none sm:w-80"
+              className="sm:w-80"
             />
-            <select
+            <Select
               value={roleFilter}
               onChange={(e) => {
                 setRoleFilter(e.target.value);
                 setPage(1);
               }}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+              className="w-auto"
             >
               <option value="">All roles</option>
               {ROLES.map((r) => (
@@ -179,15 +183,15 @@ export default function ManagementUsersPage() {
                   {r}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
         }
       />
 
       {editingUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl">
-            <h2 className="text-lg font-semibold text-gray-900">
+          <div className="w-full max-w-md rounded-xl bg-card p-6 shadow-2xl">
+            <h2 className="text-lg font-semibold text-foreground">
               Edit User &mdash; {editingUser.first_name} {editingUser.last_name}
             </h2>
             <div className="mt-4 space-y-4">
@@ -201,9 +205,9 @@ export default function ManagementUsersPage() {
                       is_active: e.target.checked,
                     });
                   }}
-                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
                 />
-                <span className="text-sm text-gray-700">Active</span>
+                <span className="text-sm text-foreground">Active</span>
               </label>
               <label className="flex items-center gap-3">
                 <input
@@ -215,13 +219,16 @@ export default function ManagementUsersPage() {
                       is_verified: e.target.checked,
                     });
                   }}
-                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
                 />
-                <span className="text-sm text-gray-700">Verified</span>
+                <span className="text-sm text-foreground">Verified</span>
               </label>
               <div>
-                <label className="mb-1 block text-sm text-gray-700">Role</label>
-                <select
+                <label htmlFor="edit-user-role" className="mb-1 block text-sm text-foreground">
+                  Role
+                </label>
+                <Select
+                  id="edit-user-role"
                   value={editingUser.role}
                   onChange={(e) => {
                     const { value } = e.target;
@@ -232,34 +239,28 @@ export default function ManagementUsersPage() {
                       });
                     }
                   }}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
                 >
                   {ROLES.map((r) => (
                     <option key={r} value={r}>
                       {r}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
             </div>
             <div className="mt-6 flex justify-end gap-3">
-              <button
+              <Button
                 type="button"
+                intent="outline"
                 onClick={() => {
                   setEditingUser(null);
                 }}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
                 Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleSave}
-                disabled={saving}
-                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-              >
+              </Button>
+              <Button type="button" intent="primary" onClick={handleSave} disabled={saving}>
                 {saving ? 'Saving...' : 'Save'}
-              </button>
+              </Button>
             </div>
           </div>
         </div>

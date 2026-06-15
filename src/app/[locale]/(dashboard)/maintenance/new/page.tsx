@@ -5,8 +5,12 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import { Button } from '@/components/ui/Button';
 import { FormField } from '@/components/ui/FormField';
+import { Input } from '@/components/ui/Input';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { Select } from '@/components/ui/Select';
+import { Textarea } from '@/components/ui/Textarea';
 import { apiFetch } from '@/libs/api';
 import { useRouter } from '@/libs/I18nNavigation';
 import type { ServiceRequestOutput } from '@/types/maintenance';
@@ -21,6 +25,10 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
+/**
+ * New service request page — form for creating a maintenance request.
+ * @returns The new service request page component.
+ */
 export default function NewServiceRequestPage() {
   const t = useTranslations('Pages');
   const router = useRouter();
@@ -53,56 +61,38 @@ export default function NewServiceRequestPage() {
   return (
     <>
       <PageHeader title={t('new_service_request')} backHref="/maintenance" />
-      {error ? <p className="mb-4 rounded bg-red-50 p-3 text-sm text-red-600">{error}</p> : null}
+      {error ? (
+        <p className="mb-4 rounded-lg border border-danger/30 bg-danger-subtle p-3 text-sm text-danger">
+          {error}
+        </p>
+      ) : null}
       <form onSubmit={handleSubmit(onSubmit)} className="max-w-xl space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <FormField label="Property ID" error={errors.property_id?.message} required>
-            <input
-              type="number"
-              {...register('property_id')}
-              className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm"
-            />
+            <Input type="number" {...register('property_id')} />
           </FormField>
           <FormField label="Tenant ID" error={errors.tenant_id?.message} required>
-            <input
-              type="number"
-              {...register('tenant_id')}
-              className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm"
-            />
+            <Input type="number" {...register('tenant_id')} />
           </FormField>
         </div>
         <FormField label="Title" error={errors.title?.message} required>
-          <input
-            {...register('title')}
-            className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm"
-          />
+          <Input {...register('title')} />
         </FormField>
         <FormField label="Description" error={errors.description?.message} required>
-          <textarea
-            {...register('description')}
-            rows={4}
-            className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm"
-          />
+          <Textarea {...register('description')} rows={4} />
         </FormField>
         <FormField label="Priority" error={errors.priority?.message}>
-          <select
-            {...register('priority')}
-            className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm"
-          >
+          <Select {...register('priority')}>
             <option value="">--</option>
             <option value="low">Low</option>
             <option value="medium">Medium</option>
             <option value="high">High</option>
             <option value="critical">Critical</option>
-          </select>
+          </Select>
         </FormField>
-        <button
-          type="submit"
-          disabled={submitting}
-          className="rounded-lg bg-blue-600 px-6 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-        >
+        <Button type="submit" disabled={submitting}>
           {submitting ? 'Creating...' : 'Create Request'}
-        </button>
+        </Button>
       </form>
     </>
   );

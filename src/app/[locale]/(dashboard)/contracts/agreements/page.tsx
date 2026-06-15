@@ -3,19 +3,19 @@
 import { useTranslations } from 'next-intl';
 import { useState, useEffect, useCallback } from 'react';
 import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 import { DataTable } from '@/components/ui/DataTable';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { apiFetch } from '@/libs/api';
+import { leaseStatusVariant } from '@/libs/badges';
 import { useRouter } from '@/libs/I18nNavigation';
 import type { PaginatedData } from '@/types/api';
 import type { OwnerAgreementOutput } from '@/types/contract';
 
-const STATUS_VARIANT: Record<string, 'success' | 'warning' | 'danger'> = {
-  active: 'success',
-  expired: 'danger',
-  terminated: 'warning',
-};
-
+/**
+ * Displays the paginated list of owner agreements with navigation to create or view an agreement.
+ * @returns Agreements list page element.
+ */
 export default function AgreementsPage() {
   const t = useTranslations('Pages');
   const router = useRouter();
@@ -57,7 +57,7 @@ export default function AgreementsPage() {
       key: 'status',
       header: 'Status',
       render: (item: OwnerAgreementOutput) => (
-        <Badge variant={STATUS_VARIANT[item.status] ?? 'default'}>{item.status}</Badge>
+        <Badge variant={leaseStatusVariant(item.status)}>{item.status}</Badge>
       ),
     },
   ];
@@ -68,18 +68,18 @@ export default function AgreementsPage() {
         title={t('owner_agreements')}
         description={t('owner_agreements_contracts_desc')}
         actions={
-          <button
+          <Button
+            intent="primary"
             onClick={() => {
               router.push('/contracts/agreements/new');
             }}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
           >
             New Agreement
-          </button>
+          </Button>
         }
       />
       {loading ? (
-        <p className="text-sm text-neutral-400">Loading...</p>
+        <p className="text-sm text-muted-foreground">Loading...</p>
       ) : (
         <DataTable
           columns={columns}

@@ -1,30 +1,41 @@
 'use client';
 
-const VARIANT_CLASSES: Record<string, string> = {
-  success: 'text-green-600 dark:text-green-400',
-  warning: 'text-amber-600 dark:text-amber-400',
-  danger: 'text-red-600 dark:text-red-400',
-};
+import { cva } from 'class-variance-authority';
+import type { VariantProps } from 'class-variance-authority';
+import { Card, CardContent } from '@/components/ui/Card';
+import { cn } from '@/libs/utils';
 
-export function StatsCard(props: {
+const valueVariants = cva('mt-1 text-2xl font-semibold tracking-tight', {
+  variants: {
+    variant: {
+      default: 'text-foreground',
+      success: 'text-success',
+      warning: 'text-warning',
+      danger: 'text-danger',
+    },
+  },
+  defaultVariants: { variant: 'default' },
+});
+
+type StatsCardProps = VariantProps<typeof valueVariants> & {
   title: string;
   value: string | number;
   subtitle?: string;
-  variant?: 'success' | 'warning' | 'danger';
-}) {
+};
+
+/**
+ * KPI card displaying a metric with optional semantic coloring.
+ * @param props - Title, value, optional subtitle and variant.
+ * @returns Stats card element.
+ */
+export function StatsCard(props: StatsCardProps) {
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-      <dt className="truncate text-sm font-medium text-gray-500 dark:text-zinc-400">
-        {props.title}
-      </dt>
-      <dd
-        className={`mt-1 text-2xl font-semibold tracking-tight ${props.variant ? (VARIANT_CLASSES[props.variant] ?? 'text-gray-900 dark:text-zinc-100') : 'text-gray-900 dark:text-zinc-100'}`}
-      >
-        {props.value}
-      </dd>
-      {props.subtitle && (
-        <dd className="mt-1 text-sm text-gray-500 dark:text-zinc-400">{props.subtitle}</dd>
-      )}
-    </div>
+    <Card className="shadow-sm">
+      <CardContent>
+        <dt className="truncate text-sm font-medium text-muted-foreground">{props.title}</dt>
+        <dd className={cn(valueVariants({ variant: props.variant }))}>{props.value}</dd>
+        {props.subtitle && <dd className="mt-1 text-sm text-muted-foreground">{props.subtitle}</dd>}
+      </CardContent>
+    </Card>
   );
 }

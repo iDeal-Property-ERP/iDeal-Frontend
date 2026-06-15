@@ -1,36 +1,37 @@
 'use client';
 
+import { ChevronLeft } from 'lucide-react';
 import { Link } from '@/libs/I18nNavigation';
 
-export function PageHeader(props: {
+type PageHeaderProps = {
   title: string;
   description?: string;
   actions?: React.ReactNode;
   backHref?: string;
   backLabel?: string;
-}) {
+};
+
+/**
+ * Page-level heading with optional back navigation and action slot.
+ * @param props - Title, description, back link, and actions.
+ * @returns Page header container.
+ */
+export function PageHeader(props: PageHeaderProps) {
   return (
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
       <div>
         {props.backHref && (
           <Link
             href={props.backHref}
-            className="mb-1 inline-flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+            className="mb-1 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
           >
-            <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
+            <ChevronLeft className="size-4" />
             {props.backLabel ?? 'Back'}
           </Link>
         )}
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-zinc-100">{props.title}</h1>
+        <h1 className="text-2xl font-bold text-foreground">{props.title}</h1>
         {props.description && (
-          <p className="mt-1 text-sm text-gray-500 dark:text-zinc-400">{props.description}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{props.description}</p>
         )}
       </div>
       {props.actions && <div className="flex items-center gap-2">{props.actions}</div>}

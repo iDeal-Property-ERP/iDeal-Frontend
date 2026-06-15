@@ -17,8 +17,8 @@ function fCurrency(amount: string): string {
 
 function SectionLabel(props: { children: React.ReactNode }) {
   return (
-    <h3 className="mb-3 flex items-center gap-2 text-xs font-bold tracking-widest text-zinc-400 uppercase dark:text-zinc-500">
-      <span className="block h-px flex-1 bg-zinc-200 dark:bg-zinc-700" />
+    <h3 className="mb-3 flex items-center gap-2 text-xs font-bold tracking-widest text-muted-foreground uppercase">
+      <span className="block h-px flex-1 bg-border" />
       {props.children}
     </h3>
   );
@@ -33,7 +33,7 @@ function GrowthChart(props: { actual: PnlBarItem[]; projected: PnlBarItem[] }) {
   );
 
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+    <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
       <div className="flex items-end gap-3" style={{ height: 160 }}>
         {months.map((m) => {
           const actual = props.actual.find((a) => a.month === m);
@@ -49,28 +49,28 @@ function GrowthChart(props: { actual: PnlBarItem[]; projected: PnlBarItem[] }) {
             >
               {actualVal > 0 && (
                 <div
-                  className="w-full max-w-[24px] rounded-t bg-teal-500"
+                  className="w-full max-w-[24px] rounded-t bg-primary"
                   style={{ height: `${(actualVal / maxVal) * 140}px` }}
                 />
               )}
               {projectedVal > 0 && (
                 <div
-                  className="w-full max-w-[24px] rounded-t border-2 border-dashed border-zinc-300 bg-transparent dark:border-zinc-600"
+                  className="w-full max-w-[24px] rounded-t border-2 border-dashed border-border bg-transparent"
                   style={{ height: `${(projectedVal / maxVal) * 140}px` }}
                 />
               )}
-              <span className="text-[10px] text-zinc-400 dark:text-zinc-500">{m}</span>
+              <span className="text-[10px] text-muted-foreground">{m}</span>
             </div>
           );
         })}
       </div>
       <div className="mt-4 flex gap-4 text-xs">
-        <span className="flex items-center gap-1.5 text-zinc-400 dark:text-zinc-500">
-          <span className="size-3 rounded bg-teal-500" />
+        <span className="flex items-center gap-1.5 text-muted-foreground">
+          <span className="size-3 rounded bg-primary" />
           Actual
         </span>
-        <span className="flex items-center gap-1.5 text-zinc-400 dark:text-zinc-500">
-          <span className="size-3 rounded border-2 border-dashed border-zinc-300 dark:border-zinc-600" />
+        <span className="flex items-center gap-1.5 text-muted-foreground">
+          <span className="size-3 rounded border-2 border-dashed border-border" />
           Projected
         </span>
       </div>
@@ -78,6 +78,10 @@ function GrowthChart(props: { actual: PnlBarItem[]; projected: PnlBarItem[] }) {
   );
 }
 
+/**
+ * Management profit and loss page — displays revenue, payouts, and growth charts.
+ * @returns The P&L page component.
+ */
 export default function PnlPage() {
   const t = useTranslations('Pages');
   const [data, setData] = useState<PnlOutput | null>(null);
@@ -101,7 +105,7 @@ export default function PnlPage() {
 
   if (error) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-400">
+      <div className="rounded-lg border border-danger/30 bg-danger-subtle p-4 text-danger">
         {error}
       </div>
     );
@@ -113,10 +117,7 @@ export default function PnlPage() {
         <PageHeader title={t('profit_and_loss')} description={t('profit_and_loss_desc')} />
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div
-              key={i}
-              className="h-24 animate-pulse rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900"
-            />
+            <div key={i} className="h-24 animate-pulse rounded-lg border border-border bg-card" />
           ))}
         </div>
       </div>
@@ -162,23 +163,23 @@ export default function PnlPage() {
       </div>
 
       <SectionLabel>Monthly Distribution</SectionLabel>
-      <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+      <div className="overflow-hidden rounded-lg border border-border bg-card">
         <table className="w-full text-left text-sm">
-          <thead className="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/50">
+          <thead className="border-b border-border bg-muted">
             <tr>
-              <th className="px-4 py-3 text-xs font-semibold tracking-wider text-zinc-500 uppercase">
+              <th className="px-4 py-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                 Month
               </th>
-              <th className="px-4 py-3 text-xs font-semibold tracking-wider text-zinc-500 uppercase">
+              <th className="px-4 py-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                 Revenue
               </th>
-              <th className="px-4 py-3 text-xs font-semibold tracking-wider text-zinc-500 uppercase">
+              <th className="px-4 py-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                 Payouts
               </th>
-              <th className="px-4 py-3 text-xs font-semibold tracking-wider text-zinc-500 uppercase">
+              <th className="px-4 py-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                 Profit
               </th>
-              <th className="px-4 py-3 text-xs font-semibold tracking-wider text-zinc-500 uppercase">
+              <th className="px-4 py-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                 Tax 4%
               </th>
             </tr>
@@ -187,21 +188,13 @@ export default function PnlPage() {
             {monthly.map((row) => (
               <tr
                 key={row.month}
-                className="border-b border-zinc-100 transition-colors last:border-0 hover:bg-zinc-50 dark:border-zinc-700/50 dark:hover:bg-zinc-800/50"
+                className="border-b border-border transition-colors last:border-0 hover:bg-muted"
               >
-                <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">
-                  {row.month}
-                </td>
-                <td className="px-4 py-3 text-teal-600 dark:text-teal-400">
-                  {fCurrency(row.revenue)}
-                </td>
-                <td className="px-4 py-3 text-zinc-500 dark:text-zinc-400">
-                  {fCurrency(row.owner_payouts)}
-                </td>
-                <td className="px-4 py-3 font-medium text-amber-600 dark:text-amber-400">
-                  {fCurrency(row.profit)}
-                </td>
-                <td className="px-4 py-3 text-zinc-400 dark:text-zinc-500">
+                <td className="px-4 py-3 font-medium text-foreground">{row.month}</td>
+                <td className="px-4 py-3 text-primary">{fCurrency(row.revenue)}</td>
+                <td className="px-4 py-3 text-muted-foreground">{fCurrency(row.owner_payouts)}</td>
+                <td className="px-4 py-3 font-medium text-warning">{fCurrency(row.profit)}</td>
+                <td className="px-4 py-3 text-muted-foreground">
                   {Math.round(Number.parseFloat(row.tax) || 0).toLocaleString('en-US')} UZS
                 </td>
               </tr>
@@ -213,10 +206,10 @@ export default function PnlPage() {
       <SectionLabel>Growth</SectionLabel>
       <GrowthChart actual={growth.actual} projected={growth.projected} />
 
-      <div className="rounded-lg border border-teal-200 bg-teal-50 p-5 dark:border-teal-500/20 dark:bg-teal-500/10">
+      <div className="rounded-lg border border-border bg-primary-muted p-5">
         <div className="flex items-start gap-3">
           <svg
-            className="mt-1 size-5 shrink-0 text-teal-600 dark:text-teal-400"
+            className="mt-1 size-5 shrink-0 text-primary"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -229,14 +222,12 @@ export default function PnlPage() {
             />
           </svg>
           <div>
-            <p className="text-sm font-semibold text-teal-900 dark:text-teal-100">
-              Investor Take-Home
-            </p>
-            <p className="mt-1 text-sm text-teal-700 dark:text-teal-300">
+            <p className="text-sm font-semibold text-foreground">Investor Take-Home</p>
+            <p className="mt-1 text-sm text-foreground">
               <b>{fCurrency(investor.monthly)}/mo</b> after tax · annual:{' '}
               <b>{fCurrency(investor.annual)}</b> · based on {investor.property_count} properties.
             </p>
-            <p className="text-xs text-teal-600 dark:text-teal-400">
+            <p className="text-xs text-muted-foreground">
               At 50 properties: ~{fCurrency(investor.scaled_50)}/yr
             </p>
           </div>

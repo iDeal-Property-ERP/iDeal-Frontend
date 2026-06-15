@@ -4,19 +4,20 @@ import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/Badge';
 import { DataTable } from '@/components/ui/DataTable';
+import { Input } from '@/components/ui/Input';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { Select } from '@/components/ui/Select';
 import { apiFetch } from '@/libs/api';
+import { leaseStatusVariant } from '@/libs/badges';
 import type { PaginatedData } from '@/types/api';
 import type { ManagementAgreementOutput } from '@/types/management';
 
-const STATUS_VARIANT: Record<string, 'success' | 'danger'> = {
-  active: 'success',
-  expired: 'danger',
-  terminated: 'danger',
-};
-
 const STATUSES = ['', 'active', 'expired', 'terminated'];
 
+/**
+ * Management owner agreements page — lists all owner agreements with filtering.
+ * @returns The management agreements page component.
+ */
 export default function ManagementAgreementsPage() {
   const t = useTranslations('Pages');
   const [data, setData] = useState<ManagementAgreementOutput[]>([]);
@@ -57,7 +58,9 @@ export default function ManagementAgreementsPage() {
 
   if (error) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">{error}</div>
+      <div className="rounded-lg border border-danger/30 bg-danger-subtle p-4 text-danger">
+        {error}
+      </div>
     );
   }
 
@@ -85,7 +88,7 @@ export default function ManagementAgreementsPage() {
             key: 'status',
             header: 'Status',
             render: (agr: ManagementAgreementOutput) => (
-              <Badge variant={STATUS_VARIANT[agr.status]}>{agr.status}</Badge>
+              <Badge variant={leaseStatusVariant(agr.status)}>{agr.status}</Badge>
             ),
           },
         ]}
@@ -98,21 +101,21 @@ export default function ManagementAgreementsPage() {
         onPageChange={setPage}
         filters={
           <div className="flex flex-col gap-3 sm:flex-row">
-            <select
+            <Select
               value={statusFilter}
               onChange={(e) => {
                 setStatusFilter(e.target.value);
                 setPage(1);
               }}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+              className="w-auto"
             >
               {STATUSES.map((s) => (
                 <option key={s} value={s}>
                   {s || 'All statuses'}
                 </option>
               ))}
-            </select>
-            <input
+            </Select>
+            <Input
               type="text"
               placeholder="Owner ID..."
               value={ownerId}
@@ -120,9 +123,9 @@ export default function ManagementAgreementsPage() {
                 setOwnerId(e.target.value);
                 setPage(1);
               }}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none sm:w-36"
+              className="sm:w-36"
             />
-            <input
+            <Input
               type="text"
               placeholder="Property ID..."
               value={propertyId}
@@ -130,7 +133,7 @@ export default function ManagementAgreementsPage() {
                 setPropertyId(e.target.value);
                 setPage(1);
               }}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none sm:w-36"
+              className="sm:w-36"
             />
           </div>
         }

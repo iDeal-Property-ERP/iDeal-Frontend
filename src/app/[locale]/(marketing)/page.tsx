@@ -28,12 +28,22 @@ function formatPrice(price: string, currency: string): string {
   return `${price} UZS`;
 }
 
+/**
+ * Generates page metadata for the marketing index page.
+ * @param props - Page props containing locale params.
+ * @returns Metadata object with title and description.
+ */
 export async function generateMetadata(props: IndexPageProps): Promise<Metadata> {
   const { locale } = await props.params;
   const t = await getTranslations({ locale, namespace: 'Index' });
   return { title: t('meta_title'), description: t('meta_description') };
 }
 
+/**
+ * Marketing home page with hero, features, listings preview, and CTA sections.
+ * @param props - Page props containing locale params.
+ * @returns Full marketing page layout.
+ */
 export default async function IndexPage(props: IndexPageProps) {
   const { locale } = await props.params;
   setRequestLocale(locale);
@@ -45,22 +55,22 @@ export default async function IndexPage(props: IndexPageProps) {
       {/* Hero */}
       <section className="relative overflow-hidden px-4 pt-20 pb-24 sm:pt-28">
         <div className="mx-auto max-w-4xl text-center">
-          <h1 className="text-4xl font-bold tracking-tight text-zinc-900 sm:text-5xl lg:text-6xl dark:text-zinc-100">
+          <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
             {t('heading')}
           </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-zinc-500 sm:text-xl dark:text-zinc-400">
+          <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
             {t('description')}
           </p>
           <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
             <Link
               href="/listings"
-              className="rounded-xl bg-zinc-900 px-6 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+              className="rounded-xl bg-primary px-6 py-3 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90"
             >
               {t('browse_listings')}
             </Link>
             <Link
               href="/login"
-              className="rounded-xl border border-zinc-300 px-6 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+              className="rounded-xl border border-border px-6 py-3 text-sm font-medium text-foreground transition hover:bg-muted"
             >
               {t('sign_in')}
             </Link>
@@ -72,34 +82,20 @@ export default async function IndexPage(props: IndexPageProps) {
       <section className="px-4 pb-24">
         <div className="mx-auto max-w-5xl">
           <div className="mb-12 text-center">
-            <h2 className="text-3xl font-bold text-zinc-900 dark:text-zinc-100">
-              {t('features_title')}
-            </h2>
+            <h2 className="text-3xl font-bold text-foreground">{t('features_title')}</h2>
           </div>
           <div className="grid gap-8 sm:grid-cols-3">
-            <div className="rounded-xl border border-zinc-200 p-6 dark:border-zinc-800">
-              <h3 className="mb-3 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-                {t('feature_1_title')}
-              </h3>
-              <p className="text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">
-                {t('feature_1_desc')}
-              </p>
+            <div className="rounded-xl border border-border bg-card p-6">
+              <h3 className="mb-3 text-lg font-semibold text-foreground">{t('feature_1_title')}</h3>
+              <p className="text-sm leading-relaxed text-muted-foreground">{t('feature_1_desc')}</p>
             </div>
-            <div className="rounded-xl border border-zinc-200 p-6 dark:border-zinc-800">
-              <h3 className="mb-3 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-                {t('feature_2_title')}
-              </h3>
-              <p className="text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">
-                {t('feature_2_desc')}
-              </p>
+            <div className="rounded-xl border border-border bg-card p-6">
+              <h3 className="mb-3 text-lg font-semibold text-foreground">{t('feature_2_title')}</h3>
+              <p className="text-sm leading-relaxed text-muted-foreground">{t('feature_2_desc')}</p>
             </div>
-            <div className="rounded-xl border border-zinc-200 p-6 dark:border-zinc-800">
-              <h3 className="mb-3 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-                {t('feature_3_title')}
-              </h3>
-              <p className="text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">
-                {t('feature_3_desc')}
-              </p>
+            <div className="rounded-xl border border-border bg-card p-6">
+              <h3 className="mb-3 text-lg font-semibold text-foreground">{t('feature_3_title')}</h3>
+              <p className="text-sm leading-relaxed text-muted-foreground">{t('feature_3_desc')}</p>
             </div>
           </div>
         </div>
@@ -107,18 +103,16 @@ export default async function IndexPage(props: IndexPageProps) {
 
       {/* Listings Preview */}
       {listings.length > 0 && (
-        <section className="bg-zinc-50 px-4 py-24 dark:bg-zinc-900/50">
+        <section className="bg-muted/50 px-4 py-24">
           <div className="mx-auto max-w-6xl">
             <div className="mb-12 flex items-end justify-between">
               <div>
-                <h2 className="text-3xl font-bold text-zinc-900 dark:text-zinc-100">
-                  {t('listings_title')}
-                </h2>
-                <p className="mt-2 text-zinc-500 dark:text-zinc-400">{t('listings_subtitle')}</p>
+                <h2 className="text-3xl font-bold text-foreground">{t('listings_title')}</h2>
+                <p className="mt-2 text-muted-foreground">{t('listings_subtitle')}</p>
               </div>
               <Link
                 href="/listings"
-                className="hidden text-sm font-medium text-zinc-600 hover:text-zinc-900 sm:block dark:text-zinc-400 dark:hover:text-zinc-100"
+                className="hidden text-sm font-medium text-muted-foreground hover:text-foreground sm:block"
               >
                 {t('view_all')} →
               </Link>
@@ -128,19 +122,17 @@ export default async function IndexPage(props: IndexPageProps) {
                 <Link
                   key={listing.id}
                   href={`/listings/${listing.id}`}
-                  className="group rounded-xl border border-zinc-200 bg-white p-5 shadow-sm transition hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900"
+                  className="group rounded-xl border border-border bg-card p-5 shadow-sm transition hover:shadow-md"
                 >
-                  <h3 className="font-semibold text-zinc-900 group-hover:text-zinc-700 dark:text-zinc-100">
+                  <h3 className="font-semibold text-foreground group-hover:text-foreground/80">
                     {listing.property.name}
                   </h3>
-                  <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                    {listing.property.address}
-                  </p>
+                  <p className="mt-1 text-sm text-muted-foreground">{listing.property.address}</p>
                   <div className="mt-3 flex items-center justify-between">
-                    <span className="text-sm text-zinc-600 dark:text-zinc-400">
+                    <span className="text-sm text-muted-foreground">
                       {listing.property.rooms} rooms · {listing.property.area_sqm} m²
                     </span>
-                    <span className="font-bold text-zinc-900 dark:text-zinc-100">
+                    <span className="font-bold text-foreground">
                       {formatPrice(listing.listed_price, listing.property.ask_currency)}
                     </span>
                   </div>
@@ -150,7 +142,7 @@ export default async function IndexPage(props: IndexPageProps) {
             <div className="mt-8 text-center sm:hidden">
               <Link
                 href="/listings"
-                className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                className="text-sm font-medium text-muted-foreground hover:text-foreground"
               >
                 {t('view_all')} →
               </Link>
@@ -162,12 +154,12 @@ export default async function IndexPage(props: IndexPageProps) {
       {/* CTA */}
       <section className="px-4 py-24">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl font-bold text-zinc-900 dark:text-zinc-100">{t('cta_title')}</h2>
-          <p className="mt-4 text-lg text-zinc-500 dark:text-zinc-400">{t('cta_desc')}</p>
+          <h2 className="text-3xl font-bold text-foreground">{t('cta_title')}</h2>
+          <p className="mt-4 text-lg text-muted-foreground">{t('cta_desc')}</p>
           <div className="mt-8">
             <Link
               href="/login"
-              className="inline-flex rounded-xl bg-zinc-900 px-8 py-3.5 text-sm font-medium text-white shadow-sm transition hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+              className="inline-flex rounded-xl bg-primary px-8 py-3.5 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90"
             >
               {t('get_started')}
             </Link>

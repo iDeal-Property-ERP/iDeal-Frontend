@@ -4,17 +4,13 @@ import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/Badge';
 import { DataTable } from '@/components/ui/DataTable';
+import { Input } from '@/components/ui/Input';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { Select } from '@/components/ui/Select';
 import { apiFetch } from '@/libs/api';
+import { paymentStatusVariant } from '@/libs/badges';
 import type { PaginatedData } from '@/types/api';
 import type { ManagementPaymentOutput } from '@/types/management';
-
-const STATUS_VARIANT: Record<string, 'success' | 'warning' | 'danger'> = {
-  paid: 'success',
-  pending: 'warning',
-  overdue: 'danger',
-  cancelled: 'danger',
-};
 
 const METHOD_LABELS: Record<string, string> = {
   cash: 'Cash',
@@ -25,6 +21,10 @@ const METHOD_LABELS: Record<string, string> = {
 const STATUSES = ['', 'paid', 'pending', 'overdue', 'cancelled'];
 const METHODS = ['', 'cash', 'bank_transfer', 'online'];
 
+/**
+ * Management payments page — lists all payments with filtering.
+ * @returns The management payments page component.
+ */
 export default function ManagementPaymentsPage() {
   const t = useTranslations('Pages');
   const [data, setData] = useState<ManagementPaymentOutput[]>([]);
@@ -79,7 +79,9 @@ export default function ManagementPaymentsPage() {
 
   if (error) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">{error}</div>
+      <div className="rounded-lg border border-danger/30 bg-danger-subtle p-4 text-danger">
+        {error}
+      </div>
     );
   }
 
@@ -105,7 +107,7 @@ export default function ManagementPaymentsPage() {
             key: 'status',
             header: 'Status',
             render: (pmt: ManagementPaymentOutput) => (
-              <Badge variant={STATUS_VARIANT[pmt.status]}>{pmt.status}</Badge>
+              <Badge variant={paymentStatusVariant(pmt.status)}>{pmt.status}</Badge>
             ),
           },
           {
@@ -123,35 +125,35 @@ export default function ManagementPaymentsPage() {
         onPageChange={setPage}
         filters={
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <select
+            <Select
               value={statusFilter}
               onChange={(e) => {
                 setStatusFilter(e.target.value);
                 setPage(1);
               }}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+              className="w-auto"
             >
               {STATUSES.map((s) => (
                 <option key={s} value={s}>
                   {s || 'All statuses'}
                 </option>
               ))}
-            </select>
-            <select
+            </Select>
+            <Select
               value={methodFilter}
               onChange={(e) => {
                 setMethodFilter(e.target.value);
                 setPage(1);
               }}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+              className="w-auto"
             >
               {METHODS.map((m) => (
                 <option key={m} value={m}>
                   {m ? METHOD_LABELS[m] : 'All methods'}
                 </option>
               ))}
-            </select>
-            <input
+            </Select>
+            <Input
               type="text"
               placeholder="Lease ID..."
               value={leaseId}
@@ -159,9 +161,9 @@ export default function ManagementPaymentsPage() {
                 setLeaseId(e.target.value);
                 setPage(1);
               }}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none sm:w-28"
+              className="sm:w-28"
             />
-            <input
+            <Input
               type="text"
               placeholder="Tenant ID..."
               value={tenantId}
@@ -169,9 +171,9 @@ export default function ManagementPaymentsPage() {
                 setTenantId(e.target.value);
                 setPage(1);
               }}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none sm:w-28"
+              className="sm:w-28"
             />
-            <input
+            <Input
               type="date"
               placeholder="From"
               value={dateFrom}
@@ -179,9 +181,9 @@ export default function ManagementPaymentsPage() {
                 setDateFrom(e.target.value);
                 setPage(1);
               }}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+              className="w-auto"
             />
-            <input
+            <Input
               type="date"
               placeholder="To"
               value={dateTo}
@@ -189,7 +191,7 @@ export default function ManagementPaymentsPage() {
                 setDateTo(e.target.value);
                 setPage(1);
               }}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+              className="w-auto"
             />
           </div>
         }

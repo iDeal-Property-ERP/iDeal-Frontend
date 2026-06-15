@@ -3,20 +3,19 @@
 import { useTranslations } from 'next-intl';
 import { useState, useEffect, useCallback } from 'react';
 import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 import { DataTable } from '@/components/ui/DataTable';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { apiFetch } from '@/libs/api';
+import { paymentStatusVariant } from '@/libs/badges';
 import { useRouter } from '@/libs/I18nNavigation';
 import type { PaginatedData } from '@/types/api';
 import type { TenantPaymentOutput } from '@/types/tenant';
 
-const STATUS_VARIANT: Record<string, 'success' | 'warning' | 'danger' | 'default'> = {
-  paid: 'success',
-  pending: 'warning',
-  overdue: 'danger',
-  cancelled: 'default',
-};
-
+/**
+ * Tenant payment history page with paginated table.
+ * @returns Payments page element.
+ */
 export default function TenantPaymentsPage() {
   const t = useTranslations('Pages');
   const router = useRouter();
@@ -56,7 +55,7 @@ export default function TenantPaymentsPage() {
       key: 'status',
       header: 'Status',
       render: (item: TenantPaymentOutput) => (
-        <Badge variant={STATUS_VARIANT[item.status] ?? 'default'}>{item.status}</Badge>
+        <Badge variant={paymentStatusVariant(item.status)}>{item.status}</Badge>
       ),
     },
   ];
@@ -67,18 +66,18 @@ export default function TenantPaymentsPage() {
         title={t('payment_history')}
         backHref="/tenant"
         actions={
-          <button
+          <Button
+            intent="outline"
             onClick={() => {
               router.push('/tenant');
             }}
-            className="rounded-lg border border-neutral-200 px-4 py-2 text-sm font-medium hover:bg-neutral-50"
           >
             Home
-          </button>
+          </Button>
         }
       />
       {loading ? (
-        <p className="text-sm text-neutral-400">Loading...</p>
+        <p className="text-sm text-muted-foreground">Loading...</p>
       ) : (
         <DataTable
           columns={columns}

@@ -2,12 +2,17 @@
 
 import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/Button';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { StatsCard } from '@/components/ui/StatsCard';
 import { apiFetch } from '@/libs/api';
 import { useRouter } from '@/libs/I18nNavigation';
 import type { FinanceDashboardOutput } from '@/types/finance-extras';
 
+/**
+ * Renders the finance dashboard with summary stats and navigation actions.
+ * @returns Finance dashboard page element.
+ */
 export default function FinancePage() {
   const t = useTranslations('Pages');
   const router = useRouter();
@@ -26,10 +31,10 @@ export default function FinancePage() {
   }, []);
 
   if (loading) {
-    return <p className="text-sm text-neutral-400">Loading...</p>;
+    return <p className="text-sm text-muted-foreground">Loading...</p>;
   }
   if (!data) {
-    return <p className="text-sm text-red-500">Failed to load dashboard</p>;
+    return <p className="text-sm text-danger">Failed to load dashboard</p>;
   }
 
   return (
@@ -39,30 +44,30 @@ export default function FinancePage() {
         description={t('finance_desc')}
         actions={
           <div className="flex gap-2">
-            <button
+            <Button
+              intent="outline"
               onClick={() => {
                 router.push('/finance/payments');
               }}
-              className="rounded-lg border border-neutral-200 px-4 py-2 text-sm font-medium hover:bg-neutral-50"
             >
               Payments
-            </button>
-            <button
+            </Button>
+            <Button
+              intent="outline"
               onClick={() => {
                 router.push('/finance/payouts');
               }}
-              className="rounded-lg border border-neutral-200 px-4 py-2 text-sm font-medium hover:bg-neutral-50"
             >
               Payouts
-            </button>
-            <button
+            </Button>
+            <Button
+              intent="outline"
               onClick={() => {
                 router.push('/finance/pnl');
               }}
-              className="rounded-lg border border-neutral-200 px-4 py-2 text-sm font-medium hover:bg-neutral-50"
             >
               P&amp;L
-            </button>
+            </Button>
           </div>
         }
       />

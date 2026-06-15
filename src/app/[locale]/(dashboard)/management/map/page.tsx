@@ -41,6 +41,10 @@ function fCurrency(amount: string): string {
   return `$${n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 }
 
+/**
+ * Portfolio map page — renders property locations on a Yandex map.
+ * @returns The portfolio map page component.
+ */
 export default function PortfolioMapPage() {
   const t = useTranslations('Pages');
   const mapRef = useRef<HTMLDivElement>(null);
@@ -140,20 +144,20 @@ export default function PortfolioMapPage() {
       <PageHeader title={t('portfolio_map')} description={t('portfolio_map_desc')} />
 
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-400">
+        <div className="rounded-lg border border-danger/30 bg-danger-subtle p-4 text-danger">
           {error}
         </div>
       )}
 
       {isLoading && !error && (
-        <div className="flex h-96 items-center justify-center rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
-          <span className="text-sm text-zinc-400 dark:text-zinc-500">Loading map...</span>
+        <div className="flex h-96 items-center justify-center rounded-lg border border-border bg-card">
+          <span className="text-sm text-muted-foreground">Loading map...</span>
         </div>
       )}
 
       <div
         ref={mapRef}
-        className={`h-[500px] w-full overflow-hidden rounded-lg border border-zinc-200 bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800 ${isLoading ? 'hidden' : ''}`}
+        className={`h-[500px] w-full overflow-hidden rounded-lg border border-border bg-muted ${isLoading ? 'hidden' : ''}`}
       />
     </div>
   );

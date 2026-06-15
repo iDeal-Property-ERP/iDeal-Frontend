@@ -5,8 +5,11 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import { Button } from '@/components/ui/Button';
 import { FormField } from '@/components/ui/FormField';
+import { Input } from '@/components/ui/Input';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { Select } from '@/components/ui/Select';
 import { StatsCard } from '@/components/ui/StatsCard';
 import { apiFetch } from '@/libs/api';
 import { useRouter } from '@/libs/I18nNavigation';
@@ -19,6 +22,10 @@ const filterSchema = z.object({
 
 type FilterForm = z.infer<typeof filterSchema>;
 
+/**
+ * Renders the profit and loss report page with year/month filter controls.
+ * @returns Profit and loss report page element.
+ */
 export default function PnLPage() {
   const t = useTranslations('Pages');
   const router = useRouter();
@@ -52,44 +59,33 @@ export default function PnLPage() {
         title={t('profit_and_loss')}
         description={t('profit_and_loss_desc')}
         actions={
-          <button
+          <Button
+            intent="outline"
             onClick={() => {
               router.push('/finance');
             }}
-            className="rounded-lg border border-neutral-200 px-4 py-2 text-sm font-medium hover:bg-neutral-50"
           >
             Back to Finance
-          </button>
+          </Button>
         }
       />
       <form onSubmit={handleSubmit(onSubmit)} className="mb-6 flex items-end gap-4">
         <FormField label="Year" error="">
-          <input
-            type="number"
-            {...register('year')}
-            className="w-28 rounded-lg border border-neutral-200 px-3 py-2 text-sm"
-          />
+          <Input type="number" {...register('year')} className="w-28" />
         </FormField>
         <FormField label="Month" error="">
-          <select
-            {...register('month')}
-            className="w-28 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm"
-          >
+          <Select {...register('month')} className="w-28">
             <option value="">All</option>
             {Array.from({ length: 12 }, (_, i) => (
               <option key={i + 1} value={i + 1}>
                 {i + 1}
               </option>
             ))}
-          </select>
+          </Select>
         </FormField>
-        <button
-          type="submit"
-          disabled={loading}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-        >
+        <Button type="submit" intent="primary" disabled={loading}>
           {loading ? 'Loading...' : 'Generate'}
-        </button>
+        </Button>
       </form>
       {data ? (
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -103,7 +99,9 @@ export default function PnLPage() {
           />
         </div>
       ) : (
-        <p className="text-sm text-neutral-400">Select year and month to generate the report.</p>
+        <p className="text-sm text-muted-foreground">
+          Select year and month to generate the report.
+        </p>
       )}
     </>
   );

@@ -3,3 +3,172 @@
 @import 'tailwindcss';
 
 @custom-variant dark (&:where(.dark, .dark *));
+
+/* ─── Design tokens ──────────────────────────────────────────────────────── */
+
+:root {
+  /* Surfaces — faint indigo tint so neutrals feel alive, not dead-gray */
+  --background: oklch(0.985 0.007 265);
+  --foreground: oklch(0.13 0.025 265);
+  --card: oklch(0.995 0.004 265);
+  --card-foreground: oklch(0.13 0.025 265);
+  --muted: oklch(0.955 0.013 265);
+  --muted-foreground: oklch(0.48 0.03 265);
+
+  /* Interactive chrome */
+  --border: oklch(0.898 0.012 265);
+  --input: oklch(0.898 0.012 265);
+  --ring: oklch(0.52 0.24 265);
+
+  /* Brand accent — purplish-blue (indigo) */
+  --primary: oklch(0.52 0.24 265);
+  --primary-foreground: oklch(0.985 0 0);
+  --primary-muted: oklch(0.91 0.07 265);
+
+  /* Secondary */
+  --secondary: oklch(0.955 0.013 265);
+  --secondary-foreground: oklch(0.2 0.02 265);
+
+  /* Semantic status */
+  --success: oklch(0.46 0.14 145);
+  --success-foreground: oklch(0.985 0 0);
+  --success-subtle: oklch(0.94 0.04 145);
+  --success-subtle-foreground: oklch(0.35 0.12 145);
+
+  --warning: oklch(0.6 0.17 67);
+  --warning-foreground: oklch(0.985 0 0);
+  --warning-subtle: oklch(0.96 0.05 83);
+  --warning-subtle-foreground: oklch(0.45 0.15 67);
+
+  --danger: oklch(0.47 0.19 27);
+  --danger-foreground: oklch(0.985 0 0);
+  --danger-subtle: oklch(0.94 0.04 27);
+  --danger-subtle-foreground: oklch(0.4 0.18 27);
+
+  /* Info shifted to sky-blue (220) — clearly distinct from indigo primary */
+  --info: oklch(0.44 0.16 220);
+  --info-foreground: oklch(0.985 0 0);
+  --info-subtle: oklch(0.93 0.05 220);
+  --info-subtle-foreground: oklch(0.37 0.15 220);
+
+  /* Shape */
+  --radius: 0.5rem;
+}
+
+.dark {
+  /* Surfaces — deep indigo-black, not pure neutral black */
+  --background: oklch(0.095 0.02 265);
+  --foreground: oklch(0.97 0.007 265);
+  --card: oklch(0.138 0.018 265);
+  --card-foreground: oklch(0.97 0.007 265);
+  --muted: oklch(0.185 0.02 265);
+  --muted-foreground: oklch(0.6 0.022 265);
+
+  /* Interactive chrome */
+  --border: oklch(0.255 0.025 265);
+  --input: oklch(0.255 0.025 265);
+  --ring: oklch(0.68 0.22 265);
+
+  /* Brand accent — brighter indigo for dark surfaces */
+  --primary: oklch(0.68 0.22 265);
+  --primary-foreground: oklch(0.095 0.02 265);
+  --primary-muted: oklch(0.225 0.09 265);
+
+  /* Secondary */
+  --secondary: oklch(0.185 0.02 265);
+  --secondary-foreground: oklch(0.97 0.007 265);
+
+  /* Semantic status — adjusted for dark surfaces */
+  --success: oklch(0.62 0.16 145);
+  --success-foreground: oklch(0.09 0 0);
+  --success-subtle: oklch(0.18 0.05 145);
+  --success-subtle-foreground: oklch(0.72 0.15 145);
+
+  --warning: oklch(0.72 0.16 67);
+  --warning-foreground: oklch(0.09 0 0);
+  --warning-subtle: oklch(0.2 0.06 67);
+  --warning-subtle-foreground: oklch(0.78 0.15 67);
+
+  --danger: oklch(0.65 0.18 27);
+  --danger-foreground: oklch(0.09 0 0);
+  --danger-subtle: oklch(0.2 0.06 27);
+  --danger-subtle-foreground: oklch(0.72 0.17 27);
+
+  --info: oklch(0.63 0.16 220);
+  --info-foreground: oklch(0.09 0 0);
+  --info-subtle: oklch(0.18 0.06 220);
+  --info-subtle-foreground: oklch(0.72 0.15 220);
+}
+
+/* ─── Tailwind theme mapping ─────────────────────────────────────────────── */
+
+@theme inline {
+  /* Surface colors */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  /* Chrome */
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Brand */
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-muted: var(--primary-muted);
+
+  /* Secondary */
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  /* Status */
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-subtle: var(--success-subtle);
+  --color-success-subtle-foreground: var(--success-subtle-foreground);
+
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-subtle: var(--warning-subtle);
+  --color-warning-subtle-foreground: var(--warning-subtle-foreground);
+
+  --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
+  --color-danger-subtle: var(--danger-subtle);
+  --color-danger-subtle-foreground: var(--danger-subtle-foreground);
+
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-info-subtle: var(--info-subtle);
+  --color-info-subtle-foreground: var(--info-subtle-foreground);
+
+  /* Radius */
+  --radius-sm: calc(var(--radius) - 0.125rem);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 0.125rem);
+  --radius-xl: calc(var(--radius) + 0.375rem);
+
+  /* Font */
+  --font-sans: var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif);
+  --font-mono: var(--font-geist-mono, ui-monospace, monospace);
+}
+
+/* ─── Base resets ────────────────────────────────────────────────────────── */
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}

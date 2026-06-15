@@ -3,20 +3,19 @@
 import { useTranslations } from 'next-intl';
 import { useState, useEffect, useCallback } from 'react';
 import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 import { DataTable } from '@/components/ui/DataTable';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { apiFetch } from '@/libs/api';
+import { paymentStatusVariant } from '@/libs/badges';
 import { useRouter } from '@/libs/I18nNavigation';
 import type { PaginatedData } from '@/types/api';
 import type { PaymentOutput } from '@/types/finance';
 
-const STATUS_VARIANT: Record<string, 'success' | 'warning' | 'danger' | 'default'> = {
-  paid: 'success',
-  pending: 'warning',
-  overdue: 'danger',
-  cancelled: 'default',
-};
-
+/**
+ * Renders the paginated payments list with status badges and navigation.
+ * @returns Payments list page element.
+ */
 export default function PaymentsListPage() {
   const t = useTranslations('Pages');
   const router = useRouter();
@@ -58,7 +57,7 @@ export default function PaymentsListPage() {
       key: 'status',
       header: 'Status',
       render: (item: PaymentOutput) => (
-        <Badge variant={STATUS_VARIANT[item.status] ?? 'default'}>{item.status}</Badge>
+        <Badge variant={paymentStatusVariant(item.status)}>{item.status}</Badge>
       ),
     },
   ];
@@ -70,27 +69,27 @@ export default function PaymentsListPage() {
         description={t('payments_all_desc')}
         actions={
           <div className="flex gap-2">
-            <button
+            <Button
+              intent="outline"
               onClick={() => {
                 router.push('/finance');
               }}
-              className="rounded-lg border border-neutral-200 px-4 py-2 text-sm font-medium hover:bg-neutral-50"
             >
               Back to Finance
-            </button>
-            <button
+            </Button>
+            <Button
+              intent="primary"
               onClick={() => {
                 router.push('/finance/payments/new');
               }}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
             >
               New Payment
-            </button>
+            </Button>
           </div>
         }
       />
       {loading ? (
-        <p className="text-sm text-neutral-400">Loading...</p>
+        <p className="text-sm text-muted-foreground">Loading...</p>
       ) : (
         <DataTable
           columns={columns}

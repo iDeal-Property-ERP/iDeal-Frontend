@@ -5,8 +5,11 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import { Button } from '@/components/ui/Button';
 import { FormField } from '@/components/ui/FormField';
+import { Input } from '@/components/ui/Input';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { Select } from '@/components/ui/Select';
 import { apiFetch } from '@/libs/api';
 import { useRouter } from '@/libs/I18nNavigation';
 import type { LeaseOutput } from '@/types/contract';
@@ -24,6 +27,10 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
+/**
+ * Renders the new lease creation form and submits it to the API.
+ * @returns New lease form page element.
+ */
 export default function NewLeasePage() {
   const t = useTranslations('Pages');
   const router = useRouter();
@@ -53,80 +60,49 @@ export default function NewLeasePage() {
   return (
     <>
       <PageHeader title={t('new_lease')} backHref="/contracts/leases" />
-      {error ? <p className="mb-4 rounded bg-red-50 p-3 text-sm text-red-600">{error}</p> : null}
+      {error ? (
+        <p className="mb-4 rounded bg-danger-subtle p-3 text-sm text-danger">{error}</p>
+      ) : null}
       <form onSubmit={handleSubmit(onSubmit)} className="max-w-xl space-y-4">
         <div className="grid grid-cols-3 gap-4">
           <FormField label="Property ID" error={errors.property_id?.message} required>
-            <input
-              type="number"
-              {...register('property_id')}
-              className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm"
-            />
+            <Input type="number" {...register('property_id')} />
           </FormField>
           <FormField label="Agreement ID" error={errors.owner_agreement_id?.message} required>
-            <input
-              type="number"
-              {...register('owner_agreement_id')}
-              className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm"
-            />
+            <Input type="number" {...register('owner_agreement_id')} />
           </FormField>
           <FormField label="Tenant ID" error={errors.tenant_id?.message} required>
-            <input
-              type="number"
-              {...register('tenant_id')}
-              className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm"
-            />
+            <Input type="number" {...register('tenant_id')} />
           </FormField>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <FormField label="Start Date" error={errors.start_date?.message} required>
-            <input
-              type="date"
-              {...register('start_date')}
-              className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm"
-            />
+            <Input type="date" {...register('start_date')} />
           </FormField>
           <FormField label="End Date" error={errors.end_date?.message} required>
-            <input
-              type="date"
-              {...register('end_date')}
-              className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm"
-            />
+            <Input type="date" {...register('end_date')} />
           </FormField>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <FormField label="Monthly Rent" error={errors.monthly_rent?.message} required>
-            <input
-              {...register('monthly_rent')}
-              className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm"
-            />
+            <Input {...register('monthly_rent')} />
           </FormField>
           <FormField label="Deposit" error={errors.deposit?.message} required>
-            <input
-              {...register('deposit')}
-              className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm"
-            />
+            <Input {...register('deposit')} />
           </FormField>
         </div>
         <FormField label="Status" error={errors.status?.message}>
-          <select
-            {...register('status')}
-            className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm"
-          >
+          <Select {...register('status')}>
             <option value="">--</option>
             <option value="active">Active</option>
             <option value="expired">Expired</option>
             <option value="renewed">Renewed</option>
             <option value="terminated">Terminated</option>
-          </select>
+          </Select>
         </FormField>
-        <button
-          type="submit"
-          disabled={submitting}
-          className="rounded-lg bg-blue-600 px-6 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-        >
+        <Button type="submit" intent="primary" disabled={submitting}>
           {submitting ? 'Creating...' : 'Create Lease'}
-        </button>
+        </Button>
       </form>
     </>
   );

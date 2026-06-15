@@ -2,12 +2,17 @@
 
 import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/Button';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { StatsCard } from '@/components/ui/StatsCard';
 import { apiFetch } from '@/libs/api';
 import { useRouter } from '@/libs/I18nNavigation';
 import type { OwnerEarningsOutput } from '@/types/owner';
 
+/**
+ * Owner earnings summary page showing guaranteed, paid, and pending amounts.
+ * @returns Earnings page element.
+ */
 export default function OwnerEarningsPage() {
   const t = useTranslations('Pages');
   const router = useRouter();
@@ -26,10 +31,10 @@ export default function OwnerEarningsPage() {
   }, []);
 
   if (loading) {
-    return <p className="text-sm text-neutral-400">Loading...</p>;
+    return <p className="text-sm text-muted-foreground">Loading...</p>;
   }
   if (!data) {
-    return <p className="text-sm text-red-500">Failed to load earnings</p>;
+    return <p className="text-sm text-danger">Failed to load earnings</p>;
   }
 
   return (
@@ -38,14 +43,14 @@ export default function OwnerEarningsPage() {
         title={t('my_earnings')}
         backHref="/owner"
         actions={
-          <button
+          <Button
+            intent="outline"
             onClick={() => {
               router.push('/owner');
             }}
-            className="rounded-lg border border-neutral-200 px-4 py-2 text-sm font-medium hover:bg-neutral-50"
           >
             Dashboard
-          </button>
+          </Button>
         }
       />
       <div className="grid grid-cols-3 gap-4">

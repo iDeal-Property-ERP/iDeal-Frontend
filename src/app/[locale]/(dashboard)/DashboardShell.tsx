@@ -1,9 +1,9 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { Header } from '@/components/ui/Header';
 import { Sidebar } from '@/components/ui/Sidebar';
+import { Spinner } from '@/components/ui/Spinner';
 import { AuthProvider, roleDashboardMap, roleRouteMap, useAuth } from '@/libs/auth';
 import { useRouter, usePathname } from '@/libs/I18nNavigation';
 
@@ -11,13 +11,12 @@ function DashboardContent(props: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
-  const t = useTranslations('Dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950">
-        <span className="text-sm text-zinc-500">{t('redirecting')}</span>
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <Spinner className="size-6" />
       </div>
     );
   }
@@ -35,7 +34,7 @@ function DashboardContent(props: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
+    <div className="min-h-screen bg-background">
       <Sidebar
         role={user.role}
         isOpen={sidebarOpen}
@@ -56,6 +55,11 @@ function DashboardContent(props: { children: React.ReactNode }) {
   );
 }
 
+/**
+ * Dashboard layout shell providing auth guard, role routing, sidebar, and header.
+ * @param props - Children to render inside the authenticated layout.
+ * @returns Dashboard shell wrapper.
+ */
 export function DashboardShell(props: { children: React.ReactNode }) {
   return (
     <AuthProvider>

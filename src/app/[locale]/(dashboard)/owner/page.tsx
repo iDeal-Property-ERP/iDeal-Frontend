@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/Button';
 import { DataTable } from '@/components/ui/DataTable';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { StatsCard } from '@/components/ui/StatsCard';
@@ -10,6 +11,10 @@ import { useRouter } from '@/libs/I18nNavigation';
 import type { PaginatedData } from '@/types/api';
 import type { OwnerEarningsOutput, OwnerPropertyOutput } from '@/types/owner';
 
+/**
+ * Owner dashboard page showing earnings summary and property list.
+ * @returns Dashboard page element.
+ */
 export default function OwnerDashboardPage() {
   const t = useTranslations('Pages');
   const router = useRouter();
@@ -43,7 +48,7 @@ export default function OwnerDashboardPage() {
   ];
 
   if (loading) {
-    return <p className="text-sm text-neutral-400">Loading...</p>;
+    return <p className="text-sm text-muted-foreground">Loading...</p>;
   }
 
   return (
@@ -52,14 +57,14 @@ export default function OwnerDashboardPage() {
         title={t('owner_dashboard')}
         description={t('owner_dashboard_desc')}
         actions={
-          <button
+          <Button
+            intent="outline"
             onClick={() => {
               router.push('/owner/properties');
             }}
-            className="rounded-lg border border-neutral-200 px-4 py-2 text-sm font-medium hover:bg-neutral-50"
           >
             All Properties
-          </button>
+          </Button>
         }
       />
       {earnings ? (
@@ -80,7 +85,7 @@ export default function OwnerDashboardPage() {
           />
         </div>
       ) : null}
-      <h2 className="mb-4 text-lg font-semibold text-neutral-800">Your Properties</h2>
+      <h2 className="mb-4 text-lg font-semibold text-foreground">Your Properties</h2>
       <DataTable
         columns={propColumns}
         data={properties}

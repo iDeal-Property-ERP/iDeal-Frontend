@@ -54,7 +54,6 @@
     "nav_map_search": "Xarita bo'yicha qidirish",
     "nav_logout": "Chiqish",
     "menu_toggle": "Menyuni ochish/yopish",
-    "redirecting": "Yo'naltirilmoqda...",
     "theme_toggle": "Mavzuni almashtirish",
     "sec_overview": "Umumiy ko'rinish",
     "sec_portfolio": "Portfel",
@@ -147,5 +146,11 @@
     "marketplace_desc": "Mavjud mulklarni ko'rish",
     "map_search": "Xarita bo'yicha qidirish",
     "map_search_desc": "Mulklarni joylashuv bo'yicha qidirish"
+  },
+  "DataTable": {
+    "no_data": "Ma'lumot yo'q",
+    "previous": "Oldingi",
+    "next": "Keyingi",
+    "page_of": "{page}-sahifa, jami {total}"
   }
 }

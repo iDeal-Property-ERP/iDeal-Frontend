@@ -4,20 +4,20 @@ import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/Badge';
 import { DataTable } from '@/components/ui/DataTable';
+import { Input } from '@/components/ui/Input';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { Select } from '@/components/ui/Select';
 import { apiFetch } from '@/libs/api';
+import { leaseStatusVariant } from '@/libs/badges';
 import type { PaginatedData } from '@/types/api';
 import type { ManagementLeaseOutput } from '@/types/management';
 
-const STATUS_VARIANT: Record<string, 'success' | 'danger' | 'info' | 'default'> = {
-  active: 'success',
-  expired: 'danger',
-  renewed: 'info',
-  terminated: 'danger',
-};
-
 const STATUSES = ['', 'active', 'expired', 'renewed', 'terminated'];
 
+/**
+ * Management leases page — lists all leases with filtering.
+ * @returns The management leases page component.
+ */
 export default function ManagementLeasesPage() {
   const t = useTranslations('Pages');
   const [data, setData] = useState<ManagementLeaseOutput[]>([]);
@@ -60,7 +60,9 @@ export default function ManagementLeasesPage() {
 
   if (error) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">{error}</div>
+      <div className="rounded-lg border border-danger/30 bg-danger-subtle p-4 text-danger">
+        {error}
+      </div>
     );
   }
 
@@ -83,7 +85,7 @@ export default function ManagementLeasesPage() {
             key: 'status',
             header: 'Status',
             render: (lease: ManagementLeaseOutput) => (
-              <Badge variant={STATUS_VARIANT[lease.status]}>{lease.status}</Badge>
+              <Badge variant={leaseStatusVariant(lease.status)}>{lease.status}</Badge>
             ),
           },
         ]}
@@ -96,21 +98,21 @@ export default function ManagementLeasesPage() {
         onPageChange={setPage}
         filters={
           <div className="flex flex-col gap-3 sm:flex-row">
-            <select
+            <Select
               value={statusFilter}
               onChange={(e) => {
                 setStatusFilter(e.target.value);
                 setPage(1);
               }}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+              className="w-auto"
             >
               {STATUSES.map((s) => (
                 <option key={s} value={s}>
                   {s || 'All statuses'}
                 </option>
               ))}
-            </select>
-            <input
+            </Select>
+            <Input
               type="text"
               placeholder="Property ID..."
               value={propertyId}
@@ -118,9 +120,9 @@ export default function ManagementLeasesPage() {
                 setPropertyId(e.target.value);
                 setPage(1);
               }}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none sm:w-36"
+              className="sm:w-36"
             />
-            <input
+            <Input
               type="text"
               placeholder="Tenant ID..."
               value={tenantId}
@@ -128,7 +130,7 @@ export default function ManagementLeasesPage() {
                 setTenantId(e.target.value);
                 setPage(1);
               }}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none sm:w-36"
+              className="sm:w-36"
             />
           </div>
         }

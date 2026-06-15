@@ -54,7 +54,6 @@
     "nav_map_search": "Map Search",
     "nav_logout": "Logout",
     "menu_toggle": "Toggle menu",
-    "redirecting": "Redirecting...",
     "theme_toggle": "Toggle theme",
     "sec_overview": "Overview",
     "sec_portfolio": "Portfolio",
@@ -147,5 +146,11 @@
     "marketplace_desc": "Browse available properties",
     "map_search": "Map Search",
     "map_search_desc": "Search properties by location"
+  },
+  "DataTable": {
+    "no_data": "No data",
+    "previous": "Previous",
+    "next": "Next",
+    "page_of": "Page {page} of {total}"
   }
 }

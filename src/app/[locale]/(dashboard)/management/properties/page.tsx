@@ -4,17 +4,14 @@ import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/Badge';
 import { DataTable } from '@/components/ui/DataTable';
+import { Input } from '@/components/ui/Input';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { Select } from '@/components/ui/Select';
 import { apiFetch } from '@/libs/api';
+import { propertyStatusVariant } from '@/libs/badges';
 import { Link } from '@/libs/I18nNavigation';
 import type { PaginatedData } from '@/types/api';
 import type { ManagementPropertyOutput } from '@/types/management';
-
-const STATUS_VARIANT: Record<string, 'success' | 'warning' | 'danger' | 'default'> = {
-  vacant: 'warning',
-  rented: 'success',
-  maintenance: 'danger',
-};
 
 const TARIFF_VARIANT: Record<string, 'default' | 'info' | 'warning'> = {
   standard: 'default',
@@ -25,6 +22,10 @@ const TARIFF_VARIANT: Record<string, 'default' | 'info' | 'warning'> = {
 const STATUSES = ['', 'vacant', 'rented', 'maintenance'];
 const TARIFFS = ['', 'standard', 'comfort', 'premium'];
 
+/**
+ * Management properties page — lists all properties with filtering.
+ * @returns The management properties page component.
+ */
 export default function ManagementPropertiesPage() {
   const t = useTranslations('Pages');
   const [data, setData] = useState<ManagementPropertyOutput[]>([]);
@@ -69,7 +70,9 @@ export default function ManagementPropertiesPage() {
 
   if (error) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">{error}</div>
+      <div className="rounded-lg border border-danger/30 bg-danger-subtle p-4 text-danger">
+        {error}
+      </div>
     );
   }
 
@@ -85,7 +88,7 @@ export default function ManagementPropertiesPage() {
             render: (prop: ManagementPropertyOutput) => (
               <Link
                 href={`/properties/${prop.id}`}
-                className="font-medium text-blue-600 hover:text-blue-800"
+                className="font-medium text-primary hover:text-primary/80"
               >
                 {prop.name}
               </Link>
@@ -103,7 +106,7 @@ export default function ManagementPropertiesPage() {
             key: 'status',
             header: 'Status',
             render: (prop: ManagementPropertyOutput) => (
-              <Badge variant={STATUS_VARIANT[prop.status]}>{prop.status}</Badge>
+              <Badge variant={propertyStatusVariant(prop.status)}>{prop.status}</Badge>
             ),
           },
           {
@@ -128,7 +131,7 @@ export default function ManagementPropertiesPage() {
         onPageChange={setPage}
         filters={
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <input
+            <Input
               type="text"
               placeholder="Search by name or address..."
               value={search}
@@ -136,37 +139,37 @@ export default function ManagementPropertiesPage() {
                 setSearch(e.target.value);
                 setPage(1);
               }}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none sm:w-64"
+              className="sm:w-64"
             />
-            <select
+            <Select
               value={statusFilter}
               onChange={(e) => {
                 setStatusFilter(e.target.value);
                 setPage(1);
               }}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+              className="w-auto"
             >
               {STATUSES.map((s) => (
                 <option key={s} value={s}>
                   {s || 'All statuses'}
                 </option>
               ))}
-            </select>
-            <select
+            </Select>
+            <Select
               value={tariffFilter}
               onChange={(e) => {
                 setTariffFilter(e.target.value);
                 setPage(1);
               }}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+              className="w-auto"
             >
               {TARIFFS.map((tariff) => (
                 <option key={tariff} value={tariff}>
                   {tariff || 'All tariffs'}
                 </option>
               ))}
-            </select>
-            <input
+            </Select>
+            <Input
               type="text"
               placeholder="District..."
               value={districtFilter}
@@ -174,7 +177,7 @@ export default function ManagementPropertiesPage() {
                 setDistrictFilter(e.target.value);
                 setPage(1);
               }}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none sm:w-40"
+              className="sm:w-40"
             />
           </div>
         }

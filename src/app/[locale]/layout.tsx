@@ -1,3 +1,4 @@
+import { GeistSans } from 'geist/font/sans';
 import type { Metadata, Viewport } from 'next';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
@@ -55,7 +56,7 @@ export default async function RootLayout(props: {
   logger.info(`Locale set to ${locale}`);
 
   return (
-    <html lang={locale} suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning className={GeistSans.variable}>
       <body>
         <ThemeProvider>
           <NextIntlClientProvider>{props.children}</NextIntlClientProvider>

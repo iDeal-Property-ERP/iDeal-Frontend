@@ -54,7 +54,6 @@
     "nav_map_search": "Поиск по карте",
     "nav_logout": "Выйти",
     "menu_toggle": "Открыть/закрыть меню",
-    "redirecting": "Перенаправление...",
     "theme_toggle": "Сменить тему",
     "sec_overview": "Обзор",
     "sec_portfolio": "Портфель",
@@ -147,5 +146,11 @@
     "marketplace_desc": "Просмотр доступных объектов",
     "map_search": "Поиск по карте",
     "map_search_desc": "Поиск объектов по местоположению"
+  },
+  "DataTable": {
+    "no_data": "Нет данных",
+    "previous": "Назад",
+    "next": "Вперёд",
+    "page_of": "Страница {page} из {total}"
   }
 }

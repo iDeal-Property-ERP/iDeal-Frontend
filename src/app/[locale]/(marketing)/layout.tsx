@@ -10,13 +10,10 @@ export default async function MarketingLayout(props: {
   const t = await getTranslations({ locale, namespace: 'RootLayout' });
 
   return (
-    <div className="min-h-screen bg-white dark:bg-zinc-950">
-      <header className="sticky top-0 z-30 border-b border-zinc-200 bg-white/80 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/80">
+    <div className="min-h-screen bg-background">
+      <header className="sticky top-0 z-30 border-b border-border bg-card/80 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-          <Link
-            href="/"
-            className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100"
-          >
+          <Link href="/" className="text-xl font-bold tracking-tight text-foreground">
             iDeal
           </Link>
           <nav>
@@ -24,7 +21,7 @@ export default async function MarketingLayout(props: {
               <li>
                 <Link
                   href="/listings"
-                  className="text-zinc-600 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                  className="text-muted-foreground transition-colors hover:text-foreground"
                 >
                   Listings
                 </Link>
@@ -32,7 +29,7 @@ export default async function MarketingLayout(props: {
               <li>
                 <Link
                   href="/login"
-                  className="rounded-lg bg-zinc-900 px-4 py-2 text-white transition-colors hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+                  className="rounded-lg bg-primary px-4 py-2 text-primary-foreground transition-colors hover:bg-primary/90"
                 >
                   Sign in
                 </Link>
@@ -42,7 +39,7 @@ export default async function MarketingLayout(props: {
         </div>
       </header>
       <main>{props.children}</main>
-      <footer className="border-t border-zinc-200 py-8 text-center text-sm text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+      <footer className="border-t border-border py-8 text-center text-sm text-muted-foreground">
         {t('home_link')}
       </footer>
     </div>

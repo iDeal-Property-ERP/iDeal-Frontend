@@ -5,6 +5,9 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
+import { Alert } from '@/components/ui/Alert';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 import { useAuth, roleDashboardMap } from '@/libs/auth';
 import { useRouter } from '@/libs/I18nNavigation';
 
@@ -15,6 +18,10 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
+/**
+ * Login page with username/password form and role-based redirect on success.
+ * @returns Login form card.
+ */
 export default function LoginPage() {
   const t = useTranslations('LoginPage');
   const { login, user, isAuthenticated } = useAuth();
@@ -43,66 +50,50 @@ export default function LoginPage() {
   });
 
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-      <h1 className="mb-2 text-center text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
-        iDeal
-      </h1>
-      <p className="mb-6 text-center text-sm text-zinc-500">{t('sign_in_to_continue')}</p>
+    <div className="rounded-xl border border-border bg-card p-8 shadow-sm">
+      <h1 className="mb-2 text-center text-2xl font-bold tracking-tight text-foreground">iDeal</h1>
+      <p className="mb-6 text-center text-sm text-muted-foreground">{t('sign_in_to_continue')}</p>
 
       <form onSubmit={onSubmit} className="space-y-4">
         <div>
-          <label
-            htmlFor="username"
-            className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
-          >
+          <label htmlFor="username" className="block text-sm font-medium text-foreground">
             {t('username')}
           </label>
-          <input
-            id="username"
-            type="text"
-            className="mt-1 block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-            {...form.register('username')}
-          />
+          <Input id="username" type="text" className="mt-1" {...form.register('username')} />
           {form.formState.errors.username && (
-            <p className="mt-1 text-sm text-red-600">{t('field_required')}</p>
+            <p className="mt-1 text-sm text-danger">{t('field_required')}</p>
           )}
         </div>
 
         <div>
-          <label
-            htmlFor="password"
-            className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
-          >
+          <label htmlFor="password" className="block text-sm font-medium text-foreground">
             {t('password')}
           </label>
-          <input
-            id="password"
-            type="password"
-            className="mt-1 block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-            {...form.register('password')}
-          />
+          <Input id="password" type="password" className="mt-1" {...form.register('password')} />
           {form.formState.errors.password && (
-            <p className="mt-1 text-sm text-red-600">{t('field_required')}</p>
+            <p className="mt-1 text-sm text-danger">{t('field_required')}</p>
           )}
         </div>
 
         {serverError && (
-          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-400">
+          <Alert variant="danger" className="text-sm">
             {serverError}
-          </p>
+          </Alert>
         )}
 
-        <button
+        <Button
           type="submit"
+          intent="primary"
+          size="lg"
+          className="w-full"
           disabled={form.formState.isSubmitting}
-          className="w-full rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
         >
           {form.formState.isSubmitting ? t('signing_in') : t('sign_in')}
-        </button>
+        </Button>
       </form>
 
       <p className="mt-4 text-center">
-        <span className="text-sm text-zinc-400">{t('forgot_password')}</span>
+        <span className="text-sm text-muted-foreground">{t('forgot_password')}</span>
       </p>
     </div>
   );
