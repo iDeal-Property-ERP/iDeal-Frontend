@@ -68,8 +68,8 @@ export default function NewPaymentPage() {
   });
 
   const onSubmit = createApiSubmit(form, {
-    submit:  async (values) =>
-      apiFetch<PaymentOutput>('/finance/payments/', { method: 'POST', body: values }),
+    submit: async (values) =>
+      await apiFetch<PaymentOutput>('/finance/payments/', { method: 'POST', body: values }),
     success: 'Payment created',
     error: 'Failed to create payment',
     onSuccess: () => router.push('/finance/payments'),

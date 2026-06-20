@@ -57,8 +57,8 @@ export default function NewLeasePage() {
   });
 
   const onSubmit = createApiSubmit(form, {
-    submit:  async (values) =>
-      apiFetch<LeaseOutput>('/contracts/leases/', { method: 'POST', body: values }),
+    submit: async (values) =>
+      await apiFetch<LeaseOutput>('/contracts/leases/', { method: 'POST', body: values }),
     success: 'Lease created',
     error: 'Failed to create lease',
     onSuccess: (created) => router.push(`/contracts/leases/${created.id}`),

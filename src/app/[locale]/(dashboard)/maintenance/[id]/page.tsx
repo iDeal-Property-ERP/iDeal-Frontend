@@ -38,8 +38,8 @@ export default function ServiceRequestDetailPage(props: { params: Promise<{ id: 
   const assignForm = useForm({ resolver: zodResolver(assignSchema) });
   const resolveForm = useForm({ resolver: zodResolver(resolveSchema) });
 
-  const loadRequest =  async () =>
-    apiFetch<ServiceRequestOutput>(`/maintenance/requests/${params.id}/`).then(setRequest);
+  const loadRequest = async () =>
+    await apiFetch<ServiceRequestOutput>(`/maintenance/requests/${params.id}/`).then(setRequest);
 
   useEffect(() => {
     loadRequest()
@@ -53,8 +53,11 @@ export default function ServiceRequestDetailPage(props: { params: Promise<{ id: 
   }, [params.id]);
 
   const handleAssign = createApiSubmit(assignForm, {
-    submit:  async (values) =>
-      apiFetch(`/maintenance/requests/${params.id}/assign/`, { method: 'POST', body: values }),
+    submit: async (values) =>
+      await apiFetch(`/maintenance/requests/${params.id}/assign/`, {
+        method: 'POST',
+        body: values,
+      }),
     success: 'Staff assigned',
     error: 'Failed to assign',
     onSuccess: async () => {
@@ -64,8 +67,11 @@ export default function ServiceRequestDetailPage(props: { params: Promise<{ id: 
   });
 
   const handleResolve = createApiSubmit(resolveForm, {
-    submit:  async (values) =>
-      apiFetch(`/maintenance/requests/${params.id}/resolve/`, { method: 'POST', body: values }),
+    submit: async (values) =>
+      await apiFetch(`/maintenance/requests/${params.id}/resolve/`, {
+        method: 'POST',
+        body: values,
+      }),
     success: 'Request resolved',
     error: 'Failed to resolve',
     onSuccess: async () => {

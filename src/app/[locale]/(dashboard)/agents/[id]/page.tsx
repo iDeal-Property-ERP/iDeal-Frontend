@@ -52,9 +52,9 @@ export default function AgentDetailPage(props: { params: Promise<{ id: string }>
     resolver: zodResolver(dealSchema),
   });
 
-  const fetchData =  async () => {
+  const fetchData = async () => {
     setLoading(true);
-    return Promise.all([
+    return await Promise.all([
       apiFetch<AgentOutput>(`/agents/${params.id}/`),
       apiFetch<PaginatedData<DealOutput>>(`/agents/${params.id}/deals/`, { query: { page: 1 } }),
     ])
@@ -73,8 +73,8 @@ export default function AgentDetailPage(props: { params: Promise<{ id: string }>
   }, [params.id]);
 
   const onCreateDeal = createApiSubmit(form, {
-    submit:  async (values) =>
-      apiFetch<DealOutput>(`/agents/${params.id}/deals/`, { method: 'POST', body: values }),
+    submit: async (values) =>
+      await apiFetch<DealOutput>(`/agents/${params.id}/deals/`, { method: 'POST', body: values }),
     success: 'Deal created',
     error: 'Failed to create deal',
     onSuccess: async () => {

@@ -42,7 +42,8 @@ export default function LeaseDetailPage(props: { params: Promise<{ id: string }>
     resolver: zodResolver(renewSchema),
   });
 
-  const loadLease =  async () => apiFetch<LeaseOutput>(`/contracts/leases/${params.id}/`).then(setLease);
+  const loadLease = async () =>
+    await apiFetch<LeaseOutput>(`/contracts/leases/${params.id}/`).then(setLease);
 
   useEffect(() => {
     loadLease()
@@ -56,8 +57,8 @@ export default function LeaseDetailPage(props: { params: Promise<{ id: string }>
   }, [params.id]);
 
   const onRenew = createApiSubmit(form, {
-    submit:  async (values) =>
-      apiFetch(`/contracts/leases/${params.id}/renew/`, { method: 'POST', body: values }),
+    submit: async (values) =>
+      await apiFetch(`/contracts/leases/${params.id}/renew/`, { method: 'POST', body: values }),
     success: 'Lease renewed',
     error: 'Failed to renew',
     onSuccess: async () => {

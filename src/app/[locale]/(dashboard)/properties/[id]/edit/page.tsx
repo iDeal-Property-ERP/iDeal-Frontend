@@ -71,7 +71,8 @@ export default function EditPropertyPage(props: { params: Promise<{ id: string }
   }, [params.id, form]);
 
   const onSubmit = createApiSubmit(form, {
-    submit:  async (values) => apiFetch(`/properties/${params.id}/`, { method: 'PATCH', body: values }),
+    submit: async (values) =>
+      await apiFetch(`/properties/${params.id}/`, { method: 'PATCH', body: values }),
     success: 'Property updated',
     error: 'Failed to update property',
     onSuccess: () => router.push(`/properties/${params.id}`),

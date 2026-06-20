@@ -33,7 +33,8 @@ export default function NewPropertyPage() {
   });
 
   const onSubmit = createApiSubmit(form, {
-    submit:  async (values) => apiFetch<PropertyOutput>('/properties/', { method: 'POST', body: values }),
+    submit: async (values) =>
+      await apiFetch<PropertyOutput>('/properties/', { method: 'POST', body: values }),
     success: 'Property created',
     error: 'Failed to create property',
     onSuccess: (created) => router.push(`/properties/${created.id}`),

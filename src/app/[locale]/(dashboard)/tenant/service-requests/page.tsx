@@ -74,7 +74,8 @@ export default function TenantServiceRequestsPage() {
   }, [page, fetchData]);
 
   const onCreate = createApiSubmit(form, {
-    submit:  async (values) => apiFetch('/tenant/service-requests/', { method: 'POST', body: values }),
+    submit: async (values) =>
+      await apiFetch('/tenant/service-requests/', { method: 'POST', body: values }),
     success: 'Request created',
     error: 'Failed to create request',
     onSuccess: () => {

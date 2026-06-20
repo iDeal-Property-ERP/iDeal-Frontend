@@ -41,7 +41,7 @@ export default function NewInventoryActPage() {
   });
 
   const onSubmit = createApiSubmit(form, {
-    submit:  async (data) => {
+    submit: async (data) => {
       const body: Record<string, unknown> = {
         property_id: data.property_id,
         act_type: data.act_type,
@@ -50,7 +50,7 @@ export default function NewInventoryActPage() {
       if (data.lease_id) {
         body.lease_id = data.lease_id;
       }
-      return apiFetch<InventoryActOutput>('/inventory/acts/', { method: 'POST', body });
+      return await apiFetch<InventoryActOutput>('/inventory/acts/', { method: 'POST', body });
     },
     success: t('inventory_create'),
     error: t('inventory_create_error'),

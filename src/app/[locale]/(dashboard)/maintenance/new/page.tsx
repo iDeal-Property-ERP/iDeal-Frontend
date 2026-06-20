@@ -43,8 +43,11 @@ export default function NewServiceRequestPage() {
   });
 
   const onSubmit = createApiSubmit(form, {
-    submit:  async (values) =>
-      apiFetch<ServiceRequestOutput>('/maintenance/requests/', { method: 'POST', body: values }),
+    submit: async (values) =>
+      await apiFetch<ServiceRequestOutput>('/maintenance/requests/', {
+        method: 'POST',
+        body: values,
+      }),
     success: 'Request created',
     error: 'Failed to create request',
     onSuccess: (created) => router.push(`/maintenance/${created.id}`),

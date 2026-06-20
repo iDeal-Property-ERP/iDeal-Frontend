@@ -51,8 +51,8 @@ export default function OwnerOnboardingPage() {
   }, []);
 
   const onSubmit = createApiSubmit(form, {
-    submit:  async (values) =>
-      apiFetch<OwnerOnboardingOutput>('/owner/onboarding/', {
+    submit: async (values) =>
+      await apiFetch<OwnerOnboardingOutput>('/owner/onboarding/', {
         method: 'POST',
         body: { ...values, accept_offer: true },
       }),

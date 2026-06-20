@@ -67,8 +67,8 @@ export default function NewAgreementPage() {
   });
 
   const onSubmit = createApiSubmit(form, {
-    submit:  async (values) =>
-      apiFetch<OwnerAgreementOutput>('/contracts/owner-agreements/', {
+    submit: async (values) =>
+      await apiFetch<OwnerAgreementOutput>('/contracts/owner-agreements/', {
         method: 'POST',
         body: values,
       }),
