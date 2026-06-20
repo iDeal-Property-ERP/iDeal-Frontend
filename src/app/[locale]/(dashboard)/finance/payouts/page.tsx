@@ -27,7 +27,9 @@ export default function PayoutsPage() {
   const fetchData = useCallback(async (p: number) => {
     setLoading(true);
     try {
-      const res = await apiFetch<PaginatedData<PayoutOutput>>('/payouts/', { query: { page: p } });
+      const res = await apiFetch<PaginatedData<PayoutOutput>>('/finance/payouts/', {
+        query: { page: p },
+      });
       setData(res.page.object_list);
       setTotalPages(res.num_pages);
     } catch {
@@ -43,6 +45,15 @@ export default function PayoutsPage() {
     });
   }, [page, fetchData]);
 
+  async function markPaid(id: number) {
+    try {
+      await apiFetch(`/finance/payouts/${id}/mark-paid/`, { method: 'POST' });
+      await fetchData(page);
+    } catch {
+      // handled silently
+    }
+  }
+
   const columns = [
     { key: 'id', header: 'ID' },
     { key: 'owner_id', header: 'Owner' },
@@ -56,6 +67,24 @@ export default function PayoutsPage() {
       render: (item: PayoutOutput) => (
         <Badge variant={paymentStatusVariant(item.status)}>{item.status}</Badge>
       ),
+    },
+    {
+      key: 'actions',
+      header: '',
+      render: (item: PayoutOutput) =>
+        item.status === 'scheduled' ? (
+          <Button
+            intent="outline"
+            size="sm"
+            onClick={() => {
+              markPaid(item.id).catch(() => {
+                void 0;
+              });
+            }}
+          >
+            {t('mark_paid')}
+          </Button>
+        ) : null,
     },
   ];
 

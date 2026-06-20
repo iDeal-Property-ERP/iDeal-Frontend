@@ -1,4 +1,30 @@
-import type { Role } from './enums';
+import type { OnboardingStatus, Role } from './enums';
+
+export type ManagementOnboardingOutput = {
+  id: number;
+  owner_id: number;
+  owner_name: string;
+  property_id: number;
+  property_name: string;
+  status: OnboardingStatus;
+  offer_version: string | null;
+  offer_accepted_at: string | null;
+  review_notes: string | null;
+  generated_agreement_id: number | null;
+  ask_price: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ManagementOnboardingApprovePayload = {
+  commission_rate: string;
+  start_date: string;
+  end_date: string;
+  agreement_number?: string;
+  terms?: string;
+  owner_guaranteed_price?: string;
+  tenant_charge_price?: string;
+};
 
 export type UserOutput = {
   id: number;

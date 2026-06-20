@@ -38,7 +38,7 @@ export default function ServiceRequestDetailPage(props: { params: Promise<{ id: 
   const resolveForm = useForm({ resolver: zodResolver(resolveSchema) });
 
   useEffect(() => {
-    apiFetch<ServiceRequestOutput>(`/service-requests/${params.id}/`)
+    apiFetch<ServiceRequestOutput>(`/maintenance/requests/${params.id}/`)
       .then(setRequest)
       .catch(() => {
         void 0;
@@ -51,8 +51,8 @@ export default function ServiceRequestDetailPage(props: { params: Promise<{ id: 
   const handleAssign = async (data: { assigned_to_id: number }) => {
     setActionError(null);
     try {
-      await apiFetch(`/service-requests/${params.id}/assign/`, { method: 'POST', body: data });
-      const updated = await apiFetch<ServiceRequestOutput>(`/service-requests/${params.id}/`);
+      await apiFetch(`/maintenance/requests/${params.id}/assign/`, { method: 'POST', body: data });
+      const updated = await apiFetch<ServiceRequestOutput>(`/maintenance/requests/${params.id}/`);
       setRequest(updated);
     } catch (_error) {
       setActionError(_error instanceof Error ? _error.message : 'Failed to assign');
@@ -62,8 +62,8 @@ export default function ServiceRequestDetailPage(props: { params: Promise<{ id: 
   const handleResolve = async (data: { cost: string; resolution_notes: string }) => {
     setActionError(null);
     try {
-      await apiFetch(`/service-requests/${params.id}/resolve/`, { method: 'POST', body: data });
-      const updated = await apiFetch<ServiceRequestOutput>(`/service-requests/${params.id}/`);
+      await apiFetch(`/maintenance/requests/${params.id}/resolve/`, { method: 'POST', body: data });
+      const updated = await apiFetch<ServiceRequestOutput>(`/maintenance/requests/${params.id}/`);
       setRequest(updated);
     } catch (_error) {
       setActionError(_error instanceof Error ? _error.message : 'Failed to resolve');

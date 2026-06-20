@@ -33,7 +33,7 @@ export default function MaintenancePage() {
       if (status) {
         query.status = status;
       }
-      const res = await apiFetch<PaginatedData<ServiceRequestOutput>>('/service-requests/', {
+      const res = await apiFetch<PaginatedData<ServiceRequestOutput>>('/maintenance/requests/', {
         query,
       });
       setData(res.page.object_list);

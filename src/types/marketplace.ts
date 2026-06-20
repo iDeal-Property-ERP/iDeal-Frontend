@@ -1,4 +1,4 @@
-import type { Currency, Tariff } from './enums';
+import type { BookingStatus, Currency, Tariff } from './enums';
 
 export type ListingOutput = {
   id: number;
@@ -46,6 +46,46 @@ export type ViewingOutput = {
   preferred_date: string;
   message: string | null;
   status: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type TenantBookingOutput = {
+  id: number;
+  listing_id: number;
+  property_id: number;
+  property_name: string;
+  requested_start_date: string;
+  requested_end_date: string;
+  monthly_rent_offer: string | null;
+  status: BookingStatus;
+  message: string | null;
+  converted_lease_id: number | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type TenantBookingCreatePayload = {
+  listing_id: number;
+  requested_start_date: string;
+  requested_end_date: string;
+  monthly_rent_offer?: string;
+  message?: string;
+};
+
+export type ManagementBookingOutput = {
+  id: number;
+  listing_id: number;
+  property_id: number;
+  property_name: string;
+  tenant_id: number;
+  tenant_name: string;
+  requested_start_date: string;
+  requested_end_date: string;
+  monthly_rent_offer: string | null;
+  status: BookingStatus;
+  message: string | null;
+  converted_lease_id: number | null;
   created_at: string;
   updated_at: string;
 };

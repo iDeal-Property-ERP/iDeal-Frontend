@@ -21,8 +21,8 @@ export default function AgreementDetailPage(props: { params: Promise<{ id: strin
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    apiFetch<PaginatedData<OwnerAgreementOutput>>('/owner-agreements/', {
-      query: { per_page: 100 },
+    apiFetch<PaginatedData<OwnerAgreementOutput>>('/contracts/owner-agreements/', {
+      query: { page: 1, per_page: 100 },
     })
       .then((res) => {
         const found = res.page.object_list.find((a) => a.id === id);

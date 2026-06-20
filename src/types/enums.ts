@@ -25,3 +25,28 @@ export type DealStatus = 'closed' | 'pending' | 'cancelled';
 export type Currency = 'USD' | 'UZS';
 
 export type ViewingStatus = 'pending' | 'confirmed' | 'cancelled';
+
+export type NotificationType =
+  | 'payment_due'
+  | 'payment_paid'
+  | 'payout_paid'
+  | 'booking_status'
+  | 'service_request_status'
+  | 'lease_renewal'
+  | 'owner_onboarding'
+  | 'service_order_status'
+  | 'general';
+
+export type BookingStatus = 'requested' | 'approved' | 'rejected' | 'converted' | 'cancelled';
+
+export type OnboardingStatus = 'submitted' | 'offer_accepted' | 'approved' | 'rejected';
+
+export type InventoryActStatus = 'draft' | 'finalized';
+
+export type InventoryActType = 'handover' | 'return' | 'general';
+
+export type ConditionRating = 'excellent' | 'good' | 'fair' | 'poor' | 'damaged';
+
+export type VASServiceType = 'cleaning' | 'handyman' | 'utility' | 'internet' | 'moving' | 'other';
+
+export type VASOrderStatus = 'requested' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled';

@@ -52,7 +52,7 @@ export default function NewPaymentPage() {
     setSubmitting(true);
     setError(null);
     try {
-      await apiFetch<PaymentOutput>('/payments/', { method: 'POST', body: data });
+      await apiFetch<PaymentOutput>('/finance/payments/', { method: 'POST', body: data });
       router.push('/finance/payments');
     } catch (_error) {
       setError(_error instanceof Error ? _error.message : 'Failed to create payment');

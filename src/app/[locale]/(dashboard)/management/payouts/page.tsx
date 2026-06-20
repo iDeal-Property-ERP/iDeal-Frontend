@@ -1,8 +1,9 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 import { DataTable } from '@/components/ui/DataTable';
 import { Input } from '@/components/ui/Input';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -27,6 +28,7 @@ export default function ManagementPayoutsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [statusFilter, setStatusFilter] = useState('');
   const [ownerId, setOwnerId] = useState('');
+  const [reload, setReload] = useState(0);
 
   useEffect(() => {
     setIsLoading(true);
@@ -52,7 +54,16 @@ export default function ManagementPayoutsPage() {
       .finally(() => {
         setIsLoading(false);
       });
-  }, [page, statusFilter, ownerId]);
+  }, [page, statusFilter, ownerId, reload]);
+
+  async function markPaid(id: number) {
+    try {
+      await apiFetch(`/finance/payouts/${id}/mark-paid/`, { method: 'POST' });
+      setReload((n) => n + 1);
+    } catch {
+      // handled silently
+    }
+  }
 
   if (error) {
     return (
@@ -86,6 +97,24 @@ export default function ManagementPayoutsPage() {
             render: (po: ManagementPayoutOutput) => (
               <Badge variant={paymentStatusVariant(po.status)}>{po.status}</Badge>
             ),
+          },
+          {
+            key: 'actions',
+            header: '',
+            render: (po: ManagementPayoutOutput) =>
+              po.status === 'scheduled' ? (
+                <Button
+                  intent="outline"
+                  size="sm"
+                  onClick={() => {
+                    markPaid(po.id).catch(() => {
+                      void 0;
+                    });
+                  }}
+                >
+                  {t('mark_paid')}
+                </Button>
+              ) : null,
           },
         ]}
         data={data}

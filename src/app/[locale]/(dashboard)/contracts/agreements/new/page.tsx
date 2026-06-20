@@ -51,7 +51,7 @@ export default function NewAgreementPage() {
     setSubmitting(true);
     setError(null);
     try {
-      const created = await apiFetch<OwnerAgreementOutput>('/owner-agreements/', {
+      const created = await apiFetch<OwnerAgreementOutput>('/contracts/owner-agreements/', {
         method: 'POST',
         body: data,
       });

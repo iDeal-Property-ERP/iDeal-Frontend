@@ -47,7 +47,7 @@ export default function NewServiceRequestPage() {
     setSubmitting(true);
     setError(null);
     try {
-      const created = await apiFetch<ServiceRequestOutput>('/service-requests/', {
+      const created = await apiFetch<ServiceRequestOutput>('/maintenance/requests/', {
         method: 'POST',
         body: data,
       });

@@ -46,3 +46,9 @@ export type TenantServiceRequestCreatePayload = {
   description: string;
   priority?: Priority;
 };
+
+export type TenantPaymentCreatePayload = {
+  amount?: string;
+  method?: PaymentMethod;
+  notes?: string;
+};

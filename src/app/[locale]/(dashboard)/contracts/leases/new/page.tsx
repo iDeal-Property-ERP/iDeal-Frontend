@@ -49,7 +49,10 @@ export default function NewLeasePage() {
     setSubmitting(true);
     setError(null);
     try {
-      const created = await apiFetch<LeaseOutput>('/leases/', { method: 'POST', body: data });
+      const created = await apiFetch<LeaseOutput>('/contracts/leases/', {
+        method: 'POST',
+        body: data,
+      });
       router.push(`/contracts/leases/${created.id}`);
     } catch (_error) {
       setError(_error instanceof Error ? _error.message : 'Failed to create lease');

@@ -27,7 +27,7 @@ export default function PaymentsListPage() {
   const fetchData = useCallback(async (p: number) => {
     setLoading(true);
     try {
-      const res = await apiFetch<PaginatedData<PaymentOutput>>('/payments/', {
+      const res = await apiFetch<PaginatedData<PaymentOutput>>('/finance/payments/', {
         query: { page: p },
       });
       setData(res.page.object_list);

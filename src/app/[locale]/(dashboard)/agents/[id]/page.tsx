@@ -55,7 +55,7 @@ export default function AgentDetailPage(props: { params: Promise<{ id: string }>
     setLoading(true);
     Promise.all([
       apiFetch<AgentOutput>(`/agents/${params.id}/`),
-      apiFetch<PaginatedData<DealOutput>>('/deals/', { query: { agent_id: params.id } }),
+      apiFetch<PaginatedData<DealOutput>>(`/agents/${params.id}/deals/`, { query: { page: 1 } }),
     ])
       .then(([agentData, dealsData]) => {
         setAgent(agentData);

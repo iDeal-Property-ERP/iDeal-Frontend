@@ -3,7 +3,11 @@
 import {
   BarChart3,
   Building2,
+  CalendarCheck,
+  ClipboardCheck,
+  ClipboardList,
   DollarSign,
+  FilePlus,
   FileText,
   HandCoins,
   HelpCircle,
@@ -14,6 +18,7 @@ import {
   Plus,
   Search,
   Settings,
+  Sparkles,
   TrendingUp,
   Users,
   Wrench,
@@ -44,7 +49,15 @@ type NavItemLabel =
   | 'nav_how_it_works'
   | 'nav_browse_homes'
   | 'nav_marketplace'
-  | 'nav_map_search';
+  | 'nav_map_search'
+  | 'nav_onboardings'
+  | 'nav_inventory'
+  | 'nav_bookings'
+  | 'nav_vas_catalog'
+  | 'nav_vas_orders'
+  | 'nav_submit_property'
+  | 'nav_my_bookings'
+  | 'nav_services';
 
 type SectionLabel =
   | 'sec_overview'
@@ -82,6 +95,8 @@ const mgmtSections: NavSection[] = [
       { labelKey: 'nav_properties', href: '/management/properties', icon: Building2 },
       { labelKey: 'nav_leases', href: '/management/leases', icon: FileText },
       { labelKey: 'nav_agreements', href: '/management/agreements', icon: Settings },
+      { labelKey: 'nav_onboardings', href: '/management/onboardings', icon: ClipboardCheck },
+      { labelKey: 'nav_inventory', href: '/management/inventory', icon: ClipboardList },
       { labelKey: 'nav_vacancy_cost', href: '/management/vacancy', icon: BarChart3 },
       { labelKey: 'nav_add_property', href: '/properties/new', icon: Plus },
     ],
@@ -92,7 +107,10 @@ const mgmtSections: NavSection[] = [
       { labelKey: 'nav_users', href: '/management/users', icon: Users },
       { labelKey: 'nav_payments', href: '/management/payments', icon: DollarSign },
       { labelKey: 'nav_payouts', href: '/management/payouts', icon: HandCoins },
+      { labelKey: 'nav_bookings', href: '/management/bookings', icon: CalendarCheck },
       { labelKey: 'nav_service_requests', href: '/management/service-requests', icon: Wrench },
+      { labelKey: 'nav_vas_catalog', href: '/management/vas-catalog', icon: Sparkles },
+      { labelKey: 'nav_vas_orders', href: '/management/vas-orders', icon: ClipboardList },
       { labelKey: 'nav_agents', href: '/agents', icon: Users },
     ],
   },
@@ -104,6 +122,7 @@ const ownerSections: NavSection[] = [
     items: [
       { labelKey: 'nav_dashboard', href: '/owner', icon: LayoutDashboard },
       { labelKey: 'nav_my_properties', href: '/owner/properties', icon: Building2 },
+      { labelKey: 'nav_submit_property', href: '/owner/onboarding', icon: FilePlus },
       { labelKey: 'nav_earnings', href: '/owner/earnings', icon: DollarSign },
       { labelKey: 'nav_how_it_works', href: '/owner/how-it-works', icon: HelpCircle },
     ],
@@ -117,6 +136,8 @@ const tenantSections: NavSection[] = [
       { labelKey: 'nav_dashboard', href: '/tenant', icon: Home },
       { labelKey: 'nav_payments', href: '/tenant/payments', icon: DollarSign },
       { labelKey: 'nav_service_requests', href: '/tenant/service-requests', icon: Wrench },
+      { labelKey: 'nav_services', href: '/tenant/services', icon: Sparkles },
+      { labelKey: 'nav_my_bookings', href: '/tenant/bookings', icon: CalendarCheck },
     ],
   },
   {

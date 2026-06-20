@@ -27,7 +27,9 @@ export default function LeasesPage() {
   const fetchData = useCallback(async (p: number) => {
     setLoading(true);
     try {
-      const res = await apiFetch<PaginatedData<LeaseOutput>>('/leases/', { query: { page: p } });
+      const res = await apiFetch<PaginatedData<LeaseOutput>>('/contracts/leases/', {
+        query: { page: p },
+      });
       setData(res.page.object_list);
       setTotalPages(res.num_pages);
     } catch {

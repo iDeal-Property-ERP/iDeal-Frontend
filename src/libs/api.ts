@@ -165,3 +165,53 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
   logger.debug(`API ${options.method ?? 'GET'} ${path} -> success`);
   return json.data;
 }
+
+/**
+ * Upload multipart form data (e.g. images) with the same auth/refresh handling
+ * as {@link apiFetch}. Does NOT set Content-Type — the browser sets the
+ * multipart boundary automatically.
+ * @param path - API path appended to the configured base URL.
+ * @param formData - The multipart form data to send.
+ * @param options - Optional request options (HTTP method, defaults to POST).
+ * @returns The unwrapped `data` payload from the API response.
+ */
+export async function apiUpload<T>(
+  path: string,
+  formData: FormData,
+  options: { method?: string } = {},
+): Promise<T> {
+  const url = `${Env.NEXT_PUBLIC_API_URL}${path}`;
+  const headers: Record<string, string> = {};
+
+  const token = await getValidToken();
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const method = options.method ?? 'POST';
+  let res = await fetch(url, { method, headers, body: formData });
+
+  if (res.status === 401 && token) {
+    const newToken = await refreshAccessToken();
+    if (newToken) {
+      headers.Authorization = `Bearer ${newToken}`;
+      res = await fetch(url, { method, headers, body: formData });
+    }
+  }
+
+  if (!res.ok) {
+    let errorBody: ApiError | null = null;
+    try {
+      errorBody = (await res.json()) as ApiError;
+    } catch {
+      // noop
+    }
+    throw new ApiError_(res.status, errorBody);
+  }
+
+  const json = (await res.json()) as ApiResponse<T>;
+  if (!json.success) {
+    throw new ApiError_(res.status, { success: false, message: json.message, error: json.message });
+  }
+  return json.data;
+}

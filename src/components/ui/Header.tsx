@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/Badge';
+import { NotificationBell } from '@/components/ui/NotificationBell';
 import { useAuth } from '@/libs/auth';
 import { roleVariant } from '@/libs/badges';
 
@@ -55,6 +56,7 @@ export function Header(props: HeaderProps) {
             {theme === 'dark' ? <Sun className="size-5" /> : <Moon className="size-5" />}
           </button>
         )}
+        <NotificationBell />
         {user !== null && (
           <div className="flex items-center gap-3">
             <span className="text-sm font-medium text-foreground">

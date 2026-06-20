@@ -27,9 +27,12 @@ export default function AgreementsPage() {
   const fetchData = useCallback(async (p: number) => {
     setLoading(true);
     try {
-      const res = await apiFetch<PaginatedData<OwnerAgreementOutput>>('/owner-agreements/', {
-        query: { page: p },
-      });
+      const res = await apiFetch<PaginatedData<OwnerAgreementOutput>>(
+        '/contracts/owner-agreements/',
+        {
+          query: { page: p },
+        },
+      );
       setData(res.page.object_list);
       setTotalPages(res.num_pages);
     } catch {

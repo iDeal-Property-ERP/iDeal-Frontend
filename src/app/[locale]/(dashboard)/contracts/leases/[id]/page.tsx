@@ -44,7 +44,7 @@ export default function LeaseDetailPage(props: { params: Promise<{ id: string }>
   });
 
   useEffect(() => {
-    apiFetch<LeaseOutput>(`/leases/${params.id}/`)
+    apiFetch<LeaseOutput>(`/contracts/leases/${params.id}/`)
       .then(setLease)
       .catch(() => {
         void 0;
@@ -58,8 +58,8 @@ export default function LeaseDetailPage(props: { params: Promise<{ id: string }>
     setRenewing(true);
     setRenewError(null);
     try {
-      await apiFetch(`/leases/${params.id}/renew/`, { method: 'POST', body: data });
-      const updated = await apiFetch<LeaseOutput>(`/leases/${params.id}/`);
+      await apiFetch(`/contracts/leases/${params.id}/renew/`, { method: 'POST', body: data });
+      const updated = await apiFetch<LeaseOutput>(`/contracts/leases/${params.id}/`);
       setLease(updated);
     } catch (_error) {
       setRenewError(_error instanceof Error ? _error.message : 'Failed to renew');
