@@ -4,13 +4,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useState, useEffect, use } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/DataTable';
 import { FormField } from '@/components/ui/FormField';
-import { Input } from '@/components/ui/Input';
+import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Select } from '@/components/ui/Select';
+import { Select } from '@/components/ui/select';
 import { apiFetch } from '@/libs/api';
 import type { AgentOutput, DealOutput } from '@/types/agent';
 import type { PaginatedData } from '@/types/api';
@@ -152,7 +152,7 @@ export default function AgentDetailPage(props: { params: Promise<{ id: string }>
               <option value="cancelled">Cancelled</option>
             </Select>
           </FormField>
-          <Button type="submit" intent="primary">
+          <Button type="submit" variant="default">
             Create Deal
           </Button>
         </form>

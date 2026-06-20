@@ -1,5 +1,5 @@
 import type { VariantProps } from 'class-variance-authority';
-import type { badgeVariants } from '@/components/ui/Badge';
+import type { badgeVariants } from '@/components/ui/badge';
 
 type BadgeVariant = NonNullable<VariantProps<typeof badgeVariants>['variant']>;
 

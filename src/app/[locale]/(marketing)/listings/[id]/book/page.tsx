@@ -6,10 +6,10 @@ import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { Alert } from '@/components/ui/Alert';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Textarea } from '@/components/ui/Textarea';
+import { Alert } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Env } from '@/libs/Env';
 import { Link } from '@/libs/I18nNavigation';
 import type { ViewingOutput } from '@/types/marketplace';
@@ -162,7 +162,7 @@ export default function BookViewingPage() {
 
         <Button
           type="submit"
-          intent="primary"
+          variant="default"
           size="lg"
           className="w-full"
           disabled={form.formState.isSubmitting}

@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useState, useEffect, useCallback } from 'react';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/DataTable';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { apiFetch } from '@/libs/api';
@@ -61,7 +61,7 @@ export default function OwnerPropertiesPage() {
         backHref="/owner"
         actions={
           <Button
-            intent="outline"
+            variant="outline"
             onClick={() => {
               router.push('/owner');
             }}

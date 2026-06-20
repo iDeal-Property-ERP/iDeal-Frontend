@@ -2,11 +2,11 @@
 
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/DataTable';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Select } from '@/components/ui/Select';
+import { Select } from '@/components/ui/select';
 import { apiFetch } from '@/libs/api';
 import { useRouter } from '@/libs/I18nNavigation';
 import type { PaginatedData } from '@/types/api';
@@ -77,7 +77,7 @@ export default function InventoryActsPage() {
             header: '',
             render: (a: InventoryActListOutput) => (
               <Button
-                intent="outline"
+                variant="outline"
                 size="sm"
                 onClick={() => {
                   router.push(`/management/inventory/${a.id}`);

@@ -5,13 +5,13 @@ import { useTranslations } from 'next-intl';
 import { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/DataTable';
 import { FormField } from '@/components/ui/FormField';
-import { Input } from '@/components/ui/Input';
+import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Select } from '@/components/ui/Select';
+import { Select } from '@/components/ui/select';
 import { apiFetch } from '@/libs/api';
 import { maintenanceStatusVariant, priorityVariant } from '@/libs/badges';
 import { useRouter } from '@/libs/I18nNavigation';
@@ -112,7 +112,7 @@ export default function TenantServiceRequestsPage() {
         backHref="/tenant"
         actions={
           <Button
-            intent="outline"
+            variant="outline"
             onClick={() => {
               router.push('/tenant');
             }}
@@ -145,7 +145,7 @@ export default function TenantServiceRequestsPage() {
               <option value="critical">Critical</option>
             </Select>
           </FormField>
-          <Button type="submit" intent="primary" disabled={submitting}>
+          <Button type="submit" variant="default" disabled={submitting}>
             {submitting ? 'Creating...' : 'Create'}
           </Button>
         </form>

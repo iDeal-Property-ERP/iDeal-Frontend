@@ -3,7 +3,9 @@ import type { Metadata, Viewport } from 'next';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
+import { Toaster } from '@/components/ui/sonner';
 import { ThemeProvider } from '@/components/ui/ThemeProvider';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { routing } from '@/libs/I18nRouting';
 import { logger } from '@/libs/Logger';
 import '@/styles/global.css';
@@ -59,7 +61,10 @@ export default async function RootLayout(props: {
     <html lang={locale} suppressHydrationWarning className={GeistSans.variable}>
       <body>
         <ThemeProvider>
-          <NextIntlClientProvider>{props.children}</NextIntlClientProvider>
+          <NextIntlClientProvider>
+            <TooltipProvider>{props.children}</TooltipProvider>
+            <Toaster />
+          </NextIntlClientProvider>
         </ThemeProvider>
       </body>
     </html>

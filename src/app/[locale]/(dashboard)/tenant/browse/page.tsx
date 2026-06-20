@@ -2,9 +2,9 @@
 
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useState } from 'react';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/ui/FormField';
-import { Input } from '@/components/ui/Input';
+import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { apiFetch } from '@/libs/api';
 import type { ListingOutput } from '@/types/marketplace';
@@ -117,7 +117,7 @@ export default function BrowseHomesPage() {
                       {t('request_booking')}
                     </Button>
                     <Button
-                      intent="outline"
+                      variant="outline"
                       size="sm"
                       onClick={() => {
                         setActive(null);

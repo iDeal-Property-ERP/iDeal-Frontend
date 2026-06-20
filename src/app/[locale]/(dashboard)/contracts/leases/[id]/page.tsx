@@ -4,10 +4,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useState, useEffect, use } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/ui/FormField';
-import { Input } from '@/components/ui/Input';
+import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { apiFetch } from '@/libs/api';
 import { leaseStatusVariant } from '@/libs/badges';
@@ -146,7 +146,7 @@ export default function LeaseDetailPage(props: { params: Promise<{ id: string }>
                 <Input {...register('deposit')} />
               </FormField>
             </div>
-            <Button type="submit" intent="primary" disabled={renewing}>
+            <Button type="submit" variant="default" disabled={renewing}>
               {renewing ? 'Renewing...' : 'Renew Lease'}
             </Button>
           </form>

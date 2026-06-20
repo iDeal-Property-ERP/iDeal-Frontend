@@ -2,11 +2,11 @@
 
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
-import { Alert } from '@/components/ui/Alert';
-import { Badge } from '@/components/ui/Badge';
+import { Alert } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { DataTable } from '@/components/ui/DataTable';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Skeleton } from '@/components/ui/Skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 import { StatsCard } from '@/components/ui/StatsCard';
 import { apiFetch } from '@/libs/api';
 import { maintenanceStatusVariant, paymentStatusVariant, priorityVariant } from '@/libs/badges';

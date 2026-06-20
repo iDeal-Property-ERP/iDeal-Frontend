@@ -3,11 +3,11 @@
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Select } from '@/components/ui/Select';
+import { Select } from '@/components/ui/select';
 import { apiFetch, apiUpload } from '@/libs/api';
 import type { ConditionRating } from '@/types/enums';
 import type { InventoryActItemInput, InventoryActOutput } from '@/types/inventory';
@@ -145,7 +145,7 @@ export default function InventoryActDetailPage() {
         {isDraft ? (
           <div className="flex gap-2">
             <Button
-              intent="outline"
+              variant="outline"
               size="sm"
               onClick={() => {
                 setItems([...items, { area: '', condition: 'good', notes: '' }]);

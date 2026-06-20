@@ -2,13 +2,13 @@
 
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useState } from 'react';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/DataTable';
 import { FormField } from '@/components/ui/FormField';
-import { Input } from '@/components/ui/Input';
+import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Select } from '@/components/ui/Select';
+import { Select } from '@/components/ui/select';
 import { apiFetch } from '@/libs/api';
 import type { VASServiceType } from '@/types/enums';
 import type { ServiceCatalogItemCreatePayload, ServiceCatalogItemOutput } from '@/types/vas';

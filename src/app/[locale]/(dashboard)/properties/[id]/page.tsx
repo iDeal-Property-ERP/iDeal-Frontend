@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect, use } from 'react';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { apiFetch } from '@/libs/api';
 import { propertyStatusVariant } from '@/libs/badges';
@@ -57,14 +57,14 @@ export default function PropertyDetailPage(props: { params: Promise<{ id: string
         actions={
           <div className="flex gap-2">
             <Button
-              intent="outline"
+              variant="outline"
               onClick={() => {
                 router.push(`/properties/${params.id}/edit`);
               }}
             >
               Edit
             </Button>
-            <Button intent="destructive" onClick={handleDelete} disabled={deleting}>
+            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
               {deleting ? 'Deleting...' : 'Delete'}
             </Button>
           </div>

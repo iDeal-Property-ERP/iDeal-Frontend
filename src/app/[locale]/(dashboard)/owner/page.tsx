@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/DataTable';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { StatsCard } from '@/components/ui/StatsCard';
@@ -58,7 +58,7 @@ export default function OwnerDashboardPage() {
         description={t('owner_dashboard_desc')}
         actions={
           <Button
-            intent="outline"
+            variant="outline"
             onClick={() => {
               router.push('/owner/properties');
             }}

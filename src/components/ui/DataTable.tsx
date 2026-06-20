@@ -2,8 +2,8 @@
 
 import { useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
-import { Button } from '@/components/ui/Button';
-import { Skeleton } from '@/components/ui/Skeleton';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Link } from '@/libs/I18nNavigation';
 import { cn } from '@/libs/utils';
 
@@ -131,7 +131,7 @@ export function DataTable<T>(props: DataTableProps<T>) {
             </span>
             <div className="flex gap-2">
               <Button
-                intent="outline"
+                variant="outline"
                 size="sm"
                 disabled={props.page <= 1}
                 onClick={() => {
@@ -141,7 +141,7 @@ export function DataTable<T>(props: DataTableProps<T>) {
                 {t('previous')}
               </Button>
               <Button
-                intent="outline"
+                variant="outline"
                 size="sm"
                 disabled={
                   props.page !== undefined &&

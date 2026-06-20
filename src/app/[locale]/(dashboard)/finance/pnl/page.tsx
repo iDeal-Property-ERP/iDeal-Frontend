@@ -5,11 +5,11 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/ui/FormField';
-import { Input } from '@/components/ui/Input';
+import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Select } from '@/components/ui/Select';
+import { Select } from '@/components/ui/select';
 import { StatsCard } from '@/components/ui/StatsCard';
 import { apiFetch } from '@/libs/api';
 import { useRouter } from '@/libs/I18nNavigation';
@@ -60,7 +60,7 @@ export default function PnLPage() {
         description={t('profit_and_loss_desc')}
         actions={
           <Button
-            intent="outline"
+            variant="outline"
             onClick={() => {
               router.push('/finance');
             }}
@@ -83,7 +83,7 @@ export default function PnLPage() {
             ))}
           </Select>
         </FormField>
-        <Button type="submit" intent="primary" disabled={loading}>
+        <Button type="submit" variant="default" disabled={loading}>
           {loading ? 'Loading...' : 'Generate'}
         </Button>
       </form>

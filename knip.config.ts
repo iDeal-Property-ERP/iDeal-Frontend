@@ -6,8 +6,11 @@ const config: KnipConfig = {
     'src/types/I18n.ts',
     'src/components/LocaleSwitcher.tsx',
     'src/templates/BaseTemplate.tsx',
+    // shadcn/ui is a vendored component library: keep primitives available
+    // even when not yet consumed by a page.
+    'src/components/ui/**',
   ],
-  ignoreDependencies: ['@swc/helpers', 'vitest-browser-react'],
+  ignoreDependencies: ['@swc/helpers', 'vitest-browser-react', 'cmdk'],
   rules: {
     exports: 'off',
     types: 'off',

@@ -2,12 +2,12 @@
 
 import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/DataTable';
-import { Input } from '@/components/ui/Input';
+import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Select } from '@/components/ui/Select';
+import { Select } from '@/components/ui/select';
 import { apiFetch } from '@/libs/api';
 import { roleVariant } from '@/libs/badges';
 import type { PaginatedData } from '@/types/api';
@@ -131,7 +131,7 @@ export default function ManagementUsersPage() {
             render: (user: UserOutput) => (
               <Button
                 type="button"
-                intent="ghost"
+                variant="ghost"
                 size="sm"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -251,14 +251,14 @@ export default function ManagementUsersPage() {
             <div className="mt-6 flex justify-end gap-3">
               <Button
                 type="button"
-                intent="outline"
+                variant="outline"
                 onClick={() => {
                   setEditingUser(null);
                 }}
               >
                 Cancel
               </Button>
-              <Button type="button" intent="primary" onClick={handleSave} disabled={saving}>
+              <Button type="button" variant="default" onClick={handleSave} disabled={saving}>
                 {saving ? 'Saving...' : 'Save'}
               </Button>
             </div>

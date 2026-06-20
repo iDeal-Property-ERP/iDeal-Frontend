@@ -1,6 +1,7 @@
 @layer theme, base, clerk, components, utilities;
 
 @import 'tailwindcss';
+@import 'tw-animate-css';
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -28,6 +29,15 @@
   /* Secondary */
   --secondary: oklch(0.955 0.013 265);
   --secondary-foreground: oklch(0.2 0.02 265);
+
+  /* shadcn aliases — popover mirrors card, accent mirrors muted */
+  --popover: oklch(0.995 0.004 265);
+  --popover-foreground: oklch(0.13 0.025 265);
+  --accent: oklch(0.955 0.013 265);
+  --accent-foreground: oklch(0.2 0.02 265);
+  /* destructive aliases the danger scale so shadcn components drop in cleanly */
+  --destructive: oklch(0.47 0.19 27);
+  --destructive-foreground: oklch(0.985 0 0);
 
   /* Semantic status */
   --success: oklch(0.46 0.14 145);
@@ -78,6 +88,15 @@
   --secondary: oklch(0.185 0.02 265);
   --secondary-foreground: oklch(0.97 0.007 265);
 
+  /* shadcn aliases — popover mirrors card, accent mirrors muted */
+  --popover: oklch(0.138 0.018 265);
+  --popover-foreground: oklch(0.97 0.007 265);
+  --accent: oklch(0.185 0.02 265);
+  --accent-foreground: oklch(0.97 0.007 265);
+  /* destructive aliases the danger scale so shadcn components drop in cleanly */
+  --destructive: oklch(0.65 0.18 27);
+  --destructive-foreground: oklch(0.09 0 0);
+
   /* Semantic status — adjusted for dark surfaces */
   --success: oklch(0.62 0.16 145);
   --success-foreground: oklch(0.09 0 0);
@@ -124,6 +143,14 @@
   /* Secondary */
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
+
+  /* shadcn aliases */
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
 
   /* Status */
   --color-success: var(--success);

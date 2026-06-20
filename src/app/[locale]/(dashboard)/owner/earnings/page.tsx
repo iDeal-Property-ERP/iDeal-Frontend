@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { StatsCard } from '@/components/ui/StatsCard';
 import { apiFetch } from '@/libs/api';
@@ -44,7 +44,7 @@ export default function OwnerEarningsPage() {
         backHref="/owner"
         actions={
           <Button
-            intent="outline"
+            variant="outline"
             onClick={() => {
               router.push('/owner');
             }}

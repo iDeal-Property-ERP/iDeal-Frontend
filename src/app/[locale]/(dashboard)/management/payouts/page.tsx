@@ -2,12 +2,12 @@
 
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/DataTable';
-import { Input } from '@/components/ui/Input';
+import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Select } from '@/components/ui/Select';
+import { Select } from '@/components/ui/select';
 import { apiFetch } from '@/libs/api';
 import { paymentStatusVariant } from '@/libs/badges';
 import type { PaginatedData } from '@/types/api';
@@ -104,7 +104,7 @@ export default function ManagementPayoutsPage() {
             render: (po: ManagementPayoutOutput) =>
               po.status === 'scheduled' ? (
                 <Button
-                  intent="outline"
+                  variant="outline"
                   size="sm"
                   onClick={() => {
                     markPaid(po.id).catch(() => {

@@ -5,11 +5,11 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/ui/FormField';
-import { Input } from '@/components/ui/Input';
+import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Textarea } from '@/components/ui/Textarea';
+import { Textarea } from '@/components/ui/textarea';
 import { apiFetch } from '@/libs/api';
 import { useRouter } from '@/libs/I18nNavigation';
 import type { OwnerOnboardingOutput, PublicOfferOutput } from '@/types/owner';
@@ -142,7 +142,7 @@ export default function OwnerOnboardingPage() {
           </label>
         </div>
 
-        <Button type="submit" intent="primary" disabled={submitting || !accepted}>
+        <Button type="submit" variant="default" disabled={submitting || !accepted}>
           {submitting ? t('onboarding_submitting') : t('onboarding_submit')}
         </Button>
       </form>

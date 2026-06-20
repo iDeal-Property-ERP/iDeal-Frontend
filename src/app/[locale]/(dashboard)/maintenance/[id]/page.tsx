@@ -4,12 +4,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useState, useEffect, use } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/ui/FormField';
-import { Input } from '@/components/ui/Input';
+import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Textarea } from '@/components/ui/Textarea';
+import { Textarea } from '@/components/ui/textarea';
 import { apiFetch } from '@/libs/api';
 import { maintenanceStatusVariant, priorityVariant } from '@/libs/badges';
 import type { ServiceRequestOutput } from '@/types/maintenance';
@@ -157,7 +157,7 @@ export default function ServiceRequestDetailPage(props: { params: Promise<{ id: 
               >
                 <Textarea {...resolveForm.register('resolution_notes')} rows={2} />
               </FormField>
-              <Button type="submit" intent="primary">
+              <Button type="submit" variant="default">
                 Resolve
               </Button>
             </form>

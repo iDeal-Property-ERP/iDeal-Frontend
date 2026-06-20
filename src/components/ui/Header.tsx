@@ -4,7 +4,7 @@ import { Menu, Moon, Sun } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
-import { Badge } from '@/components/ui/Badge';
+import { Badge } from '@/components/ui/badge';
 import { NotificationBell } from '@/components/ui/NotificationBell';
 import { useAuth } from '@/libs/auth';
 import { roleVariant } from '@/libs/badges';

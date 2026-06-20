@@ -2,13 +2,13 @@
 
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/DataTable';
 import { FormField } from '@/components/ui/FormField';
-import { Input } from '@/components/ui/Input';
+import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Select } from '@/components/ui/Select';
+import { Select } from '@/components/ui/select';
 import { apiFetch } from '@/libs/api';
 import type { PaginatedData } from '@/types/api';
 import type { ManagementBookingOutput } from '@/types/marketplace';
@@ -102,7 +102,7 @@ export default function ManagementBookingsPage() {
             {t('booking_confirm_convert')}
           </Button>
           <Button
-            intent="outline"
+            variant="outline"
             onClick={() => {
               setConverting(null);
             }}
@@ -141,7 +141,7 @@ export default function ManagementBookingsPage() {
                       {t('booking_approve')}
                     </Button>
                     <Button
-                      intent="destructive"
+                      variant="destructive"
                       size="sm"
                       onClick={() => {
                         act(b.id, 'reject').catch(() => {

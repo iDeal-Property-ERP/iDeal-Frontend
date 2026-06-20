@@ -2,7 +2,7 @@
 
 import { cva } from 'class-variance-authority';
 import type { VariantProps } from 'class-variance-authority';
-import { Card, CardContent } from '@/components/ui/Card';
+import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/libs/utils';
 
 const valueVariants = cva('mt-1 text-2xl font-semibold tracking-tight', {

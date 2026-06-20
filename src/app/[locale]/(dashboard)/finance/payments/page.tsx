@@ -2,8 +2,8 @@
 
 import { useTranslations } from 'next-intl';
 import { useState, useEffect, useCallback } from 'react';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/DataTable';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { apiFetch } from '@/libs/api';
@@ -70,7 +70,7 @@ export default function PaymentsListPage() {
         actions={
           <div className="flex gap-2">
             <Button
-              intent="outline"
+              variant="outline"
               onClick={() => {
                 router.push('/finance');
               }}
@@ -78,7 +78,7 @@ export default function PaymentsListPage() {
               Back to Finance
             </Button>
             <Button
-              intent="primary"
+              variant="default"
               onClick={() => {
                 router.push('/finance/payments/new');
               }}

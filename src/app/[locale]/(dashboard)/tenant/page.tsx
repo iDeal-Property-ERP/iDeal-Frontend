@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { apiFetch } from '@/libs/api';
 import { useRouter } from '@/libs/I18nNavigation';
@@ -81,7 +81,7 @@ export default function TenantHomePage() {
           <h3 className="text-sm font-medium text-muted-foreground">Quick Actions</h3>
           <div className="mt-4 flex flex-col gap-2">
             <Button
-              intent="outline"
+              variant="outline"
               onClick={() => {
                 router.push('/tenant/payments');
               }}
@@ -90,7 +90,7 @@ export default function TenantHomePage() {
               Payment History
             </Button>
             <Button
-              intent="outline"
+              variant="outline"
               onClick={() => {
                 router.push('/tenant/service-requests');
               }}

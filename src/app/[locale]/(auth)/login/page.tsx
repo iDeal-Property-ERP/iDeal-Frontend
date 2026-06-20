@@ -5,9 +5,9 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { Alert } from '@/components/ui/Alert';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { Alert } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { useAuth, roleDashboardMap } from '@/libs/auth';
 import { useRouter } from '@/libs/I18nNavigation';
 
@@ -83,7 +83,7 @@ export default function LoginPage() {
 
         <Button
           type="submit"
-          intent="primary"
+          variant="default"
           size="lg"
           className="w-full"
           disabled={form.formState.isSubmitting}
