@@ -1,12 +1,20 @@
 'use client';
 
+import type { ColumnDef } from '@tanstack/react-table';
 import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { DataTable } from '@/components/ui/DataTable';
 import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Select } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { apiFetch } from '@/libs/api';
 import { leaseStatusVariant } from '@/libs/badges';
 import type { PaginatedData } from '@/types/api';
@@ -60,57 +68,63 @@ export default function ManagementLeasesPage() {
 
   if (error) {
     return (
-      <div className="rounded-lg border border-danger/30 bg-danger-subtle p-4 text-danger">
-        {error}
-      </div>
+      <Alert variant="danger">
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
     );
   }
+
+  const columns: ColumnDef<ManagementLeaseOutput>[] = [
+    { accessorKey: 'property_name', header: 'Property' },
+    { accessorKey: 'tenant_name', header: 'Tenant' },
+    { accessorKey: 'start_date', header: 'Start Date' },
+    { accessorKey: 'end_date', header: 'End Date' },
+    {
+      accessorKey: 'monthly_rent',
+      header: 'Monthly Rent',
+      cell: ({ row }) => `$${row.original.monthly_rent}`,
+    },
+    {
+      accessorKey: 'status',
+      header: 'Status',
+      cell: ({ row }) => (
+        <Badge variant={leaseStatusVariant(row.original.status)}>{row.original.status}</Badge>
+      ),
+    },
+  ];
 
   return (
     <div className="space-y-6">
       <PageHeader title={t('leases')} description={t('leases_desc')} />
 
       <DataTable
-        columns={[
-          { key: 'property_name', header: 'Property' },
-          { key: 'tenant_name', header: 'Tenant' },
-          { key: 'start_date', header: 'Start Date' },
-          { key: 'end_date', header: 'End Date' },
-          {
-            key: 'monthly_rent',
-            header: 'Monthly Rent',
-            render: (lease: ManagementLeaseOutput) => `$${lease.monthly_rent}`,
-          },
-          {
-            key: 'status',
-            header: 'Status',
-            render: (lease: ManagementLeaseOutput) => (
-              <Badge variant={leaseStatusVariant(lease.status)}>{lease.status}</Badge>
-            ),
-          },
-        ]}
+        columns={columns}
         data={data}
         isLoading={isLoading}
         emptyMessage="No leases found"
-        keyExtractor={(item) => item.id}
         page={page}
         totalPages={totalPages}
         onPageChange={setPage}
         filters={
           <div className="flex flex-col gap-3 sm:flex-row">
             <Select
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
+              value={statusFilter || 'all'}
+              onValueChange={(v) => {
+                setStatusFilter(v === 'all' ? '' : v);
                 setPage(1);
               }}
-              className="w-auto"
             >
-              {STATUSES.map((s) => (
-                <option key={s} value={s}>
-                  {s || 'All statuses'}
-                </option>
-              ))}
+              <SelectTrigger className="w-auto min-w-36">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All statuses</SelectItem>
+                {STATUSES.filter(Boolean).map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {s}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
             <Input
               type="text"

@@ -3,13 +3,19 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
-import { FormField } from '@/components/ui/FormField';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Select } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { StatsCard } from '@/components/ui/StatsCard';
 import { apiFetch } from '@/libs/api';
 import { useRouter } from '@/libs/I18nNavigation';
@@ -32,7 +38,7 @@ export default function PnLPage() {
   const [data, setData] = useState<PnLOutput | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const { register, handleSubmit } = useForm({
+  const { register, handleSubmit, control } = useForm({
     resolver: zodResolver(filterSchema),
     defaultValues: { year: new Date().getFullYear() },
   });
@@ -70,19 +76,35 @@ export default function PnLPage() {
         }
       />
       <form onSubmit={handleSubmit(onSubmit)} className="mb-6 flex items-end gap-4">
-        <FormField label="Year" error="">
-          <Input type="number" {...register('year')} className="w-28" />
-        </FormField>
-        <FormField label="Month" error="">
-          <Select {...register('month')} className="w-28">
-            <option value="">All</option>
-            {Array.from({ length: 12 }, (_, i) => (
-              <option key={i + 1} value={i + 1}>
-                {i + 1}
-              </option>
-            ))}
-          </Select>
-        </FormField>
+        <div className="grid gap-1.5">
+          <Label htmlFor="year">Year</Label>
+          <Input id="year" type="number" {...register('year')} className="w-28" />
+        </div>
+        <div className="grid gap-1.5">
+          <Label htmlFor="month">Month</Label>
+          <Controller
+            control={control}
+            name="month"
+            render={({ field }) => (
+              <Select
+                value={field.value ? String(field.value) : 'all'}
+                onValueChange={(v) => field.onChange(v === 'all' ? '' : v)}
+              >
+                <SelectTrigger id="month" className="w-28">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                    <SelectItem key={m} value={String(m)}>
+                      {m}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+        </div>
         <Button type="submit" variant="default" disabled={loading}>
           {loading ? 'Loading...' : 'Generate'}
         </Button>

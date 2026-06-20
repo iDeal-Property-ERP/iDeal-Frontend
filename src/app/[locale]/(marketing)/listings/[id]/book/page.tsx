@@ -1,28 +1,27 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2Icon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { Form } from '@/components/ui/form';
+import { DateField, TextareaField, TextField } from '@/components/ui/form-fields';
 import { Env } from '@/libs/Env';
+import { createApiSubmit } from '@/libs/forms';
 import { Link } from '@/libs/I18nNavigation';
 import type { ViewingOutput } from '@/types/marketplace';
 
 const bookViewingSchema = z.object({
   full_name: z.string().min(1),
-  phone: z.string().min(1),
+  phone: z.string().min(7, 'Please enter a valid phone number'),
   email: z.email(),
   preferred_date: z.string().min(1),
   message: z.string().optional(),
 });
-
-type BookViewingFormValues = z.infer<typeof bookViewingSchema>;
 
 /**
  * Book a viewing page for a specific listing, submitting contact details to the API.
@@ -31,10 +30,9 @@ type BookViewingFormValues = z.infer<typeof bookViewingSchema>;
 export default function BookViewingPage() {
   const t = useTranslations('BookViewingPage');
   const { id } = useParams<{ id: string }>();
-  const [serverError, setServerError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  const form = useForm<BookViewingFormValues>({
+  const form = useForm({
     resolver: zodResolver(bookViewingSchema),
     defaultValues: {
       full_name: '',
@@ -45,9 +43,8 @@ export default function BookViewingPage() {
     },
   });
 
-  const onSubmit = form.handleSubmit(async (data) => {
-    setServerError(null);
-    try {
+  const onSubmit = createApiSubmit(form, {
+    submit: async (data) => {
       const res = await fetch(
         `${Env.NEXT_PUBLIC_API_URL}/marketplace/listings/${id}/book-viewing/`,
         {
@@ -61,14 +58,14 @@ export default function BookViewingPage() {
         message?: string;
         data: ViewingOutput;
       };
-      if (json.success) {
-        setIsSuccess(true);
-      } else {
+      if (!json.success) {
         throw new Error(json.message ?? t('booking_failed'));
       }
-    } catch (error) {
-      setServerError(error instanceof Error ? error.message : t('booking_failed'));
-    }
+      return json.data;
+    },
+    success: t('booking_success'),
+    error: t('booking_failed'),
+    onSuccess: () => setIsSuccess(true),
   });
 
   if (isSuccess) {
@@ -76,100 +73,69 @@ export default function BookViewingPage() {
       <div className="mx-auto max-w-md px-4 py-16 text-center">
         <h1 className="mb-4 text-2xl font-bold text-foreground">{t('booking_success')}</h1>
         <p className="mb-6 text-muted-foreground">{t('booking_success_message')}</p>
-        <Link
-          href={`/listings/${id}`}
-          className="inline-block rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-        >
-          {t('back_to_listing')}
-        </Link>
+        <Button asChild variant="default">
+          <Link href={`/listings/${id}`}>{t('back_to_listing')}</Link>
+        </Button>
       </div>
     );
   }
 
   return (
     <div className="mx-auto max-w-md px-4 py-8">
-      <Link
-        href={`/listings/${id}`}
-        className="mb-6 inline-block text-sm text-muted-foreground hover:text-foreground"
+      <Button
+        asChild
+        variant="ghost"
+        className="mb-6 px-0 text-sm text-muted-foreground hover:bg-transparent hover:text-foreground"
       >
-        &larr; {t('back_to_listing')}
-      </Link>
+        <Link href={`/listings/${id}`}>&larr; {t('back_to_listing')}</Link>
+      </Button>
 
       <h1 className="mb-6 text-2xl font-bold text-foreground">{t('book_a_viewing')}</h1>
 
-      <form onSubmit={onSubmit} className="space-y-4">
-        <div>
-          <label htmlFor="full_name" className="block text-sm font-medium text-foreground">
-            {t('full_name')}
-          </label>
-          <Input id="full_name" type="text" className="mt-1" {...form.register('full_name')} />
-          {form.formState.errors.full_name && (
-            <p className="mt-1 text-sm text-danger">{t('field_required')}</p>
-          )}
-        </div>
-
-        <div>
-          <label htmlFor="phone" className="block text-sm font-medium text-foreground">
-            {t('phone')}
-          </label>
-          <Input id="phone" type="tel" className="mt-1" {...form.register('phone')} />
-          {form.formState.errors.phone && (
-            <p className="mt-1 text-sm text-danger">{t('field_required')}</p>
-          )}
-        </div>
-
-        <div>
-          <label htmlFor="email" className="block text-sm font-medium text-foreground">
-            {t('email')}
-          </label>
-          <Input id="email" type="email" className="mt-1" {...form.register('email')} />
-          {form.formState.errors.email && (
-            <p className="mt-1 text-sm text-danger">
-              {form.formState.errors.email.type === 'invalid_string'
-                ? t('invalid_email')
-                : t('field_required')}
-            </p>
-          )}
-        </div>
-
-        <div>
-          <label htmlFor="preferred_date" className="block text-sm font-medium text-foreground">
-            {t('preferred_date')}
-          </label>
-          <Input
-            id="preferred_date"
-            type="date"
-            className="mt-1"
-            {...form.register('preferred_date')}
+      <Form {...form}>
+        <form onSubmit={onSubmit} className="space-y-4">
+          <TextField control={form.control} name="full_name" label={t('full_name')} required />
+          <TextField
+            control={form.control}
+            name="phone"
+            label={t('phone')}
+            type="tel"
+            inputMode="tel"
+            required
           />
-          {form.formState.errors.preferred_date && (
-            <p className="mt-1 text-sm text-danger">{t('field_required')}</p>
-          )}
-        </div>
+          <TextField
+            control={form.control}
+            name="email"
+            label={t('email')}
+            type="email"
+            inputMode="email"
+            required
+          />
+          <DateField
+            control={form.control}
+            name="preferred_date"
+            label={t('preferred_date')}
+            required
+          />
+          <TextareaField
+            control={form.control}
+            name="message"
+            label={`${t('message')} (${t('optional')})`}
+            rows={3}
+          />
 
-        <div>
-          <label htmlFor="message" className="block text-sm font-medium text-foreground">
-            {t('message')} ({t('optional')})
-          </label>
-          <Textarea id="message" rows={3} className="mt-1" {...form.register('message')} />
-        </div>
-
-        {serverError && (
-          <Alert variant="danger" className="text-sm">
-            {serverError}
-          </Alert>
-        )}
-
-        <Button
-          type="submit"
-          variant="default"
-          size="lg"
-          className="w-full"
-          disabled={form.formState.isSubmitting}
-        >
-          {form.formState.isSubmitting ? t('submitting') : t('submit')}
-        </Button>
-      </form>
+          <Button
+            type="submit"
+            variant="default"
+            size="lg"
+            className="w-full"
+            disabled={form.formState.isSubmitting}
+          >
+            {form.formState.isSubmitting ? <Loader2Icon className="animate-spin" /> : null}
+            {form.formState.isSubmitting ? t('submitting') : t('submit')}
+          </Button>
+        </form>
+      </Form>
     </div>
   );
 }

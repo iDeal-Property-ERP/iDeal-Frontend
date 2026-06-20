@@ -1,13 +1,15 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2Icon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Form } from '@/components/ui/form';
+import { TextField } from '@/components/ui/form-fields';
 import { useAuth, roleDashboardMap } from '@/libs/auth';
 import { useRouter } from '@/libs/I18nNavigation';
 
@@ -15,8 +17,6 @@ const loginSchema = z.object({
   username: z.string().min(1),
   password: z.string().min(1),
 });
-
-type LoginFormValues = z.infer<typeof loginSchema>;
 
 /**
  * Login page with username/password form and role-based redirect on success.
@@ -28,7 +28,7 @@ export default function LoginPage() {
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
 
-  const form = useForm<LoginFormValues>({
+  const form = useForm({
     resolver: zodResolver(loginSchema),
     defaultValues: { username: '', password: '' },
   });
@@ -54,43 +54,35 @@ export default function LoginPage() {
       <h1 className="mb-2 text-center text-2xl font-bold tracking-tight text-foreground">iDeal</h1>
       <p className="mb-6 text-center text-sm text-muted-foreground">{t('sign_in_to_continue')}</p>
 
-      <form onSubmit={onSubmit} className="space-y-4">
-        <div>
-          <label htmlFor="username" className="block text-sm font-medium text-foreground">
-            {t('username')}
-          </label>
-          <Input id="username" type="text" className="mt-1" {...form.register('username')} />
-          {form.formState.errors.username && (
-            <p className="mt-1 text-sm text-danger">{t('field_required')}</p>
+      <Form {...form}>
+        <form onSubmit={onSubmit} className="space-y-4">
+          <TextField control={form.control} name="username" label={t('username')} required />
+          <TextField
+            control={form.control}
+            name="password"
+            label={t('password')}
+            type="password"
+            required
+          />
+
+          {serverError && (
+            <Alert variant="danger" className="text-sm">
+              {serverError}
+            </Alert>
           )}
-        </div>
 
-        <div>
-          <label htmlFor="password" className="block text-sm font-medium text-foreground">
-            {t('password')}
-          </label>
-          <Input id="password" type="password" className="mt-1" {...form.register('password')} />
-          {form.formState.errors.password && (
-            <p className="mt-1 text-sm text-danger">{t('field_required')}</p>
-          )}
-        </div>
-
-        {serverError && (
-          <Alert variant="danger" className="text-sm">
-            {serverError}
-          </Alert>
-        )}
-
-        <Button
-          type="submit"
-          variant="default"
-          size="lg"
-          className="w-full"
-          disabled={form.formState.isSubmitting}
-        >
-          {form.formState.isSubmitting ? t('signing_in') : t('sign_in')}
-        </Button>
-      </form>
+          <Button
+            type="submit"
+            variant="default"
+            size="lg"
+            className="w-full"
+            disabled={form.formState.isSubmitting}
+          >
+            {form.formState.isSubmitting ? <Loader2Icon className="animate-spin" /> : null}
+            {form.formState.isSubmitting ? t('signing_in') : t('sign_in')}
+          </Button>
+        </form>
+      </Form>
 
       <p className="mt-4 text-center">
         <span className="text-sm text-muted-foreground">{t('forgot_password')}</span>

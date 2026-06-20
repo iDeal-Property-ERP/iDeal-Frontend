@@ -1,14 +1,21 @@
 'use client';
 
+import type { ColumnDef } from '@tanstack/react-table';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/DataTable';
-import { FormField } from '@/components/ui/FormField';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Select } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { apiFetch } from '@/libs/api';
 import type { PaginatedData } from '@/types/api';
 import type { ManagementBookingOutput } from '@/types/marketplace';
@@ -75,6 +82,66 @@ export default function ManagementBookingsPage() {
     }
   }
 
+  const columns: ColumnDef<ManagementBookingOutput>[] = [
+    { accessorKey: 'tenant_name', header: 'Tenant' },
+    { accessorKey: 'property_name', header: 'Property' },
+    { accessorKey: 'requested_start_date', header: 'From' },
+    { accessorKey: 'requested_end_date', header: 'To' },
+    {
+      accessorKey: 'status',
+      header: 'Status',
+      cell: ({ row }) => <Badge>{row.original.status}</Badge>,
+    },
+    {
+      id: 'actions',
+      header: '',
+      enableSorting: false,
+      cell: ({ row }) => {
+        const b = row.original;
+        return (
+          <div className="flex gap-2">
+            {b.status === 'requested' ? (
+              <>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    act(b.id, 'approve').catch(() => {
+                      void 0;
+                    });
+                  }}
+                >
+                  {t('booking_approve')}
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => {
+                    act(b.id, 'reject').catch(() => {
+                      void 0;
+                    });
+                  }}
+                >
+                  {t('booking_reject')}
+                </Button>
+              </>
+            ) : null}
+            {b.status === 'approved' ? (
+              <Button
+                size="sm"
+                onClick={() => {
+                  setConverting(b);
+                  setRent('');
+                }}
+              >
+                {t('booking_convert')}
+              </Button>
+            ) : null}
+          </div>
+        );
+      },
+    },
+  ];
+
   return (
     <div className="space-y-6">
       <PageHeader title={t('bookings')} description={t('bookings_desc')} />
@@ -82,15 +149,17 @@ export default function ManagementBookingsPage() {
       {converting ? (
         <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4 sm:flex-row sm:items-end">
           <div className="flex-1">
-            <FormField label={t('booking_monthly_rent')}>
+            <div className="grid gap-1.5">
+              <Label htmlFor="monthly_rent">{t('booking_monthly_rent')}</Label>
               <Input
+                id="monthly_rent"
                 value={rent}
                 placeholder={converting.monthly_rent_offer ?? ''}
                 onChange={(e) => {
                   setRent(e.target.value);
                 }}
               />
-            </FormField>
+            </div>
           </div>
           <Button
             onClick={() => {
@@ -113,82 +182,32 @@ export default function ManagementBookingsPage() {
       ) : null}
 
       <DataTable
-        columns={[
-          { key: 'tenant_name', header: 'Tenant' },
-          { key: 'property_name', header: 'Property' },
-          { key: 'requested_start_date', header: 'From' },
-          { key: 'requested_end_date', header: 'To' },
-          {
-            key: 'status',
-            header: 'Status',
-            render: (b: ManagementBookingOutput) => <Badge>{b.status}</Badge>,
-          },
-          {
-            key: 'actions',
-            header: '',
-            render: (b: ManagementBookingOutput) => (
-              <div className="flex gap-2">
-                {b.status === 'requested' ? (
-                  <>
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        act(b.id, 'approve').catch(() => {
-                          void 0;
-                        });
-                      }}
-                    >
-                      {t('booking_approve')}
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => {
-                        act(b.id, 'reject').catch(() => {
-                          void 0;
-                        });
-                      }}
-                    >
-                      {t('booking_reject')}
-                    </Button>
-                  </>
-                ) : null}
-                {b.status === 'approved' ? (
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      setConverting(b);
-                      setRent('');
-                    }}
-                  >
-                    {t('booking_convert')}
-                  </Button>
-                ) : null}
-              </div>
-            ),
-          },
-        ]}
+        columns={columns}
         data={data}
         isLoading={isLoading}
         emptyMessage="No bookings found"
-        keyExtractor={(item) => item.id}
         page={page}
         totalPages={totalPages}
         onPageChange={setPage}
         filters={
           <Select
-            value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value);
+            value={statusFilter || 'all'}
+            onValueChange={(v) => {
+              setStatusFilter(v === 'all' ? '' : v);
               setPage(1);
             }}
-            className="w-auto"
           >
-            {STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {s || 'All statuses'}
-              </option>
-            ))}
+            <SelectTrigger className="w-auto min-w-36">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              {STATUSES.filter(Boolean).map((s) => (
+                <SelectItem key={s} value={s}>
+                  {s}
+                </SelectItem>
+              ))}
+            </SelectContent>
           </Select>
         }
       />

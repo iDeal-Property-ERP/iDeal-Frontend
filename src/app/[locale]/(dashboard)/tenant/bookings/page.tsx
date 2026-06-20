@@ -1,5 +1,6 @@
 'use client';
 
+import type { ColumnDef } from '@tanstack/react-table';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
@@ -53,6 +54,36 @@ export default function TenantBookingsPage() {
     }
   }
 
+  const columns: ColumnDef<TenantBookingOutput>[] = [
+    { accessorKey: 'property_name', header: 'Property' },
+    { accessorKey: 'requested_start_date', header: 'From' },
+    { accessorKey: 'requested_end_date', header: 'To' },
+    {
+      accessorKey: 'status',
+      header: 'Status',
+      cell: ({ row }) => <Badge>{row.original.status}</Badge>,
+    },
+    {
+      id: 'actions',
+      header: '',
+      enableSorting: false,
+      cell: ({ row }) =>
+        row.original.status === 'requested' || row.original.status === 'approved' ? (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              cancel(row.original.id).catch(() => {
+                void 0;
+              });
+            }}
+          >
+            {t('booking_cancel')}
+          </Button>
+        ) : null,
+    },
+  ];
+
   return (
     <>
       <PageHeader
@@ -72,36 +103,8 @@ export default function TenantBookingsPage() {
         <p className="text-sm text-muted-foreground">Loading...</p>
       ) : (
         <DataTable
-          columns={[
-            { key: 'property_name', header: 'Property' },
-            { key: 'requested_start_date', header: 'From' },
-            { key: 'requested_end_date', header: 'To' },
-            {
-              key: 'status',
-              header: 'Status',
-              render: (b: TenantBookingOutput) => <Badge>{b.status}</Badge>,
-            },
-            {
-              key: 'actions',
-              header: '',
-              render: (b: TenantBookingOutput) =>
-                b.status === 'requested' || b.status === 'approved' ? (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      cancel(b.id).catch(() => {
-                        void 0;
-                      });
-                    }}
-                  >
-                    {t('booking_cancel')}
-                  </Button>
-                ) : null,
-            },
-          ]}
+          columns={columns}
           data={data}
-          keyExtractor={(item) => String(item.id)}
           page={page}
           totalPages={totalPages}
           onPageChange={setPage}

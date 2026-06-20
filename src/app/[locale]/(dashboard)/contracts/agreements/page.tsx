@@ -1,5 +1,6 @@
 'use client';
 
+import type { ColumnDef } from '@tanstack/react-table';
 import { useTranslations } from 'next-intl';
 import { useState, useEffect, useCallback } from 'react';
 import { Badge } from '@/components/ui/badge';
@@ -48,19 +49,19 @@ export default function AgreementsPage() {
     });
   }, [page, fetchData]);
 
-  const columns = [
-    { key: 'agreement_number', header: 'Agreement #', sortable: true },
-    { key: 'owner_id', header: 'Owner' },
-    { key: 'property_id', header: 'Property' },
-    { key: 'signed_date', header: 'Signed', sortable: true },
-    { key: 'start_date', header: 'Start' },
-    { key: 'end_date', header: 'End' },
-    { key: 'commission_rate', header: 'Commission' },
+  const columns: ColumnDef<OwnerAgreementOutput>[] = [
+    { accessorKey: 'agreement_number', header: 'Agreement #' },
+    { accessorKey: 'owner_id', header: 'Owner' },
+    { accessorKey: 'property_id', header: 'Property' },
+    { accessorKey: 'signed_date', header: 'Signed' },
+    { accessorKey: 'start_date', header: 'Start' },
+    { accessorKey: 'end_date', header: 'End' },
+    { accessorKey: 'commission_rate', header: 'Commission' },
     {
-      key: 'status',
+      accessorKey: 'status',
       header: 'Status',
-      render: (item: OwnerAgreementOutput) => (
-        <Badge variant={leaseStatusVariant(item.status)}>{item.status}</Badge>
+      cell: ({ row }) => (
+        <Badge variant={leaseStatusVariant(row.original.status)}>{row.original.status}</Badge>
       ),
     },
   ];
@@ -87,7 +88,6 @@ export default function AgreementsPage() {
         <DataTable
           columns={columns}
           data={data}
-          keyExtractor={(item) => String(item.id)}
           rowHref={(item) => `/contracts/agreements/${item.id}`}
           page={page}
           totalPages={totalPages}

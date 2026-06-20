@@ -1,12 +1,20 @@
 'use client';
 
+import type { ColumnDef } from '@tanstack/react-table';
 import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { DataTable } from '@/components/ui/DataTable';
 import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Select } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { apiFetch } from '@/libs/api';
 import { maintenanceStatusVariant, priorityVariant } from '@/libs/badges';
 import type { PaginatedData } from '@/types/api';
@@ -14,6 +22,33 @@ import type { ManagementServiceRequestOutput } from '@/types/management';
 
 const STATUSES = ['', 'open', 'in_progress', 'resolved', 'cancelled'];
 const PRIORITIES = ['', 'low', 'medium', 'high', 'critical'];
+
+const columns: ColumnDef<ManagementServiceRequestOutput>[] = [
+  { accessorKey: 'property_name', header: 'Property' },
+  { accessorKey: 'tenant_name', header: 'Tenant' },
+  { accessorKey: 'title', header: 'Title' },
+  {
+    accessorKey: 'priority',
+    header: 'Priority',
+    cell: ({ row }) => (
+      <Badge variant={priorityVariant(row.original.priority)}>{row.original.priority}</Badge>
+    ),
+  },
+  {
+    accessorKey: 'status',
+    header: 'Status',
+    cell: ({ row }) => (
+      <Badge variant={maintenanceStatusVariant(row.original.status)}>
+        {row.original.status.replace('_', ' ')}
+      </Badge>
+    ),
+  },
+  {
+    accessorKey: 'assigned_to_name',
+    header: 'Assigned To',
+    cell: ({ row }) => row.original.assigned_to_name ?? '—',
+  },
+];
 
 /**
  * Management service requests page — lists all service requests with filtering.
@@ -67,9 +102,9 @@ export default function ManagementServiceRequestsPage() {
 
   if (error) {
     return (
-      <div className="rounded-lg border border-danger/30 bg-danger-subtle p-4 text-danger">
-        {error}
-      </div>
+      <Alert variant="danger">
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
     );
   }
 
@@ -78,68 +113,52 @@ export default function ManagementServiceRequestsPage() {
       <PageHeader title={t('service_requests')} description={t('service_requests_desc')} />
 
       <DataTable
-        columns={[
-          { key: 'property_name', header: 'Property' },
-          { key: 'tenant_name', header: 'Tenant' },
-          { key: 'title', header: 'Title' },
-          {
-            key: 'priority',
-            header: 'Priority',
-            render: (sr: ManagementServiceRequestOutput) => (
-              <Badge variant={priorityVariant(sr.priority)}>{sr.priority}</Badge>
-            ),
-          },
-          {
-            key: 'status',
-            header: 'Status',
-            render: (sr: ManagementServiceRequestOutput) => (
-              <Badge variant={maintenanceStatusVariant(sr.status)}>
-                {sr.status.replace('_', ' ')}
-              </Badge>
-            ),
-          },
-          {
-            key: 'assigned_to_name',
-            header: 'Assigned To',
-            render: (sr: ManagementServiceRequestOutput) => sr.assigned_to_name ?? '—',
-          },
-        ]}
+        columns={columns}
         data={data}
         isLoading={isLoading}
         emptyMessage="No service requests found"
-        keyExtractor={(item) => item.id}
         page={page}
         totalPages={totalPages}
         onPageChange={setPage}
         filters={
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <Select
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
+              value={statusFilter || 'all'}
+              onValueChange={(v) => {
+                setStatusFilter(v === 'all' ? '' : v);
                 setPage(1);
               }}
-              className="w-auto"
             >
-              {STATUSES.map((s) => (
-                <option key={s} value={s}>
-                  {s ? s.replace('_', ' ') : 'All statuses'}
-                </option>
-              ))}
+              <SelectTrigger className="w-auto min-w-36">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All statuses</SelectItem>
+                {STATUSES.filter(Boolean).map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {s.replace('_', ' ')}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
             <Select
-              value={priorityFilter}
-              onChange={(e) => {
-                setPriorityFilter(e.target.value);
+              value={priorityFilter || 'all'}
+              onValueChange={(v) => {
+                setPriorityFilter(v === 'all' ? '' : v);
                 setPage(1);
               }}
-              className="w-auto"
             >
-              {PRIORITIES.map((p) => (
-                <option key={p} value={p}>
-                  {p || 'All priorities'}
-                </option>
-              ))}
+              <SelectTrigger className="w-auto min-w-36">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All priorities</SelectItem>
+                {PRIORITIES.filter(Boolean).map((p) => (
+                  <SelectItem key={p} value={p}>
+                    {p}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
             <Input
               type="text"

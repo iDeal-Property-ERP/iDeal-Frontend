@@ -3,12 +3,22 @@
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Select } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 import { apiFetch, apiUpload } from '@/libs/api';
+import { getApiErrorMessage } from '@/libs/forms';
 import type { ConditionRating } from '@/types/enums';
 import type { InventoryActItemInput, InventoryActOutput } from '@/types/inventory';
 
@@ -25,6 +35,7 @@ export default function InventoryActDetailPage() {
   const [items, setItems] = useState<InventoryActItemInput[]>([]);
   const [ackName, setAckName] = useState('');
   const [busy, setBusy] = useState(false);
+  const [loadError, setLoadError] = useState(false);
 
   const load = useCallback(async () => {
     const data = await apiFetch<InventoryActOutput>(`/inventory/acts/${params.id}/`);
@@ -35,9 +46,15 @@ export default function InventoryActDetailPage() {
   }, [params.id]);
 
   useEffect(() => {
-    load().catch(() => {
-      void 0;
-    });
+    const run = async () => {
+      try {
+        await load();
+      } catch (error) {
+        setLoadError(true);
+        toast.error(getApiErrorMessage(error, 'Failed to load inventory act'));
+      }
+    };
+    void run();
   }, [load]);
 
   const isDraft = act?.status === 'draft';
@@ -50,8 +67,9 @@ export default function InventoryActDetailPage() {
         body: { items: items.filter((i) => i.area.trim()) },
       });
       await load();
-    } catch {
-      void 0;
+      toast.success('Items saved');
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Failed to save items'));
     }
     setBusy(false);
   }
@@ -68,8 +86,9 @@ export default function InventoryActDetailPage() {
       }
       await apiUpload(`/inventory/acts/${params.id}/photos/`, fd);
       await load();
-    } catch {
-      void 0;
+      toast.success('Photos uploaded');
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Failed to upload photos'));
     }
     setBusy(false);
   }
@@ -82,14 +101,25 @@ export default function InventoryActDetailPage() {
         body: { acknowledged_by_name: ackName || undefined },
       });
       await load();
-    } catch {
-      void 0;
+      toast.success('Inventory act finalized');
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Failed to finalize act'));
     }
     setBusy(false);
   }
 
+  if (loadError) {
+    return <p className="text-sm text-muted-foreground">Failed to load inventory act.</p>;
+  }
+
   if (!act) {
-    return <p className="text-sm text-muted-foreground">Loading...</p>;
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-72" />
+        <Skeleton className="h-40 w-full" />
+        <Skeleton className="h-40 w-full" />
+      </div>
+    );
   }
 
   return (
@@ -100,132 +130,144 @@ export default function InventoryActDetailPage() {
         actions={<Badge>{act.status}</Badge>}
       />
 
-      <section className="space-y-3 rounded-lg border border-border bg-card p-4">
-        <h3 className="text-sm font-semibold text-foreground">{t('inventory_items')}</h3>
-        {items.map((item, idx) => (
-          <div key={idx} className="flex flex-col gap-2 sm:flex-row">
-            <Input
-              placeholder={t('inventory_area')}
-              value={item.area}
-              disabled={!isDraft}
-              onChange={(e) => {
-                const next = [...items];
-                next[idx] = { ...item, area: e.target.value };
-                setItems(next);
-              }}
-            />
-            <Select
-              value={item.condition}
-              disabled={!isDraft}
-              onChange={(e) => {
-                const next = [...items];
-                next[idx] = { ...item, condition: e.target.value as ConditionRating };
-                setItems(next);
-              }}
-              className="sm:w-40"
-            >
-              {CONDITIONS.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </Select>
-            <Input
-              placeholder={t('inventory_notes')}
-              value={item.notes ?? ''}
-              disabled={!isDraft}
-              onChange={(e) => {
-                const next = [...items];
-                next[idx] = { ...item, notes: e.target.value };
-                setItems(next);
-              }}
-            />
-          </div>
-        ))}
-        {isDraft ? (
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setItems([...items, { area: '', condition: 'good', notes: '' }]);
-              }}
-            >
-              {t('inventory_add_item')}
-            </Button>
-            <Button
-              size="sm"
-              disabled={busy}
-              onClick={() => {
-                saveItems().catch(() => {
-                  void 0;
-                });
-              }}
-            >
-              {t('inventory_save_items')}
-            </Button>
-          </div>
-        ) : null}
-      </section>
-
-      <section className="space-y-3 rounded-lg border border-border bg-card p-4">
-        <h3 className="text-sm font-semibold text-foreground">{t('inventory_photos')}</h3>
-        <div className="flex flex-wrap gap-3">
-          {act.photos.map((p) => (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              key={p.id}
-              src={p.image_url ?? ''}
-              alt={p.caption ?? 'photo'}
-              className="size-24 rounded-md object-cover"
-            />
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm">{t('inventory_items')}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {items.map((item, idx) => (
+            <div key={idx} className="flex flex-col gap-2 sm:flex-row">
+              <Input
+                placeholder={t('inventory_area')}
+                value={item.area}
+                disabled={!isDraft}
+                onChange={(e) => {
+                  const next = [...items];
+                  next[idx] = { ...item, area: e.target.value };
+                  setItems(next);
+                }}
+              />
+              <Select
+                value={item.condition}
+                disabled={!isDraft}
+                onValueChange={(value) => {
+                  const next = [...items];
+                  next[idx] = { ...item, condition: value as ConditionRating };
+                  setItems(next);
+                }}
+              >
+                <SelectTrigger className="sm:w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CONDITIONS.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input
+                placeholder={t('inventory_notes')}
+                value={item.notes ?? ''}
+                disabled={!isDraft}
+                onChange={(e) => {
+                  const next = [...items];
+                  next[idx] = { ...item, notes: e.target.value };
+                  setItems(next);
+                }}
+              />
+            </div>
           ))}
-          {act.photos.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{t('inventory_no_photos')}</p>
+          {isDraft ? (
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setItems([...items, { area: '', condition: 'good', notes: '' }]);
+                }}
+              >
+                {t('inventory_add_item')}
+              </Button>
+              <Button
+                size="sm"
+                disabled={busy}
+                onClick={() => {
+                  void saveItems();
+                }}
+              >
+                {t('inventory_save_items')}
+              </Button>
+            </div>
           ) : null}
-        </div>
-        {isDraft ? (
-          <Input
-            type="file"
-            accept="image/*"
-            multiple
-            disabled={busy}
-            onChange={(e) => {
-              uploadPhotos(e.target.files).catch(() => {
-                void 0;
-              });
-            }}
-          />
-        ) : null}
-      </section>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm">{t('inventory_photos')}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex flex-wrap gap-3">
+            {act.photos.map((p) => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                key={p.id}
+                src={p.image_url ?? ''}
+                alt={p.caption ?? 'photo'}
+                className="size-24 rounded-md object-cover"
+              />
+            ))}
+            {act.photos.length === 0 ? (
+              <p className="text-sm text-muted-foreground">{t('inventory_no_photos')}</p>
+            ) : null}
+          </div>
+          {isDraft ? (
+            <Input
+              type="file"
+              accept="image/*"
+              multiple
+              disabled={busy}
+              onChange={(e) => {
+                void uploadPhotos(e.target.files);
+              }}
+            />
+          ) : null}
+        </CardContent>
+      </Card>
 
       {isDraft ? (
-        <section className="space-y-3 rounded-lg border border-border bg-card p-4">
-          <h3 className="text-sm font-semibold text-foreground">{t('inventory_finalize')}</h3>
-          <Input
-            placeholder={t('inventory_ack_name')}
-            value={ackName}
-            onChange={(e) => {
-              setAckName(e.target.value);
-            }}
-            className="max-w-sm"
-          />
-          <Button
-            disabled={busy}
-            onClick={() => {
-              finalize().catch(() => {
-                void 0;
-              });
-            }}
-          >
-            {t('inventory_finalize_btn')}
-          </Button>
-        </section>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">{t('inventory_finalize')}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Input
+              placeholder={t('inventory_ack_name')}
+              value={ackName}
+              onChange={(e) => {
+                setAckName(e.target.value);
+              }}
+              className="max-w-sm"
+            />
+            <Button
+              disabled={busy}
+              onClick={() => {
+                void finalize();
+              }}
+            >
+              {t('inventory_finalize_btn')}
+            </Button>
+          </CardContent>
+        </Card>
       ) : (
-        <section className="rounded-lg border border-border bg-card p-4 text-sm text-muted-foreground">
-          {t('inventory_finalized_on')}: {act.finalized_at}
-          {act.acknowledged_by_name ? ` — ${act.acknowledged_by_name}` : ''}
-        </section>
+        <Card>
+          <CardContent className="text-sm text-muted-foreground">
+            {t('inventory_finalized_on')}: {act.finalized_at}
+            {act.acknowledged_by_name ? ` — ${act.acknowledged_by_name}` : ''}
+          </CardContent>
+        </Card>
       )}
     </div>
   );

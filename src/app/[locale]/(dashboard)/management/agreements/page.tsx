@@ -1,12 +1,20 @@
 'use client';
 
+import type { ColumnDef } from '@tanstack/react-table';
 import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { DataTable } from '@/components/ui/DataTable';
 import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Select } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { apiFetch } from '@/libs/api';
 import { leaseStatusVariant } from '@/libs/badges';
 import type { PaginatedData } from '@/types/api';
@@ -58,62 +66,68 @@ export default function ManagementAgreementsPage() {
 
   if (error) {
     return (
-      <div className="rounded-lg border border-danger/30 bg-danger-subtle p-4 text-danger">
-        {error}
-      </div>
+      <Alert variant="danger">
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
     );
   }
+
+  const columns: ColumnDef<ManagementAgreementOutput>[] = [
+    { accessorKey: 'property_name', header: 'Property' },
+    { accessorKey: 'owner_name', header: 'Owner' },
+    { accessorKey: 'agreement_number', header: 'Agreement #' },
+    {
+      id: 'dates',
+      header: 'Dates',
+      enableSorting: false,
+      cell: ({ row }) => `${row.original.start_date} – ${row.original.end_date}`,
+    },
+    {
+      accessorKey: 'commission_rate',
+      header: 'Commission',
+      cell: ({ row }) => `${Number.parseFloat(row.original.commission_rate) * 100}%`,
+    },
+    {
+      accessorKey: 'status',
+      header: 'Status',
+      cell: ({ row }) => (
+        <Badge variant={leaseStatusVariant(row.original.status)}>{row.original.status}</Badge>
+      ),
+    },
+  ];
 
   return (
     <div className="space-y-6">
       <PageHeader title={t('owner_agreements')} description={t('owner_agreements_desc')} />
 
       <DataTable
-        columns={[
-          { key: 'property_name', header: 'Property' },
-          { key: 'owner_name', header: 'Owner' },
-          { key: 'agreement_number', header: 'Agreement #' },
-          {
-            key: 'dates',
-            header: 'Dates',
-            render: (agr: ManagementAgreementOutput) => `${agr.start_date} – ${agr.end_date}`,
-          },
-          {
-            key: 'commission_rate',
-            header: 'Commission',
-            render: (agr: ManagementAgreementOutput) =>
-              `${Number.parseFloat(agr.commission_rate) * 100}%`,
-          },
-          {
-            key: 'status',
-            header: 'Status',
-            render: (agr: ManagementAgreementOutput) => (
-              <Badge variant={leaseStatusVariant(agr.status)}>{agr.status}</Badge>
-            ),
-          },
-        ]}
+        columns={columns}
         data={data}
         isLoading={isLoading}
         emptyMessage="No agreements found"
-        keyExtractor={(item) => item.id}
         page={page}
         totalPages={totalPages}
         onPageChange={setPage}
         filters={
           <div className="flex flex-col gap-3 sm:flex-row">
             <Select
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
+              value={statusFilter || 'all'}
+              onValueChange={(v) => {
+                setStatusFilter(v === 'all' ? '' : v);
                 setPage(1);
               }}
-              className="w-auto"
             >
-              {STATUSES.map((s) => (
-                <option key={s} value={s}>
-                  {s || 'All statuses'}
-                </option>
-              ))}
+              <SelectTrigger className="w-auto min-w-36">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All statuses</SelectItem>
+                {STATUSES.filter(Boolean).map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {s}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
             <Input
               type="text"

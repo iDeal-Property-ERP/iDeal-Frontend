@@ -1,5 +1,6 @@
 'use client';
 
+import type { ColumnDef } from '@tanstack/react-table';
 import { useTranslations } from 'next-intl';
 import { useState, useEffect, useCallback } from 'react';
 import { Badge } from '@/components/ui/badge';
@@ -45,18 +46,18 @@ export default function LeasesPage() {
     });
   }, [page, fetchData]);
 
-  const columns = [
-    { key: 'id', header: 'ID' },
-    { key: 'property_id', header: 'Property' },
-    { key: 'tenant_id', header: 'Tenant' },
-    { key: 'start_date', header: 'Start', sortable: true },
-    { key: 'end_date', header: 'End', sortable: true },
-    { key: 'monthly_rent', header: 'Monthly Rent' },
+  const columns: ColumnDef<LeaseOutput>[] = [
+    { accessorKey: 'id', header: 'ID' },
+    { accessorKey: 'property_id', header: 'Property' },
+    { accessorKey: 'tenant_id', header: 'Tenant' },
+    { accessorKey: 'start_date', header: 'Start' },
+    { accessorKey: 'end_date', header: 'End' },
+    { accessorKey: 'monthly_rent', header: 'Monthly Rent' },
     {
-      key: 'status',
+      accessorKey: 'status',
       header: 'Status',
-      render: (item: LeaseOutput) => (
-        <Badge variant={leaseStatusVariant(item.status)}>{item.status}</Badge>
+      cell: ({ row }) => (
+        <Badge variant={leaseStatusVariant(row.original.status)}>{row.original.status}</Badge>
       ),
     },
   ];
@@ -83,7 +84,6 @@ export default function LeasesPage() {
         <DataTable
           columns={columns}
           data={data}
-          keyExtractor={(item) => String(item.id)}
           rowHref={(item) => `/contracts/leases/${item.id}`}
           page={page}
           totalPages={totalPages}

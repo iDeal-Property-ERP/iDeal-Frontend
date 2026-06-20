@@ -1,5 +1,6 @@
 'use client';
 
+import type { ColumnDef } from '@tanstack/react-table';
 import { useTranslations } from 'next-intl';
 import { useState, useEffect, useCallback } from 'react';
 import { Badge } from '@/components/ui/badge';
@@ -45,19 +46,19 @@ export default function PaymentsListPage() {
     });
   }, [page, fetchData]);
 
-  const columns = [
-    { key: 'id', header: 'ID' },
-    { key: 'tenant_name', header: 'Tenant', sortable: true },
-    { key: 'amount', header: 'Amount' },
-    { key: 'currency', header: 'Currency' },
-    { key: 'payment_date', header: 'Paid On', sortable: true },
-    { key: 'due_date', header: 'Due' },
-    { key: 'method', header: 'Method' },
+  const columns: ColumnDef<PaymentOutput>[] = [
+    { accessorKey: 'id', header: 'ID' },
+    { accessorKey: 'tenant_name', header: 'Tenant' },
+    { accessorKey: 'amount', header: 'Amount' },
+    { accessorKey: 'currency', header: 'Currency' },
+    { accessorKey: 'payment_date', header: 'Paid On' },
+    { accessorKey: 'due_date', header: 'Due' },
+    { accessorKey: 'method', header: 'Method' },
     {
-      key: 'status',
+      accessorKey: 'status',
       header: 'Status',
-      render: (item: PaymentOutput) => (
-        <Badge variant={paymentStatusVariant(item.status)}>{item.status}</Badge>
+      cell: ({ row }) => (
+        <Badge variant={paymentStatusVariant(row.original.status)}>{row.original.status}</Badge>
       ),
     },
   ];
@@ -94,7 +95,6 @@ export default function PaymentsListPage() {
         <DataTable
           columns={columns}
           data={data}
-          keyExtractor={(item) => String(item.id)}
           page={page}
           totalPages={totalPages}
           onPageChange={setPage}

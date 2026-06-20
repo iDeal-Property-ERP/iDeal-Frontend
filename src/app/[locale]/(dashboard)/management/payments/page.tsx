@@ -1,12 +1,20 @@
 'use client';
 
+import type { ColumnDef } from '@tanstack/react-table';
 import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { DataTable } from '@/components/ui/DataTable';
 import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Select } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { apiFetch } from '@/libs/api';
 import { paymentStatusVariant } from '@/libs/badges';
 import type { PaginatedData } from '@/types/api';
@@ -79,79 +87,90 @@ export default function ManagementPaymentsPage() {
 
   if (error) {
     return (
-      <div className="rounded-lg border border-danger/30 bg-danger-subtle p-4 text-danger">
-        {error}
-      </div>
+      <Alert variant="danger">
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
     );
   }
+
+  const columns: ColumnDef<ManagementPaymentOutput>[] = [
+    { accessorKey: 'tenant_name', header: 'Tenant' },
+    {
+      accessorKey: 'amount',
+      header: 'Amount',
+      cell: ({ row }) => `${row.original.amount} ${row.original.currency}`,
+    },
+    { accessorKey: 'due_date', header: 'Due Date' },
+    {
+      accessorKey: 'payment_date',
+      header: 'Payment Date',
+      cell: ({ row }) => row.original.payment_date || '—',
+    },
+    {
+      accessorKey: 'status',
+      header: 'Status',
+      cell: ({ row }) => (
+        <Badge variant={paymentStatusVariant(row.original.status)}>{row.original.status}</Badge>
+      ),
+    },
+    {
+      accessorKey: 'method',
+      header: 'Method',
+      cell: ({ row }) => METHOD_LABELS[row.original.method] ?? row.original.method,
+    },
+  ];
 
   return (
     <div className="space-y-6">
       <PageHeader title={t('payments')} description={t('payments_desc')} />
 
       <DataTable
-        columns={[
-          { key: 'tenant_name', header: 'Tenant' },
-          {
-            key: 'amount',
-            header: 'Amount',
-            render: (pmt: ManagementPaymentOutput) => `${pmt.amount} ${pmt.currency}`,
-          },
-          { key: 'due_date', header: 'Due Date' },
-          {
-            key: 'payment_date',
-            header: 'Payment Date',
-            render: (pmt: ManagementPaymentOutput) => pmt.payment_date || '—',
-          },
-          {
-            key: 'status',
-            header: 'Status',
-            render: (pmt: ManagementPaymentOutput) => (
-              <Badge variant={paymentStatusVariant(pmt.status)}>{pmt.status}</Badge>
-            ),
-          },
-          {
-            key: 'method',
-            header: 'Method',
-            render: (pmt: ManagementPaymentOutput) => METHOD_LABELS[pmt.method] ?? pmt.method,
-          },
-        ]}
+        columns={columns}
         data={data}
         isLoading={isLoading}
         emptyMessage="No payments found"
-        keyExtractor={(item) => item.id}
         page={page}
         totalPages={totalPages}
         onPageChange={setPage}
         filters={
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <Select
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
+              value={statusFilter || 'all'}
+              onValueChange={(v) => {
+                setStatusFilter(v === 'all' ? '' : v);
                 setPage(1);
               }}
-              className="w-auto"
             >
-              {STATUSES.map((s) => (
-                <option key={s} value={s}>
-                  {s || 'All statuses'}
-                </option>
-              ))}
+              <SelectTrigger className="w-auto min-w-36">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All statuses</SelectItem>
+                {STATUSES.filter(Boolean).map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {s}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
             <Select
-              value={methodFilter}
-              onChange={(e) => {
-                setMethodFilter(e.target.value);
+              value={methodFilter || 'all'}
+              onValueChange={(v) => {
+                setMethodFilter(v === 'all' ? '' : v);
                 setPage(1);
               }}
-              className="w-auto"
             >
-              {METHODS.map((m) => (
-                <option key={m} value={m}>
-                  {m ? METHOD_LABELS[m] : 'All methods'}
-                </option>
-              ))}
+              <SelectTrigger className="w-auto min-w-36">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All methods</SelectItem>
+                {METHODS.filter(Boolean).map((m) => (
+                  <SelectItem key={m} value={m}>
+                    {METHOD_LABELS[m]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
             <Input
               type="text"

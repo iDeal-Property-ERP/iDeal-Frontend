@@ -1,14 +1,21 @@
 'use client';
 
+import type { ColumnDef } from '@tanstack/react-table';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/DataTable';
-import { FormField } from '@/components/ui/FormField';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Select } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { apiFetch } from '@/libs/api';
 import { paymentStatusVariant } from '@/libs/badges';
 import type { PaginatedData } from '@/types/api';
@@ -82,17 +89,17 @@ export default function TenantPaymentsPage() {
     }
   }
 
-  const columns = [
-    { key: 'amount', header: 'Amount' },
-    { key: 'currency', header: 'Currency' },
-    { key: 'payment_date', header: 'Paid On', sortable: true },
-    { key: 'due_date', header: 'Due Date', sortable: true },
-    { key: 'method', header: 'Method' },
+  const columns: ColumnDef<TenantPaymentOutput>[] = [
+    { accessorKey: 'amount', header: 'Amount' },
+    { accessorKey: 'currency', header: 'Currency' },
+    { accessorKey: 'payment_date', header: 'Paid On' },
+    { accessorKey: 'due_date', header: 'Due Date' },
+    { accessorKey: 'method', header: 'Method' },
     {
-      key: 'status',
+      accessorKey: 'status',
       header: 'Status',
-      render: (item: TenantPaymentOutput) => (
-        <Badge variant={paymentStatusVariant(item.status)}>{item.status}</Badge>
+      cell: ({ row }) => (
+        <Badge variant={paymentStatusVariant(row.original.status)}>{row.original.status}</Badge>
       ),
     },
   ];
@@ -123,8 +130,10 @@ export default function TenantPaymentsPage() {
       {showForm ? (
         <div className="mb-6 flex flex-col gap-4 rounded-lg border border-border bg-card p-4 sm:flex-row sm:items-end">
           <div className="flex-1">
-            <FormField label={t('pay_rent_amount')}>
+            <div className="grid gap-1.5">
+              <Label htmlFor="pay_amount">{t('pay_rent_amount')}</Label>
               <Input
+                id="pay_amount"
                 type="number"
                 inputMode="decimal"
                 value={amount}
@@ -133,21 +142,27 @@ export default function TenantPaymentsPage() {
                   setAmount(e.target.value);
                 }}
               />
-            </FormField>
+            </div>
           </div>
           <div className="flex-1">
-            <FormField label={t('pay_rent_method')}>
+            <div className="grid gap-1.5">
+              <Label htmlFor="pay_method">{t('pay_rent_method')}</Label>
               <Select
                 value={method}
-                onChange={(e) => {
-                  setMethod(e.target.value as PaymentMethod);
+                onValueChange={(v) => {
+                  setMethod(v as PaymentMethod);
                 }}
               >
-                <option value="online">online</option>
-                <option value="cash">cash</option>
-                <option value="bank_transfer">bank_transfer</option>
+                <SelectTrigger id="pay_method">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="online">online</SelectItem>
+                  <SelectItem value="cash">cash</SelectItem>
+                  <SelectItem value="bank_transfer">bank_transfer</SelectItem>
+                </SelectContent>
               </Select>
-            </FormField>
+            </div>
           </div>
           <Button
             disabled={submitting}
@@ -168,7 +183,6 @@ export default function TenantPaymentsPage() {
         <DataTable
           columns={columns}
           data={data}
-          keyExtractor={(item) => String(item.id)}
           page={page}
           totalPages={totalPages}
           onPageChange={setPage}

@@ -1,25 +1,21 @@
 'use client';
 
-import { Menu, Moon, Sun } from 'lucide-react';
+import { Moon, Sun } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { NotificationBell } from '@/components/ui/NotificationBell';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 import { useAuth } from '@/libs/auth';
 import { roleVariant } from '@/libs/badges';
 
-type HeaderProps = {
-  pageTitle: string;
-  onMenuToggle: () => void;
-};
-
 /**
- * Dashboard top bar with mobile menu toggle, theme switcher, and user info.
- * @param props - Page title and mobile menu toggle handler.
+ * Dashboard top bar with sidebar trigger, theme switcher, and user info.
  * @returns Sticky header element.
  */
-export function Header(props: HeaderProps) {
+export function Header() {
   const { user } = useAuth();
   const t = useTranslations('Dashboard');
   const { theme, setTheme } = useTheme();
@@ -32,29 +28,22 @@ export function Header(props: HeaderProps) {
   return (
     <header className="flex h-16 shrink-0 items-center justify-between border-b border-border bg-card px-4 lg:px-6">
       <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={props.onMenuToggle}
-          className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground lg:hidden"
-          aria-label={t('menu_toggle')}
-        >
-          <Menu className="size-5" />
-        </button>
-        <h1 className="text-lg font-semibold text-foreground">{props.pageTitle}</h1>
+        <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
       </div>
 
       <div className="flex items-center gap-3">
         {mounted && (
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => {
               setTheme(theme === 'dark' ? 'light' : 'dark');
             }}
-            className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground"
             aria-label={t('theme_toggle')}
           >
             {theme === 'dark' ? <Sun className="size-5" /> : <Moon className="size-5" />}
-          </button>
+          </Button>
         )}
         <NotificationBell />
         {user !== null && (

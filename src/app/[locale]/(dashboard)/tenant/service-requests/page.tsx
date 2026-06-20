@@ -1,19 +1,22 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import type { ColumnDef } from '@tanstack/react-table';
+import { Loader2Icon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/DataTable';
-import { FormField } from '@/components/ui/FormField';
-import { Input } from '@/components/ui/input';
+import { PropertySelect } from '@/components/ui/entity-selects';
+import { Form } from '@/components/ui/form';
+import { EntityField, SelectField, TextField } from '@/components/ui/form-fields';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Select } from '@/components/ui/select';
 import { apiFetch } from '@/libs/api';
 import { maintenanceStatusVariant, priorityVariant } from '@/libs/badges';
+import { createApiSubmit } from '@/libs/forms';
 import { useRouter } from '@/libs/I18nNavigation';
 import type { PaginatedData } from '@/types/api';
 import type { TenantServiceRequestOutput } from '@/types/tenant';
@@ -25,7 +28,12 @@ const schema = z.object({
   priority: z.string().optional(),
 });
 
-type FormData = z.infer<typeof schema>;
+const PRIORITY_OPTIONS = [
+  { value: 'low', label: 'Low' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'high', label: 'High' },
+  { value: 'critical', label: 'Critical' },
+];
 
 /**
  * Tenant service requests page with new request form and paginated history.
@@ -38,15 +46,8 @@ export default function TenantServiceRequestsPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm({
+  const form = useForm({
     resolver: zodResolver(schema),
   });
 
@@ -72,37 +73,36 @@ export default function TenantServiceRequestsPage() {
     });
   }, [page, fetchData]);
 
-  const onCreate = async (fd: FormData) => {
-    setSubmitting(true);
-    setError(null);
-    try {
-      await apiFetch('/tenant/service-requests/', { method: 'POST', body: fd });
-      reset();
+  const onCreate = createApiSubmit(form, {
+    submit:  async (values) => apiFetch('/tenant/service-requests/', { method: 'POST', body: values }),
+    success: 'Request created',
+    error: 'Failed to create request',
+    onSuccess: () => {
+      form.reset();
       void fetchData(page);
-    } catch (_error) {
-      setError(_error instanceof Error ? _error.message : 'Failed to create request');
-    }
-    setSubmitting(false);
-  };
+    },
+  });
 
-  const columns = [
-    { key: 'title', header: 'Title', sortable: true },
-    { key: 'property_name', header: 'Property' },
+  const { isSubmitting } = form.formState;
+
+  const columns: ColumnDef<TenantServiceRequestOutput>[] = [
+    { accessorKey: 'title', header: 'Title' },
+    { accessorKey: 'property_name', header: 'Property' },
     {
-      key: 'priority',
+      accessorKey: 'priority',
       header: 'Priority',
-      render: (item: TenantServiceRequestOutput) => (
-        <Badge variant={priorityVariant(item.priority)}>{item.priority}</Badge>
+      cell: ({ row }) => (
+        <Badge variant={priorityVariant(row.original.priority)}>{row.original.priority}</Badge>
       ),
     },
     {
-      key: 'status',
+      accessorKey: 'status',
       header: 'Status',
-      render: (item: TenantServiceRequestOutput) => (
-        <Badge variant={maintenanceStatusVariant(item.status)}>{item.status}</Badge>
+      cell: ({ row }) => (
+        <Badge variant={maintenanceStatusVariant(row.original.status)}>{row.original.status}</Badge>
       ),
     },
-    { key: 'created_at', header: 'Created', sortable: true },
+    { accessorKey: 'created_at', header: 'Created' },
   ];
 
   return (
@@ -121,34 +121,54 @@ export default function TenantServiceRequestsPage() {
           </Button>
         }
       />
-      {error ? (
-        <p className="mb-4 rounded bg-danger-subtle p-3 text-sm text-danger">{error}</p>
-      ) : null}
       <div className="mb-6 rounded-lg border border-border bg-card p-6">
         <h3 className="mb-4 text-sm font-medium text-muted-foreground">New Service Request</h3>
-        <form onSubmit={handleSubmit(onCreate)} className="flex items-end gap-4">
-          <FormField label="Property ID" error={errors.property_id?.message} required>
-            <Input type="number" {...register('property_id')} className="w-28" />
-          </FormField>
-          <FormField label="Title" error={errors.title?.message} required>
-            <Input {...register('title')} className="w-40" />
-          </FormField>
-          <FormField label="Description" error={errors.description?.message} required>
-            <Input {...register('description')} className="w-48" />
-          </FormField>
-          <FormField label="Priority" error={errors.priority?.message}>
-            <Select {...register('priority')} className="w-28">
-              <option value="">--</option>
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-              <option value="critical">Critical</option>
-            </Select>
-          </FormField>
-          <Button type="submit" variant="default" disabled={submitting}>
-            {submitting ? 'Creating...' : 'Create'}
-          </Button>
-        </form>
+        <Form {...form}>
+          <form onSubmit={onCreate} className="flex items-end gap-4">
+            <EntityField
+              control={form.control}
+              name="property_id"
+              label="Property"
+              required
+              className="w-56"
+            >
+              {(field, invalid) => (
+                <PropertySelect
+                  id="property_id"
+                  value={field.value as number | null | undefined}
+                  onChange={field.onChange}
+                  aria-invalid={invalid}
+                />
+              )}
+            </EntityField>
+            <TextField
+              control={form.control}
+              name="title"
+              label="Title"
+              required
+              className="w-40"
+            />
+            <TextField
+              control={form.control}
+              name="description"
+              label="Description"
+              required
+              className="w-48"
+            />
+            <SelectField
+              control={form.control}
+              name="priority"
+              label="Priority"
+              options={PRIORITY_OPTIONS}
+              placeholder="--"
+              className="w-28"
+            />
+            <Button type="submit" variant="default" disabled={isSubmitting}>
+              {isSubmitting ? <Loader2Icon className="animate-spin" /> : null}
+              {isSubmitting ? 'Creating…' : 'Create'}
+            </Button>
+          </form>
+        </Form>
       </div>
       {loading ? (
         <p className="text-sm text-muted-foreground">Loading...</p>
@@ -156,7 +176,6 @@ export default function TenantServiceRequestsPage() {
         <DataTable
           columns={columns}
           data={data}
-          keyExtractor={(item) => String(item.id)}
           page={page}
           totalPages={totalPages}
           onPageChange={setPage}

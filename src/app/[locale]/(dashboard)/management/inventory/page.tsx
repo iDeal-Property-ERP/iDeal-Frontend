@@ -1,12 +1,19 @@
 'use client';
 
+import type { ColumnDef } from '@tanstack/react-table';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/DataTable';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Select } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { apiFetch } from '@/libs/api';
 import { useRouter } from '@/libs/I18nNavigation';
 import type { PaginatedData } from '@/types/api';
@@ -46,6 +53,34 @@ export default function InventoryActsPage() {
       });
   }, [page, statusFilter]);
 
+  const columns: ColumnDef<InventoryActListOutput>[] = [
+    { accessorKey: 'property_name', header: 'Property' },
+    { accessorKey: 'act_type', header: 'Type' },
+    { accessorKey: 'item_count', header: 'Items' },
+    { accessorKey: 'photo_count', header: 'Photos' },
+    {
+      accessorKey: 'status',
+      header: 'Status',
+      cell: ({ row }) => <Badge>{row.original.status}</Badge>,
+    },
+    {
+      id: 'actions',
+      header: '',
+      enableSorting: false,
+      cell: ({ row }) => (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            router.push(`/management/inventory/${row.original.id}`);
+          }}
+        >
+          {t('inventory_open')}
+        </Button>
+      ),
+    },
+  ];
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -62,53 +97,32 @@ export default function InventoryActsPage() {
         }
       />
       <DataTable
-        columns={[
-          { key: 'property_name', header: 'Property' },
-          { key: 'act_type', header: 'Type' },
-          { key: 'item_count', header: 'Items' },
-          { key: 'photo_count', header: 'Photos' },
-          {
-            key: 'status',
-            header: 'Status',
-            render: (a: InventoryActListOutput) => <Badge>{a.status}</Badge>,
-          },
-          {
-            key: 'actions',
-            header: '',
-            render: (a: InventoryActListOutput) => (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  router.push(`/management/inventory/${a.id}`);
-                }}
-              >
-                {t('inventory_open')}
-              </Button>
-            ),
-          },
-        ]}
+        columns={columns}
         data={data}
         isLoading={isLoading}
         emptyMessage="No inventory acts found"
-        keyExtractor={(item) => item.id}
         page={page}
         totalPages={totalPages}
         onPageChange={setPage}
         filters={
           <Select
-            value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value);
+            value={statusFilter || 'all'}
+            onValueChange={(v) => {
+              setStatusFilter(v === 'all' ? '' : v);
               setPage(1);
             }}
-            className="w-auto"
           >
-            {STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {s || 'All statuses'}
-              </option>
-            ))}
+            <SelectTrigger className="w-auto min-w-36">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              {STATUSES.filter(Boolean).map((s) => (
+                <SelectItem key={s} value={s}>
+                  {s}
+                </SelectItem>
+              ))}
+            </SelectContent>
           </Select>
         }
       />

@@ -1,12 +1,19 @@
 'use client';
 
+import type { ColumnDef } from '@tanstack/react-table';
 import { useTranslations } from 'next-intl';
 import { useState, useEffect, useCallback } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/DataTable';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Select } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { apiFetch } from '@/libs/api';
 import { maintenanceStatusVariant, priorityVariant } from '@/libs/badges';
 import { useRouter } from '@/libs/I18nNavigation';
@@ -51,25 +58,25 @@ export default function MaintenancePage() {
     });
   }, [page, statusFilter, fetchData]);
 
-  const columns = [
-    { key: 'id', header: 'ID' },
-    { key: 'title', header: 'Title', sortable: true },
-    { key: 'property_id', header: 'Property' },
+  const columns: ColumnDef<ServiceRequestOutput>[] = [
+    { accessorKey: 'id', header: 'ID' },
+    { accessorKey: 'title', header: 'Title' },
+    { accessorKey: 'property_id', header: 'Property' },
     {
-      key: 'priority',
+      accessorKey: 'priority',
       header: 'Priority',
-      render: (item: ServiceRequestOutput) => (
-        <Badge variant={priorityVariant(item.priority)}>{item.priority}</Badge>
+      cell: ({ row }) => (
+        <Badge variant={priorityVariant(row.original.priority)}>{row.original.priority}</Badge>
       ),
     },
     {
-      key: 'status',
+      accessorKey: 'status',
       header: 'Status',
-      render: (item: ServiceRequestOutput) => (
-        <Badge variant={maintenanceStatusVariant(item.status)}>{item.status}</Badge>
+      cell: ({ row }) => (
+        <Badge variant={maintenanceStatusVariant(row.original.status)}>{row.original.status}</Badge>
       ),
     },
-    { key: 'created_at', header: 'Created', sortable: true },
+    { accessorKey: 'created_at', header: 'Created' },
   ];
 
   return (
@@ -92,19 +99,22 @@ export default function MaintenancePage() {
           Filter:
         </label>
         <Select
-          id="status-filter"
-          value={statusFilter}
-          onChange={(e) => {
-            setStatusFilter(e.target.value);
+          value={statusFilter || 'all'}
+          onValueChange={(v) => {
+            setStatusFilter(v === 'all' ? '' : v);
             setPage(1);
           }}
-          className="w-auto"
         >
-          <option value="">All Statuses</option>
-          <option value="open">Open</option>
-          <option value="in_progress">In Progress</option>
-          <option value="resolved">Resolved</option>
-          <option value="cancelled">Cancelled</option>
+          <SelectTrigger id="status-filter" className="w-auto min-w-36">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="open">Open</SelectItem>
+            <SelectItem value="in_progress">In Progress</SelectItem>
+            <SelectItem value="resolved">Resolved</SelectItem>
+            <SelectItem value="cancelled">Cancelled</SelectItem>
+          </SelectContent>
         </Select>
       </div>
       {loading ? (
@@ -113,7 +123,6 @@ export default function MaintenancePage() {
         <DataTable
           columns={columns}
           data={data}
-          keyExtractor={(item) => String(item.id)}
           rowHref={(item) => `/maintenance/${item.id}`}
           page={page}
           totalPages={totalPages}

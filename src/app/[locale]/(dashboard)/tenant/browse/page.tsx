@@ -3,8 +3,8 @@
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { FormField } from '@/components/ui/FormField';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { apiFetch } from '@/libs/api';
 import type { ListingOutput } from '@/types/marketplace';
@@ -86,24 +86,28 @@ export default function BrowseHomesPage() {
               </p>
               {active === listing.id ? (
                 <div className="mt-4 space-y-3">
-                  <FormField label={t('booking_start')}>
+                  <div className="grid gap-1.5">
+                    <Label htmlFor={`booking_start_${listing.id}`}>{t('booking_start')}</Label>
                     <Input
+                      id={`booking_start_${listing.id}`}
                       type="date"
                       value={start}
                       onChange={(e) => {
                         setStart(e.target.value);
                       }}
                     />
-                  </FormField>
-                  <FormField label={t('booking_end')}>
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Label htmlFor={`booking_end_${listing.id}`}>{t('booking_end')}</Label>
                     <Input
+                      id={`booking_end_${listing.id}`}
                       type="date"
                       value={end}
                       onChange={(e) => {
                         setEnd(e.target.value);
                       }}
                     />
-                  </FormField>
+                  </div>
                   <div className="flex gap-2">
                     <Button
                       size="sm"

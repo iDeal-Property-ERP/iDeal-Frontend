@@ -1,5 +1,6 @@
 'use client';
 
+import type { ColumnDef } from '@tanstack/react-table';
 import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
@@ -39,12 +40,12 @@ export default function OwnerDashboardPage() {
       });
   }, []);
 
-  const propColumns = [
-    { key: 'name', header: 'Property', sortable: true },
-    { key: 'address', header: 'Address' },
-    { key: 'status', header: 'Status' },
-    { key: 'tariff', header: 'Tariff' },
-    { key: 'vacant_days', header: 'Vacant Days' },
+  const propColumns: ColumnDef<OwnerPropertyOutput>[] = [
+    { accessorKey: 'name', header: 'Property' },
+    { accessorKey: 'address', header: 'Address' },
+    { accessorKey: 'status', header: 'Status' },
+    { accessorKey: 'tariff', header: 'Tariff' },
+    { accessorKey: 'vacant_days', header: 'Vacant Days' },
   ];
 
   if (loading) {
@@ -89,7 +90,6 @@ export default function OwnerDashboardPage() {
       <DataTable
         columns={propColumns}
         data={properties}
-        keyExtractor={(item) => String(item.id)}
         rowHref={(item) => `/properties/${item.id}`}
       />
     </>

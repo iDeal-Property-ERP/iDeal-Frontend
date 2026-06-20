@@ -1,14 +1,21 @@
 'use client';
 
+import type { ColumnDef } from '@tanstack/react-table';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/DataTable';
-import { FormField } from '@/components/ui/FormField';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Select } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { apiFetch } from '@/libs/api';
 import type { PaginatedData } from '@/types/api';
 import type {
@@ -97,6 +104,52 @@ export default function ManagementOnboardingsPage() {
     }
   }
 
+  const columns: ColumnDef<ManagementOnboardingOutput>[] = [
+    { accessorKey: 'owner_name', header: 'Owner' },
+    { accessorKey: 'property_name', header: 'Property' },
+    {
+      accessorKey: 'ask_price',
+      header: 'Ask Price',
+      cell: ({ row }) => row.original.ask_price,
+    },
+    {
+      accessorKey: 'status',
+      header: 'Status',
+      cell: ({ row }) => <Badge>{row.original.status}</Badge>,
+    },
+    {
+      id: 'actions',
+      header: '',
+      enableSorting: false,
+      cell: ({ row }) => {
+        const o = row.original;
+        return o.status === 'submitted' ? (
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              onClick={() => {
+                setSelected(o);
+              }}
+            >
+              {t('onboarding_approve')}
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => {
+                reject(o.id).catch(() => {
+                  void 0;
+                });
+              }}
+            >
+              {t('onboarding_reject')}
+            </Button>
+          </div>
+        ) : null;
+      },
+    },
+  ];
+
   return (
     <div className="space-y-6">
       <PageHeader title={t('onboardings')} description={t('onboardings_desc')} />
@@ -107,48 +160,67 @@ export default function ManagementOnboardingsPage() {
             {t('onboarding_approve_title')}: {selected.property_name}
           </h3>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-            <FormField label={t('onboarding_commission_rate')} required>
+            <div className="grid gap-1.5">
+              <Label htmlFor="commission_rate">
+                {t('onboarding_commission_rate')}
+                <span className="text-destructive">*</span>
+              </Label>
               <Input
+                id="commission_rate"
                 value={form.commission_rate}
                 onChange={(e) => {
                   setForm({ ...form, commission_rate: e.target.value });
                 }}
               />
-            </FormField>
-            <FormField label={t('onboarding_start_date')} required>
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="start_date">
+                {t('onboarding_start_date')}
+                <span className="text-destructive">*</span>
+              </Label>
               <Input
+                id="start_date"
                 type="date"
                 value={form.start_date}
                 onChange={(e) => {
                   setForm({ ...form, start_date: e.target.value });
                 }}
               />
-            </FormField>
-            <FormField label={t('onboarding_end_date')} required>
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="end_date">
+                {t('onboarding_end_date')}
+                <span className="text-destructive">*</span>
+              </Label>
               <Input
+                id="end_date"
                 type="date"
                 value={form.end_date}
                 onChange={(e) => {
                   setForm({ ...form, end_date: e.target.value });
                 }}
               />
-            </FormField>
-            <FormField label={t('onboarding_guaranteed_price')}>
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="owner_guaranteed_price">{t('onboarding_guaranteed_price')}</Label>
               <Input
+                id="owner_guaranteed_price"
                 value={form.owner_guaranteed_price}
                 onChange={(e) => {
                   setForm({ ...form, owner_guaranteed_price: e.target.value });
                 }}
               />
-            </FormField>
-            <FormField label={t('onboarding_charge_price')}>
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="tenant_charge_price">{t('onboarding_charge_price')}</Label>
               <Input
+                id="tenant_charge_price"
                 value={form.tenant_charge_price}
                 onChange={(e) => {
                   setForm({ ...form, tenant_charge_price: e.target.value });
                 }}
               />
-            </FormField>
+            </div>
           </div>
           <div className="flex gap-2">
             <Button
@@ -173,69 +245,32 @@ export default function ManagementOnboardingsPage() {
       ) : null}
 
       <DataTable
-        columns={[
-          { key: 'owner_name', header: 'Owner' },
-          { key: 'property_name', header: 'Property' },
-          {
-            key: 'ask_price',
-            header: 'Ask Price',
-            render: (o: ManagementOnboardingOutput) => o.ask_price,
-          },
-          {
-            key: 'status',
-            header: 'Status',
-            render: (o: ManagementOnboardingOutput) => <Badge>{o.status}</Badge>,
-          },
-          {
-            key: 'actions',
-            header: '',
-            render: (o: ManagementOnboardingOutput) =>
-              o.status === 'submitted' ? (
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      setSelected(o);
-                    }}
-                  >
-                    {t('onboarding_approve')}
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => {
-                      reject(o.id).catch(() => {
-                        void 0;
-                      });
-                    }}
-                  >
-                    {t('onboarding_reject')}
-                  </Button>
-                </div>
-              ) : null,
-          },
-        ]}
+        columns={columns}
         data={data}
         isLoading={isLoading}
         emptyMessage="No onboardings found"
-        keyExtractor={(item) => item.id}
         page={page}
         totalPages={totalPages}
         onPageChange={setPage}
         filters={
           <Select
-            value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value);
+            value={statusFilter || 'all'}
+            onValueChange={(v) => {
+              setStatusFilter(v === 'all' ? '' : v);
               setPage(1);
             }}
-            className="w-auto"
           >
-            {STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {s || 'All statuses'}
-              </option>
-            ))}
+            <SelectTrigger className="w-auto min-w-36">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              {STATUSES.filter(Boolean).map((s) => (
+                <SelectItem key={s} value={s}>
+                  {s}
+                </SelectItem>
+              ))}
+            </SelectContent>
           </Select>
         }
       />

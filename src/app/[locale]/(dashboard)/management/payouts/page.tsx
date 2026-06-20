@@ -1,13 +1,21 @@
 'use client';
 
+import type { ColumnDef } from '@tanstack/react-table';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/DataTable';
 import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Select } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { apiFetch } from '@/libs/api';
 import { paymentStatusVariant } from '@/libs/badges';
 import type { PaginatedData } from '@/types/api';
@@ -67,78 +75,85 @@ export default function ManagementPayoutsPage() {
 
   if (error) {
     return (
-      <div className="rounded-lg border border-danger/30 bg-danger-subtle p-4 text-danger">
-        {error}
-      </div>
+      <Alert variant="danger">
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
     );
   }
+
+  const columns: ColumnDef<ManagementPayoutOutput>[] = [
+    { accessorKey: 'owner_name', header: 'Owner' },
+    {
+      accessorKey: 'amount',
+      header: 'Amount',
+      cell: ({ row }) => `${row.original.amount} ${row.original.currency}`,
+    },
+    { accessorKey: 'scheduled_date', header: 'Scheduled Date' },
+    {
+      accessorKey: 'paid_date',
+      header: 'Paid Date',
+      cell: ({ row }) => row.original.paid_date ?? '—',
+    },
+    {
+      accessorKey: 'status',
+      header: 'Status',
+      cell: ({ row }) => (
+        <Badge variant={paymentStatusVariant(row.original.status)}>{row.original.status}</Badge>
+      ),
+    },
+    {
+      id: 'actions',
+      header: '',
+      enableSorting: false,
+      cell: ({ row }) =>
+        row.original.status === 'scheduled' ? (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              markPaid(row.original.id).catch(() => {
+                void 0;
+              });
+            }}
+          >
+            {t('mark_paid')}
+          </Button>
+        ) : null,
+    },
+  ];
 
   return (
     <div className="space-y-6">
       <PageHeader title={t('payouts')} description={t('payouts_desc')} />
 
       <DataTable
-        columns={[
-          { key: 'owner_name', header: 'Owner' },
-          {
-            key: 'amount',
-            header: 'Amount',
-            render: (po: ManagementPayoutOutput) => `${po.amount} ${po.currency}`,
-          },
-          { key: 'scheduled_date', header: 'Scheduled Date' },
-          {
-            key: 'paid_date',
-            header: 'Paid Date',
-            render: (po: ManagementPayoutOutput) => po.paid_date ?? '—',
-          },
-          {
-            key: 'status',
-            header: 'Status',
-            render: (po: ManagementPayoutOutput) => (
-              <Badge variant={paymentStatusVariant(po.status)}>{po.status}</Badge>
-            ),
-          },
-          {
-            key: 'actions',
-            header: '',
-            render: (po: ManagementPayoutOutput) =>
-              po.status === 'scheduled' ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    markPaid(po.id).catch(() => {
-                      void 0;
-                    });
-                  }}
-                >
-                  {t('mark_paid')}
-                </Button>
-              ) : null,
-          },
-        ]}
+        columns={columns}
         data={data}
         isLoading={isLoading}
         emptyMessage="No payouts found"
-        keyExtractor={(item) => item.id}
         page={page}
         totalPages={totalPages}
         onPageChange={setPage}
         filters={
           <div className="flex flex-col gap-3 sm:flex-row">
             <Select
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
+              value={statusFilter || 'all'}
+              onValueChange={(v) => {
+                setStatusFilter(v === 'all' ? '' : v);
                 setPage(1);
               }}
-              className="w-auto"
             >
-              {STATUSES.map((s) => (
-                <option key={s} value={s}>
-                  {s || 'All statuses'}
-                </option>
-              ))}
+              <SelectTrigger className="w-auto min-w-36">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All statuses</SelectItem>
+                {STATUSES.filter(Boolean).map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {s}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
             <Input
               type="text"

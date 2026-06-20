@@ -1,17 +1,17 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2Icon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
-import { FormField } from '@/components/ui/FormField';
-import { Input } from '@/components/ui/input';
+import { PropertySelect, TenantSelect } from '@/components/ui/entity-selects';
+import { Form } from '@/components/ui/form';
+import { EntityField, SelectField, TextareaField, TextField } from '@/components/ui/form-fields';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Select } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { apiFetch } from '@/libs/api';
+import { createApiSubmit } from '@/libs/forms';
 import { useRouter } from '@/libs/I18nNavigation';
 import type { ServiceRequestOutput } from '@/types/maintenance';
 
@@ -23,7 +23,12 @@ const schema = z.object({
   priority: z.string().optional(),
 });
 
-type FormData = z.infer<typeof schema>;
+const PRIORITY_OPTIONS = [
+  { value: 'low', label: 'Low' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'high', label: 'High' },
+  { value: 'critical', label: 'Critical' },
+];
 
 /**
  * New service request page — form for creating a maintenance request.
@@ -32,68 +37,69 @@ type FormData = z.infer<typeof schema>;
 export default function NewServiceRequestPage() {
   const t = useTranslations('Pages');
   const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm({
+  const form = useForm({
     resolver: zodResolver(schema),
   });
 
-  const onSubmit = async (data: FormData) => {
-    setSubmitting(true);
-    setError(null);
-    try {
-      const created = await apiFetch<ServiceRequestOutput>('/maintenance/requests/', {
-        method: 'POST',
-        body: data,
-      });
-      router.push(`/maintenance/${created.id}`);
-    } catch (_error) {
-      setError(_error instanceof Error ? _error.message : 'Failed to create request');
-    }
-    setSubmitting(false);
-  };
+  const onSubmit = createApiSubmit(form, {
+    submit:  async (values) =>
+      apiFetch<ServiceRequestOutput>('/maintenance/requests/', { method: 'POST', body: values }),
+    success: 'Request created',
+    error: 'Failed to create request',
+    onSuccess: (created) => router.push(`/maintenance/${created.id}`),
+  });
+
+  const { isSubmitting } = form.formState;
 
   return (
     <>
       <PageHeader title={t('new_service_request')} backHref="/maintenance" />
-      {error ? (
-        <p className="mb-4 rounded-lg border border-danger/30 bg-danger-subtle p-3 text-sm text-danger">
-          {error}
-        </p>
-      ) : null}
-      <form onSubmit={handleSubmit(onSubmit)} className="max-w-xl space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <FormField label="Property ID" error={errors.property_id?.message} required>
-            <Input type="number" {...register('property_id')} />
-          </FormField>
-          <FormField label="Tenant ID" error={errors.tenant_id?.message} required>
-            <Input type="number" {...register('tenant_id')} />
-          </FormField>
-        </div>
-        <FormField label="Title" error={errors.title?.message} required>
-          <Input {...register('title')} />
-        </FormField>
-        <FormField label="Description" error={errors.description?.message} required>
-          <Textarea {...register('description')} rows={4} />
-        </FormField>
-        <FormField label="Priority" error={errors.priority?.message}>
-          <Select {...register('priority')}>
-            <option value="">--</option>
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-            <option value="critical">Critical</option>
-          </Select>
-        </FormField>
-        <Button type="submit" disabled={submitting}>
-          {submitting ? 'Creating...' : 'Create Request'}
-        </Button>
-      </form>
+      <Form {...form}>
+        <form onSubmit={onSubmit} className="max-w-xl space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <EntityField control={form.control} name="property_id" label="Property" required>
+              {(field, invalid) => (
+                <PropertySelect
+                  id="property_id"
+                  value={field.value as number | null | undefined}
+                  onChange={field.onChange}
+                  aria-invalid={invalid}
+                />
+              )}
+            </EntityField>
+            <EntityField control={form.control} name="tenant_id" label="Tenant" required>
+              {(field, invalid) => (
+                <TenantSelect
+                  id="tenant_id"
+                  value={field.value as number | null | undefined}
+                  onChange={field.onChange}
+                  aria-invalid={invalid}
+                />
+              )}
+            </EntityField>
+          </div>
+          <TextField control={form.control} name="title" label="Title" required />
+          <TextareaField
+            control={form.control}
+            name="description"
+            label="Description"
+            rows={4}
+            required
+          />
+          <SelectField
+            control={form.control}
+            name="priority"
+            label="Priority"
+            options={PRIORITY_OPTIONS}
+            placeholder="Select priority"
+          />
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? <Loader2Icon className="animate-spin" /> : null}
+            {isSubmitting ? 'Creating…' : 'Create Request'}
+          </Button>
+        </form>
+      </Form>
     </>
   );
 }

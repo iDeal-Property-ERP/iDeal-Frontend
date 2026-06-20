@@ -10,7 +10,7 @@ const config: KnipConfig = {
     // even when not yet consumed by a page.
     'src/components/ui/**',
   ],
-  ignoreDependencies: ['@swc/helpers', 'vitest-browser-react', 'cmdk'],
+  ignoreDependencies: ['@swc/helpers', 'vitest-browser-react'],
   rules: {
     exports: 'off',
     types: 'off',

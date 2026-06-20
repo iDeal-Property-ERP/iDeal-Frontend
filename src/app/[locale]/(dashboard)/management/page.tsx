@@ -1,5 +1,6 @@
 'use client';
 
+import type { ColumnDef } from '@tanstack/react-table';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { Alert } from '@/components/ui/alert';
@@ -149,44 +150,48 @@ export default function ManagementDashboardPage() {
 
   const { kpi, occupancy, recent_payments, maintenance_requests } = data;
 
-  const paymentColumns = [
+  const paymentColumns: ColumnDef<RecentPaymentItem>[] = [
     {
-      key: 'tenant_name',
+      accessorKey: 'tenant_name',
       header: 'Tenant',
-      render: (item: RecentPaymentItem) => (
+      cell: ({ row }) => (
         <span>
-          {item.nationality ? `${item.nationality} ` : ''}
-          {item.tenant_name}
+          {row.original.nationality ? `${row.original.nationality} ` : ''}
+          {row.original.tenant_name}
         </span>
       ),
     },
-    { key: 'property_name', header: 'Property' },
-    { key: 'amount', header: 'Amount', render: (item: RecentPaymentItem) => `$${item.amount}` },
+    { accessorKey: 'property_name', header: 'Property' },
     {
-      key: 'status',
+      accessorKey: 'amount',
+      header: 'Amount',
+      cell: ({ row }) => `$${row.original.amount}`,
+    },
+    {
+      accessorKey: 'status',
       header: 'Status',
-      render: (item: RecentPaymentItem) => (
-        <Badge variant={paymentStatusVariant(item.status)}>{item.status}</Badge>
+      cell: ({ row }) => (
+        <Badge variant={paymentStatusVariant(row.original.status)}>{row.original.status}</Badge>
       ),
     },
   ];
 
-  const maintenanceColumns = [
-    { key: 'title', header: 'Request' },
-    { key: 'property_name', header: 'Property' },
-    { key: 'tenant_name', header: 'Tenant' },
+  const maintenanceColumns: ColumnDef<MaintenanceRequestItem>[] = [
+    { accessorKey: 'title', header: 'Request' },
+    { accessorKey: 'property_name', header: 'Property' },
+    { accessorKey: 'tenant_name', header: 'Tenant' },
     {
-      key: 'priority',
+      accessorKey: 'priority',
       header: 'Priority',
-      render: (item: MaintenanceRequestItem) => (
-        <Badge variant={priorityVariant(item.priority)}>{item.priority}</Badge>
+      cell: ({ row }) => (
+        <Badge variant={priorityVariant(row.original.priority)}>{row.original.priority}</Badge>
       ),
     },
     {
-      key: 'status',
+      accessorKey: 'status',
       header: 'Status',
-      render: (item: MaintenanceRequestItem) => (
-        <Badge variant={maintenanceStatusVariant(item.status)}>{item.status}</Badge>
+      cell: ({ row }) => (
+        <Badge variant={maintenanceStatusVariant(row.original.status)}>{row.original.status}</Badge>
       ),
     },
   ];
@@ -239,7 +244,6 @@ export default function ManagementDashboardPage() {
           <DataTable
             columns={paymentColumns}
             data={recent_payments}
-            keyExtractor={(item, i) => `${item.tenant_name}-${item.property_name}-${i}`}
             emptyMessage="No recent payments"
           />
         </div>
@@ -262,7 +266,6 @@ export default function ManagementDashboardPage() {
         <DataTable
           columns={maintenanceColumns}
           data={maintenance_requests}
-          keyExtractor={(item, i) => `${item.title}-${item.property_name}-${i}`}
           emptyMessage="No open maintenance requests"
         />
       </div>

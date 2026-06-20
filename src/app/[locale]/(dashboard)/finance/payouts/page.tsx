@@ -1,5 +1,6 @@
 'use client';
 
+import type { ColumnDef } from '@tanstack/react-table';
 import { useTranslations } from 'next-intl';
 import { useState, useEffect, useCallback } from 'react';
 import { Badge } from '@/components/ui/badge';
@@ -54,30 +55,31 @@ export default function PayoutsPage() {
     }
   }
 
-  const columns = [
-    { key: 'id', header: 'ID' },
-    { key: 'owner_id', header: 'Owner' },
-    { key: 'amount', header: 'Amount' },
-    { key: 'currency', header: 'Currency' },
-    { key: 'scheduled_date', header: 'Scheduled', sortable: true },
-    { key: 'paid_date', header: 'Paid On' },
+  const columns: ColumnDef<PayoutOutput>[] = [
+    { accessorKey: 'id', header: 'ID' },
+    { accessorKey: 'owner_id', header: 'Owner' },
+    { accessorKey: 'amount', header: 'Amount' },
+    { accessorKey: 'currency', header: 'Currency' },
+    { accessorKey: 'scheduled_date', header: 'Scheduled' },
+    { accessorKey: 'paid_date', header: 'Paid On' },
     {
-      key: 'status',
+      accessorKey: 'status',
       header: 'Status',
-      render: (item: PayoutOutput) => (
-        <Badge variant={paymentStatusVariant(item.status)}>{item.status}</Badge>
+      cell: ({ row }) => (
+        <Badge variant={paymentStatusVariant(row.original.status)}>{row.original.status}</Badge>
       ),
     },
     {
-      key: 'actions',
+      id: 'actions',
       header: '',
-      render: (item: PayoutOutput) =>
-        item.status === 'scheduled' ? (
+      enableSorting: false,
+      cell: ({ row }) =>
+        row.original.status === 'scheduled' ? (
           <Button
             variant="outline"
             size="sm"
             onClick={() => {
-              markPaid(item.id).catch(() => {
+              markPaid(row.original.id).catch(() => {
                 void 0;
               });
             }}
@@ -110,7 +112,6 @@ export default function PayoutsPage() {
         <DataTable
           columns={columns}
           data={data}
-          keyExtractor={(item) => String(item.id)}
           page={page}
           totalPages={totalPages}
           onPageChange={setPage}

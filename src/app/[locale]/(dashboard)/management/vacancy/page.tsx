@@ -1,5 +1,6 @@
 'use client';
 
+import type { ColumnDef } from '@tanstack/react-table';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { DataTable } from '@/components/ui/DataTable';
@@ -25,6 +26,22 @@ type VacancyReport = {
   total_accrued_loss: string;
   properties: VacancyRow[];
 };
+
+const columns: ColumnDef<VacancyRow>[] = [
+  { accessorKey: 'property_name', header: 'Property' },
+  { accessorKey: 'district_name', header: 'District' },
+  { accessorKey: 'vacant_days', header: 'Vacant days' },
+  {
+    accessorKey: 'daily_loss',
+    header: 'Daily loss',
+    cell: ({ row }) => `${row.original.daily_loss} ${row.original.currency}`,
+  },
+  {
+    accessorKey: 'accrued_loss',
+    header: 'Accrued loss',
+    cell: ({ row }) => `${row.original.accrued_loss} ${row.original.currency}`,
+  },
+];
 
 /**
  * Vacancy-cost report: per-property revenue loss from vacant units.
@@ -67,25 +84,10 @@ export default function VacancyCostPage() {
       ) : null}
 
       <DataTable
-        columns={[
-          { key: 'property_name', header: 'Property' },
-          { key: 'district_name', header: 'District' },
-          { key: 'vacant_days', header: 'Vacant days' },
-          {
-            key: 'daily_loss',
-            header: 'Daily loss',
-            render: (r: VacancyRow) => `${r.daily_loss} ${r.currency}`,
-          },
-          {
-            key: 'accrued_loss',
-            header: 'Accrued loss',
-            render: (r: VacancyRow) => `${r.accrued_loss} ${r.currency}`,
-          },
-        ]}
+        columns={columns}
         data={report?.properties ?? []}
         isLoading={loading}
         emptyMessage="No vacant properties"
-        keyExtractor={(item) => item.property_id}
       />
     </div>
   );

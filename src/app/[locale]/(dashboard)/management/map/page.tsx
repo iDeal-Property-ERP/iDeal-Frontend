@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { apiFetch } from '@/libs/api';
 import { Env } from '@/libs/Env';
@@ -123,9 +124,9 @@ export default function PortfolioMapPage() {
       <PageHeader title={t('portfolio_map')} description={t('portfolio_map_desc')} />
 
       {error && (
-        <div className="rounded-lg border border-danger/30 bg-danger-subtle p-4 text-danger">
-          {error}
-        </div>
+        <Alert variant="danger">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       )}
 
       {isLoading && !error && (

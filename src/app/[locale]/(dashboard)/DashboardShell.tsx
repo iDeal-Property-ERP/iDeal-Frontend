@@ -1,17 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { AppSidebar } from '@/components/ui/app-sidebar';
 import { Header } from '@/components/ui/Header';
-import { Sidebar } from '@/components/ui/Sidebar';
-import { Spinner } from '@/components/ui/Spinner';
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { Spinner } from '@/components/ui/spinner';
 import { AuthProvider, roleDashboardMap, roleRouteMap, useAuth } from '@/libs/auth';
-import { useRouter, usePathname } from '@/libs/I18nNavigation';
+import { usePathname, useRouter } from '@/libs/I18nNavigation';
 
 function DashboardContent(props: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -34,24 +33,13 @@ function DashboardContent(props: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Sidebar
-        role={user.role}
-        isOpen={sidebarOpen}
-        onClose={() => {
-          setSidebarOpen(false);
-        }}
-      />
-      <div className="flex flex-col lg:pl-64">
-        <Header
-          pageTitle="iDeal"
-          onMenuToggle={() => {
-            setSidebarOpen(!sidebarOpen);
-          }}
-        />
+    <SidebarProvider>
+      <AppSidebar role={user.role} />
+      <SidebarInset>
+        <Header />
         <main className="flex-1 p-4 lg:p-6">{props.children}</main>
-      </div>
-    </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
 

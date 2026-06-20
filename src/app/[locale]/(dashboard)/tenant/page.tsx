@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { apiFetch } from '@/libs/api';
@@ -71,11 +72,15 @@ export default function TenantHomePage() {
           </div>
         )}
         {data.next_payment_due ? (
-          <div className="rounded-lg border border-warning/30 bg-warning/10 p-6">
-            <h3 className="text-sm font-medium text-muted-foreground">Next Payment</h3>
+          <Alert variant="warning" className="p-6">
+            <AlertTitle className="text-sm font-medium text-muted-foreground">
+              Next Payment
+            </AlertTitle>
             <p className="mt-2 text-2xl font-bold">{data.rent_due}</p>
-            <p className="text-sm text-muted-foreground">Due: {data.next_payment_due}</p>
-          </div>
+            <AlertDescription className="text-muted-foreground">
+              Due: {data.next_payment_due}
+            </AlertDescription>
+          </Alert>
         ) : null}
         <div className="rounded-lg border border-border bg-card p-6">
           <h3 className="text-sm font-medium text-muted-foreground">Quick Actions</h3>

@@ -1,11 +1,18 @@
 'use client';
 
+import type { ColumnDef } from '@tanstack/react-table';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { DataTable } from '@/components/ui/DataTable';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Select } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { apiFetch } from '@/libs/api';
 import type { PaginatedData } from '@/types/api';
 import type { VASOrderStatus } from '@/types/enums';
@@ -63,64 +70,74 @@ export default function VASOrdersPage() {
     }
   }
 
+  const columns: ColumnDef<ServiceOrderOutput>[] = [
+    { accessorKey: 'catalog_item_name', header: 'Service' },
+    { accessorKey: 'tenant_id', header: 'Tenant' },
+    { accessorKey: 'cost', header: 'Cost' },
+    { accessorKey: 'commission_earned', header: 'Commission' },
+    {
+      accessorKey: 'status',
+      header: 'Status',
+      cell: ({ row }) => <Badge>{row.original.status}</Badge>,
+    },
+    {
+      id: 'actions',
+      header: 'Set status',
+      enableSorting: false,
+      cell: ({ row }) => (
+        <Select
+          value={row.original.status}
+          onValueChange={(v) => {
+            updateStatus(row.original.id, v).catch(() => {
+              void 0;
+            });
+          }}
+        >
+          <SelectTrigger className="w-auto min-w-36">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {STATUSES.map((s) => (
+              <SelectItem key={s} value={s}>
+                {s}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      ),
+    },
+  ];
+
   return (
     <div className="space-y-6">
       <PageHeader title={t('vas_orders')} description={t('vas_orders_desc')} />
       <DataTable
-        columns={[
-          { key: 'catalog_item_name', header: 'Service' },
-          { key: 'tenant_id', header: 'Tenant' },
-          { key: 'cost', header: 'Cost' },
-          { key: 'commission_earned', header: 'Commission' },
-          {
-            key: 'status',
-            header: 'Status',
-            render: (o: ServiceOrderOutput) => <Badge>{o.status}</Badge>,
-          },
-          {
-            key: 'actions',
-            header: 'Set status',
-            render: (o: ServiceOrderOutput) => (
-              <Select
-                value={o.status}
-                onChange={(e) => {
-                  updateStatus(o.id, e.target.value).catch(() => {
-                    void 0;
-                  });
-                }}
-                className="w-auto"
-              >
-                {STATUSES.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </Select>
-            ),
-          },
-        ]}
+        columns={columns}
         data={data}
         isLoading={isLoading}
         emptyMessage="No orders found"
-        keyExtractor={(item) => item.id}
         page={page}
         totalPages={totalPages}
         onPageChange={setPage}
         filters={
           <Select
-            value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value);
+            value={statusFilter || 'all'}
+            onValueChange={(v) => {
+              setStatusFilter(v === 'all' ? '' : v);
               setPage(1);
             }}
-            className="w-auto"
           >
-            <option value="">All statuses</option>
-            {STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
+            <SelectTrigger className="w-auto min-w-36">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              {STATUSES.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {s}
+                </SelectItem>
+              ))}
+            </SelectContent>
           </Select>
         }
       />

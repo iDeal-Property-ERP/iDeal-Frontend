@@ -1,5 +1,6 @@
 'use client';
 
+import type { ColumnDef } from '@tanstack/react-table';
 import { useTranslations } from 'next-intl';
 import { useState, useEffect, useCallback } from 'react';
 import { Badge } from '@/components/ui/badge';
@@ -39,21 +40,21 @@ export default function AgentsPage() {
     });
   }, [page, fetchData]);
 
-  const columns = [
-    { key: 'user_name', header: 'Name', sortable: true },
-    { key: 'total_deals', header: 'Total Deals', sortable: true },
-    { key: 'total_revenue', header: 'Revenue' },
-    { key: 'commission_rate', header: 'Commission' },
+  const columns: ColumnDef<AgentOutput>[] = [
+    { accessorKey: 'user_name', header: 'Name' },
+    { accessorKey: 'total_deals', header: 'Total Deals' },
+    { accessorKey: 'total_revenue', header: 'Revenue' },
+    { accessorKey: 'commission_rate', header: 'Commission' },
     {
-      key: 'is_active',
+      accessorKey: 'is_active',
       header: 'Active',
-      render: (item: AgentOutput) => (
-        <Badge variant={item.is_active ? 'success' : 'default'}>
-          {item.is_active ? 'Yes' : 'No'}
+      cell: ({ row }) => (
+        <Badge variant={row.original.is_active ? 'success' : 'default'}>
+          {row.original.is_active ? 'Yes' : 'No'}
         </Badge>
       ),
     },
-    { key: 'created_at', header: 'Joined', sortable: true },
+    { accessorKey: 'created_at', header: 'Joined' },
   ];
 
   return (
@@ -65,7 +66,6 @@ export default function AgentsPage() {
         <DataTable
           columns={columns}
           data={data}
-          keyExtractor={(item) => String(item.id)}
           rowHref={(item) => `/agents/${item.id}`}
           page={page}
           totalPages={totalPages}

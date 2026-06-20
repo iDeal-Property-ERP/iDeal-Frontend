@@ -1,12 +1,19 @@
 'use client';
 
+import type { ColumnDef } from '@tanstack/react-table';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/DataTable';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Select } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { apiFetch } from '@/libs/api';
 import type { PaginatedData } from '@/types/api';
 import type { ManagementViewingRequestOutput } from '@/types/marketplace';
@@ -56,73 +63,80 @@ export default function ManagementViewingRequestsPage() {
     }
   }
 
+  const columns: ColumnDef<ManagementViewingRequestOutput>[] = [
+    { accessorKey: 'full_name', header: t('viewing_name') },
+    { accessorKey: 'phone', header: t('viewing_phone') },
+    { accessorKey: 'email', header: t('viewing_email') },
+    { accessorKey: 'property_name', header: t('viewing_property') },
+    { accessorKey: 'preferred_date', header: t('viewing_date') },
+    {
+      accessorKey: 'status',
+      header: t('viewing_status'),
+      cell: ({ row }) => <Badge>{row.original.status}</Badge>,
+    },
+    {
+      id: 'actions',
+      header: '',
+      enableSorting: false,
+      cell: ({ row }) =>
+        row.original.status === 'pending' ? (
+          <div className="flex gap-2">
+            <Button
+              onClick={() => {
+                act(row.original.id, 'confirm').catch(() => {
+                  void 0;
+                });
+              }}
+              size="sm"
+            >
+              {t('viewing_confirm')}
+            </Button>
+            <Button
+              onClick={() => {
+                act(row.original.id, 'cancel').catch(() => {
+                  void 0;
+                });
+              }}
+              size="sm"
+              variant="destructive"
+            >
+              {t('viewing_cancel')}
+            </Button>
+          </div>
+        ) : null,
+    },
+  ];
+
   return (
     <div className="space-y-6">
       <PageHeader description={t('viewing_requests_desc')} title={t('viewing_requests')} />
 
       <DataTable
-        columns={[
-          { key: 'full_name', header: t('viewing_name') },
-          { key: 'phone', header: t('viewing_phone') },
-          { key: 'email', header: t('viewing_email') },
-          { key: 'property_name', header: t('viewing_property') },
-          { key: 'preferred_date', header: t('viewing_date') },
-          {
-            key: 'status',
-            header: t('viewing_status'),
-            render: (v: ManagementViewingRequestOutput) => <Badge>{v.status}</Badge>,
-          },
-          {
-            key: 'actions',
-            header: '',
-            render: (v: ManagementViewingRequestOutput) =>
-              v.status === 'pending' ? (
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => {
-                      act(v.id, 'confirm').catch(() => {
-                        void 0;
-                      });
-                    }}
-                    size="sm"
-                  >
-                    {t('viewing_confirm')}
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      act(v.id, 'cancel').catch(() => {
-                        void 0;
-                      });
-                    }}
-                    size="sm"
-                    variant="destructive"
-                  >
-                    {t('viewing_cancel')}
-                  </Button>
-                </div>
-              ) : null,
-          },
-        ]}
+        columns={columns}
         data={data}
         emptyMessage={t('viewing_empty')}
         filters={
           <Select
-            className="w-auto"
-            onChange={(e) => {
-              setStatusFilter(e.target.value);
+            value={statusFilter || 'all'}
+            onValueChange={(v) => {
+              setStatusFilter(v === 'all' ? '' : v);
               setPage(1);
             }}
-            value={statusFilter}
           >
-            {STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {s || t('viewing_all_statuses')}
-              </option>
-            ))}
+            <SelectTrigger className="w-auto min-w-36">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t('viewing_all_statuses')}</SelectItem>
+              {STATUSES.filter(Boolean).map((s) => (
+                <SelectItem key={s} value={s}>
+                  {s}
+                </SelectItem>
+              ))}
+            </SelectContent>
           </Select>
         }
         isLoading={isLoading}
-        keyExtractor={(item) => item.id}
         onPageChange={setPage}
         page={page}
         totalPages={totalPages}

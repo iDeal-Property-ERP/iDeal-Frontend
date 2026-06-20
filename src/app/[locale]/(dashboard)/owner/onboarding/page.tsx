@@ -1,16 +1,18 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2Icon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
-import { FormField } from '@/components/ui/FormField';
-import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Form } from '@/components/ui/form';
+import { TextareaField, TextField } from '@/components/ui/form-fields';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Textarea } from '@/components/ui/textarea';
 import { apiFetch } from '@/libs/api';
+import { createApiSubmit } from '@/libs/forms';
 import { useRouter } from '@/libs/I18nNavigation';
 import type { OwnerOnboardingOutput, PublicOfferOutput } from '@/types/owner';
 
@@ -26,8 +28,6 @@ const schema = z.object({
   ask_price: z.string().min(1),
 });
 
-type FormData = z.infer<typeof schema>;
-
 /**
  * Owner self-service onboarding: submit a property and accept the public offer.
  * @returns Onboarding wizard page.
@@ -37,14 +37,10 @@ export default function OwnerOnboardingPage() {
   const router = useRouter();
   const [offer, setOffer] = useState<PublicOfferOutput | null>(null);
   const [accepted, setAccepted] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm({ resolver: zodResolver(schema) });
+  const form = useForm({
+    resolver: zodResolver(schema),
+  });
 
   useEffect(() => {
     apiFetch<PublicOfferOutput>('/owner/public-offer/')
@@ -54,24 +50,18 @@ export default function OwnerOnboardingPage() {
       });
   }, []);
 
-  const onSubmit = async (data: FormData) => {
-    if (!accepted) {
-      setError(t('onboarding_must_accept'));
-      return;
-    }
-    setSubmitting(true);
-    setError(null);
-    try {
-      await apiFetch<OwnerOnboardingOutput>('/owner/onboarding/', {
+  const onSubmit = createApiSubmit(form, {
+    submit:  async (values) =>
+      apiFetch<OwnerOnboardingOutput>('/owner/onboarding/', {
         method: 'POST',
-        body: { ...data, accept_offer: true },
-      });
-      router.push('/owner');
-    } catch (_error) {
-      setError(_error instanceof Error ? _error.message : t('onboarding_error'));
-    }
-    setSubmitting(false);
-  };
+        body: { ...values, accept_offer: true },
+      }),
+    success: t('onboarding_submit'),
+    error: t('onboarding_error'),
+    onSuccess: () => router.push('/owner'),
+  });
+
+  const { isSubmitting } = form.formState;
 
   return (
     <>
@@ -80,72 +70,97 @@ export default function OwnerOnboardingPage() {
         description={t('onboarding_desc')}
         backHref="/owner"
       />
-      {error ? (
-        <p className="mb-4 rounded bg-danger-subtle p-3 text-sm text-danger">{error}</p>
-      ) : null}
-      <form onSubmit={handleSubmit(onSubmit)} className="max-w-2xl space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <FormField label={t('onboarding_name')} error={errors.name?.message} required>
-            <Input {...register('name')} />
-          </FormField>
-          <FormField label={t('onboarding_address')} error={errors.address?.message} required>
-            <Input {...register('address')} />
-          </FormField>
-        </div>
-        <div className="grid grid-cols-3 gap-4">
-          <FormField
-            label={t('onboarding_district_id')}
-            error={errors.district_id?.message}
-            required
-          >
-            <Input type="number" {...register('district_id')} />
-          </FormField>
-          <FormField label={t('onboarding_rooms')} error={errors.rooms?.message} required>
-            <Input type="number" step="1" {...register('rooms')} />
-          </FormField>
-          <FormField label={t('onboarding_area')} error={errors.area_sqm?.message} required>
-            <Input type="number" step="1" {...register('area_sqm')} />
-          </FormField>
-        </div>
-        <div className="grid grid-cols-3 gap-4">
-          <FormField label={t('onboarding_floor')} error={errors.floor?.message} required>
-            <Input type="number" step="1" {...register('floor')} />
-          </FormField>
-          <FormField label={t('onboarding_total_floors')} error={errors.total_floors?.message}>
-            <Input type="number" step="1" {...register('total_floors')} />
-          </FormField>
-          <FormField label={t('onboarding_ask_price')} error={errors.ask_price?.message} required>
-            <Input {...register('ask_price')} />
-          </FormField>
-        </div>
-        <FormField label={t('onboarding_description')} error={errors.description?.message}>
-          <Textarea {...register('description')} rows={3} />
-        </FormField>
-
-        <div className="rounded-lg border border-border bg-card p-4">
-          <h3 className="mb-2 text-sm font-semibold text-foreground">
-            {t('onboarding_offer_title')}
-            {offer?.version ? ` (${offer.version})` : ''}
-          </h3>
-          <div className="mb-3 max-h-40 overflow-y-auto text-sm whitespace-pre-wrap text-muted-foreground">
-            {offer?.body ?? t('onboarding_offer_unavailable')}
-          </div>
-          <label className="flex items-center gap-2 text-sm text-foreground">
-            <input
-              type="checkbox"
-              checked={accepted}
-              onChange={(e) => {
-                setAccepted(e.target.checked);
-              }}
+      <Form {...form}>
+        <form onSubmit={onSubmit} className="max-w-2xl space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <TextField control={form.control} name="name" label={t('onboarding_name')} required />
+            <TextField
+              control={form.control}
+              name="address"
+              label={t('onboarding_address')}
+              required
             />
-            {t('onboarding_accept_offer')}
-          </label>
-        </div>
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            <TextField
+              control={form.control}
+              name="district_id"
+              label={t('onboarding_district_id')}
+              type="number"
+              required
+            />
+            <TextField
+              control={form.control}
+              name="rooms"
+              label={t('onboarding_rooms')}
+              type="number"
+              step="1"
+              required
+            />
+            <TextField
+              control={form.control}
+              name="area_sqm"
+              label={t('onboarding_area')}
+              type="number"
+              step="1"
+              required
+            />
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            <TextField
+              control={form.control}
+              name="floor"
+              label={t('onboarding_floor')}
+              type="number"
+              step="1"
+              required
+            />
+            <TextField
+              control={form.control}
+              name="total_floors"
+              label={t('onboarding_total_floors')}
+              type="number"
+              step="1"
+            />
+            <TextField
+              control={form.control}
+              name="ask_price"
+              label={t('onboarding_ask_price')}
+              required
+            />
+          </div>
+          <TextareaField
+            control={form.control}
+            name="description"
+            label={t('onboarding_description')}
+            rows={3}
+          />
 
-        <Button type="submit" variant="default" disabled={submitting || !accepted}>
-          {submitting ? t('onboarding_submitting') : t('onboarding_submit')}
-        </Button>
-      </form>
+          <div className="rounded-lg border border-border bg-card p-4">
+            <h3 className="mb-2 text-sm font-semibold text-foreground">
+              {t('onboarding_offer_title')}
+              {offer?.version ? ` (${offer.version})` : ''}
+            </h3>
+            <div className="mb-3 max-h-40 overflow-y-auto text-sm whitespace-pre-wrap text-muted-foreground">
+              {offer?.body ?? t('onboarding_offer_unavailable')}
+            </div>
+            <label className="flex items-center gap-2 text-sm text-foreground">
+              <Checkbox
+                checked={accepted}
+                onCheckedChange={(checked) => {
+                  setAccepted(checked === true);
+                }}
+              />
+              {t('onboarding_accept_offer')}
+            </label>
+          </div>
+
+          <Button type="submit" variant="default" disabled={isSubmitting || !accepted}>
+            {isSubmitting ? <Loader2Icon className="animate-spin" /> : null}
+            {isSubmitting ? t('onboarding_submitting') : t('onboarding_submit')}
+          </Button>
+        </form>
+      </Form>
     </>
   );
 }

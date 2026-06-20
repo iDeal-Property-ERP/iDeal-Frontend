@@ -1,17 +1,20 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import type { ColumnDef } from '@tanstack/react-table';
+import { Loader2Icon } from 'lucide-react';
 import { useState, useEffect, use } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/DataTable';
-import { FormField } from '@/components/ui/FormField';
-import { Input } from '@/components/ui/input';
+import { PropertySelect } from '@/components/ui/entity-selects';
+import { Form } from '@/components/ui/form';
+import { DateField, EntityField, SelectField, TextField } from '@/components/ui/form-fields';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Select } from '@/components/ui/select';
 import { apiFetch } from '@/libs/api';
+import { createApiSubmit } from '@/libs/forms';
 import type { AgentOutput, DealOutput } from '@/types/agent';
 import type { PaginatedData } from '@/types/api';
 
@@ -22,13 +25,17 @@ const DEAL_STATUS_VARIANT: Record<string, 'success' | 'warning' | 'default'> = {
 };
 
 const dealSchema = z.object({
-  property_id: z.coerce.number().min(1),
-  deal_date: z.string().min(1),
-  rent_amount: z.string().min(1),
-  status: z.string().min(1),
+  property_id: z.coerce.number().min(1, 'Property is required'),
+  deal_date: z.string().min(1, 'Deal date is required'),
+  rent_amount: z.coerce.number().positive('Rent amount must be greater than 0'),
+  status: z.string().min(1, 'Status is required'),
 });
 
-type DealForm = z.infer<typeof dealSchema>;
+const DEAL_STATUS_OPTIONS = [
+  { value: 'pending', label: 'Pending' },
+  { value: 'closed', label: 'Closed' },
+  { value: 'cancelled', label: 'Cancelled' },
+];
 
 /**
  * Agent detail page showing stats and deal management for a single agent.
@@ -40,29 +47,20 @@ export default function AgentDetailPage(props: { params: Promise<{ id: string }>
   const [agent, setAgent] = useState<AgentOutput | null>(null);
   const [deals, setDeals] = useState<DealOutput[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm({
+  const form = useForm({
     resolver: zodResolver(dealSchema),
   });
 
-  const fetchData = () => {
+  const fetchData =  async () => {
     setLoading(true);
-    Promise.all([
+    return Promise.all([
       apiFetch<AgentOutput>(`/agents/${params.id}/`),
       apiFetch<PaginatedData<DealOutput>>(`/agents/${params.id}/deals/`, { query: { page: 1 } }),
     ])
       .then(([agentData, dealsData]) => {
         setAgent(agentData);
         setDeals(dealsData.page.object_list);
-      })
-      .catch(() => {
-        setError('Failed to load agent');
       })
       .finally(() => {
         setLoading(false);
@@ -74,16 +72,18 @@ export default function AgentDetailPage(props: { params: Promise<{ id: string }>
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id]);
 
-  const onCreateDeal = async (data: DealForm) => {
-    setError(null);
-    try {
-      await apiFetch<DealOutput>(`/agents/${params.id}/deals/`, { method: 'POST', body: data });
-      reset();
-      fetchData();
-    } catch (_error) {
-      setError(_error instanceof Error ? _error.message : 'Failed to create deal');
-    }
-  };
+  const onCreateDeal = createApiSubmit(form, {
+    submit:  async (values) =>
+      apiFetch<DealOutput>(`/agents/${params.id}/deals/`, { method: 'POST', body: values }),
+    success: 'Deal created',
+    error: 'Failed to create deal',
+    onSuccess: async () => {
+      form.reset();
+      await fetchData();
+    },
+  });
+
+  const { isSubmitting } = form.formState;
 
   if (loading) {
     return <p className="text-sm text-muted-foreground">Loading...</p>;
@@ -92,16 +92,18 @@ export default function AgentDetailPage(props: { params: Promise<{ id: string }>
     return <p className="text-sm text-danger">Agent not found</p>;
   }
 
-  const dealColumns = [
-    { key: 'property_name', header: 'Property', sortable: true },
-    { key: 'deal_date', header: 'Date', sortable: true },
-    { key: 'rent_amount', header: 'Rent' },
-    { key: 'commission_amount', header: 'Commission' },
+  const dealColumns: ColumnDef<DealOutput>[] = [
+    { accessorKey: 'property_name', header: 'Property' },
+    { accessorKey: 'deal_date', header: 'Date' },
+    { accessorKey: 'rent_amount', header: 'Rent' },
+    { accessorKey: 'commission_amount', header: 'Commission' },
     {
-      key: 'status',
+      accessorKey: 'status',
       header: 'Status',
-      render: (item: DealOutput) => (
-        <Badge variant={DEAL_STATUS_VARIANT[item.status] ?? 'default'}>{item.status}</Badge>
+      cell: ({ row }) => (
+        <Badge variant={DEAL_STATUS_VARIANT[row.original.status] ?? 'default'}>
+          {row.original.status}
+        </Badge>
       ),
     },
   ];
@@ -109,9 +111,6 @@ export default function AgentDetailPage(props: { params: Promise<{ id: string }>
   return (
     <>
       <PageHeader title={agent.user_name} backHref="/agents" />
-      {error ? (
-        <p className="mb-4 rounded bg-danger-subtle p-3 text-sm text-danger">{error}</p>
-      ) : null}
       <div className="mb-6 grid grid-cols-4 gap-4">
         <div className="rounded-lg border border-border bg-card p-4">
           <p className="text-xs text-muted-foreground">Total Deals</p>
@@ -134,35 +133,47 @@ export default function AgentDetailPage(props: { params: Promise<{ id: string }>
       </div>
       <div className="mb-6 rounded-lg border border-border bg-card p-6">
         <h3 className="mb-4 text-sm font-medium text-muted-foreground">Create Deal</h3>
-        <form onSubmit={handleSubmit(onCreateDeal)} className="flex items-end gap-4">
-          <FormField label="Property ID" error={errors.property_id?.message} required>
-            <Input type="number" {...register('property_id')} className="w-32" />
-          </FormField>
-          <FormField label="Deal Date" error={errors.deal_date?.message} required>
-            <Input type="date" {...register('deal_date')} className="w-40" />
-          </FormField>
-          <FormField label="Rent Amount" error={errors.rent_amount?.message} required>
-            <Input {...register('rent_amount')} className="w-32" />
-          </FormField>
-          <FormField label="Status" error={errors.status?.message} required>
-            <Select {...register('status')} className="w-32">
-              <option value="">--</option>
-              <option value="pending">Pending</option>
-              <option value="closed">Closed</option>
-              <option value="cancelled">Cancelled</option>
-            </Select>
-          </FormField>
-          <Button type="submit" variant="default">
-            Create Deal
-          </Button>
-        </form>
+        <Form {...form}>
+          <form onSubmit={onCreateDeal} className="grid grid-cols-4 items-start gap-4">
+            <EntityField control={form.control} name="property_id" label="Property" required>
+              {(field, invalid) => (
+                <PropertySelect
+                  id="property_id"
+                  value={field.value as number | null | undefined}
+                  onChange={field.onChange}
+                  aria-invalid={invalid}
+                />
+              )}
+            </EntityField>
+            <DateField control={form.control} name="deal_date" label="Deal Date" required />
+            <TextField
+              control={form.control}
+              name="rent_amount"
+              label="Rent Amount"
+              type="number"
+              step="0.01"
+              required
+            />
+            <SelectField
+              control={form.control}
+              name="status"
+              label="Status"
+              options={DEAL_STATUS_OPTIONS}
+              placeholder="Select status"
+            />
+            <Button
+              type="submit"
+              variant="default"
+              className="col-span-4 w-fit"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? <Loader2Icon className="animate-spin" /> : null}
+              {isSubmitting ? 'Creating…' : 'Create Deal'}
+            </Button>
+          </form>
+        </Form>
       </div>
-      <DataTable
-        columns={dealColumns}
-        data={deals}
-        keyExtractor={(item) => String(item.id)}
-        emptyMessage="No deals yet"
-      />
+      <DataTable columns={dealColumns} data={deals} emptyMessage="No deals yet" />
     </>
   );
 }

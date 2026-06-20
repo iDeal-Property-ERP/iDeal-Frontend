@@ -2,8 +2,17 @@
 
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { StatsCard } from '@/components/ui/StatsCard';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { apiFetch } from '@/libs/api';
 import type { PnlBarItem, PnlOutput } from '@/types/management';
 
@@ -105,9 +114,9 @@ export default function PnlPage() {
 
   if (error) {
     return (
-      <div className="rounded-lg border border-danger/30 bg-danger-subtle p-4 text-danger">
-        {error}
-      </div>
+      <Alert variant="danger">
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
     );
   }
 
@@ -164,43 +173,47 @@ export default function PnlPage() {
 
       <SectionLabel>Monthly Distribution</SectionLabel>
       <div className="overflow-hidden rounded-lg border border-border bg-card">
-        <table className="w-full text-left text-sm">
-          <thead className="border-b border-border bg-muted">
-            <tr>
-              <th className="px-4 py-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+        <Table className="text-left">
+          <TableHeader className="border-b border-border bg-muted">
+            <TableRow>
+              <TableHead className="px-4 py-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                 Month
-              </th>
-              <th className="px-4 py-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+              </TableHead>
+              <TableHead className="px-4 py-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                 Revenue
-              </th>
-              <th className="px-4 py-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+              </TableHead>
+              <TableHead className="px-4 py-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                 Payouts
-              </th>
-              <th className="px-4 py-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+              </TableHead>
+              <TableHead className="px-4 py-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                 Profit
-              </th>
-              <th className="px-4 py-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+              </TableHead>
+              <TableHead className="px-4 py-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                 Tax 4%
-              </th>
-            </tr>
-          </thead>
-          <tbody>
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {monthly.map((row) => (
-              <tr
+              <TableRow
                 key={row.month}
                 className="border-b border-border transition-colors last:border-0 hover:bg-muted"
               >
-                <td className="px-4 py-3 font-medium text-foreground">{row.month}</td>
-                <td className="px-4 py-3 text-primary">{fCurrency(row.revenue)}</td>
-                <td className="px-4 py-3 text-muted-foreground">{fCurrency(row.owner_payouts)}</td>
-                <td className="px-4 py-3 font-medium text-warning">{fCurrency(row.profit)}</td>
-                <td className="px-4 py-3 text-muted-foreground">
+                <TableCell className="px-4 py-3 font-medium text-foreground">{row.month}</TableCell>
+                <TableCell className="px-4 py-3 text-primary">{fCurrency(row.revenue)}</TableCell>
+                <TableCell className="px-4 py-3 text-muted-foreground">
+                  {fCurrency(row.owner_payouts)}
+                </TableCell>
+                <TableCell className="px-4 py-3 font-medium text-warning">
+                  {fCurrency(row.profit)}
+                </TableCell>
+                <TableCell className="px-4 py-3 text-muted-foreground">
                   {Math.round(Number.parseFloat(row.tax) || 0).toLocaleString('en-US')} UZS
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
 
       <SectionLabel>Growth</SectionLabel>

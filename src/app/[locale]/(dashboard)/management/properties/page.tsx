@@ -1,12 +1,20 @@
 'use client';
 
+import type { ColumnDef } from '@tanstack/react-table';
 import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { DataTable } from '@/components/ui/DataTable';
 import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Select } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { apiFetch } from '@/libs/api';
 import { propertyStatusVariant } from '@/libs/badges';
 import { Link } from '@/libs/I18nNavigation';
@@ -21,6 +29,48 @@ const TARIFF_VARIANT: Record<string, 'default' | 'info' | 'warning'> = {
 
 const STATUSES = ['', 'vacant', 'rented', 'maintenance'];
 const TARIFFS = ['', 'standard', 'comfort', 'premium'];
+
+const columns: ColumnDef<ManagementPropertyOutput>[] = [
+  {
+    accessorKey: 'name',
+    header: 'Name',
+    cell: ({ row }) => (
+      <Link
+        href={`/properties/${row.original.id}`}
+        className="font-medium text-primary hover:text-primary/80"
+      >
+        {row.original.name}
+      </Link>
+    ),
+  },
+  { accessorKey: 'address', header: 'Address' },
+  { accessorKey: 'district_name', header: 'District' },
+  { accessorKey: 'rooms', header: 'Rooms' },
+  {
+    accessorKey: 'area_sqm',
+    header: 'Area',
+    cell: ({ row }) => `${row.original.area_sqm} m²`,
+  },
+  {
+    accessorKey: 'status',
+    header: 'Status',
+    cell: ({ row }) => (
+      <Badge variant={propertyStatusVariant(row.original.status)}>{row.original.status}</Badge>
+    ),
+  },
+  {
+    accessorKey: 'tariff',
+    header: 'Tariff',
+    cell: ({ row }) => (
+      <Badge variant={TARIFF_VARIANT[row.original.tariff]}>{row.original.tariff}</Badge>
+    ),
+  },
+  {
+    accessorKey: 'ask_price',
+    header: 'Price',
+    cell: ({ row }) => `${row.original.ask_price} ${row.original.ask_currency}`,
+  },
+];
 
 /**
  * Management properties page — lists all properties with filtering.
@@ -70,9 +120,9 @@ export default function ManagementPropertiesPage() {
 
   if (error) {
     return (
-      <div className="rounded-lg border border-danger/30 bg-danger-subtle p-4 text-danger">
-        {error}
-      </div>
+      <Alert variant="danger">
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
     );
   }
 
@@ -81,51 +131,10 @@ export default function ManagementPropertiesPage() {
       <PageHeader title={t('properties')} description={t('properties_desc')} />
 
       <DataTable
-        columns={[
-          {
-            key: 'name',
-            header: 'Name',
-            render: (prop: ManagementPropertyOutput) => (
-              <Link
-                href={`/properties/${prop.id}`}
-                className="font-medium text-primary hover:text-primary/80"
-              >
-                {prop.name}
-              </Link>
-            ),
-          },
-          { key: 'address', header: 'Address' },
-          { key: 'district_name', header: 'District' },
-          { key: 'rooms', header: 'Rooms' },
-          {
-            key: 'area_sqm',
-            header: 'Area',
-            render: (prop: ManagementPropertyOutput) => `${prop.area_sqm} m²`,
-          },
-          {
-            key: 'status',
-            header: 'Status',
-            render: (prop: ManagementPropertyOutput) => (
-              <Badge variant={propertyStatusVariant(prop.status)}>{prop.status}</Badge>
-            ),
-          },
-          {
-            key: 'tariff',
-            header: 'Tariff',
-            render: (prop: ManagementPropertyOutput) => (
-              <Badge variant={TARIFF_VARIANT[prop.tariff]}>{prop.tariff}</Badge>
-            ),
-          },
-          {
-            key: 'ask_price',
-            header: 'Price',
-            render: (prop: ManagementPropertyOutput) => `${prop.ask_price} ${prop.ask_currency}`,
-          },
-        ]}
+        columns={columns}
         data={data}
         isLoading={isLoading}
         emptyMessage="No properties found"
-        keyExtractor={(item) => item.id}
         page={page}
         totalPages={totalPages}
         onPageChange={setPage}
@@ -142,32 +151,42 @@ export default function ManagementPropertiesPage() {
               className="sm:w-64"
             />
             <Select
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
+              value={statusFilter || 'all'}
+              onValueChange={(v) => {
+                setStatusFilter(v === 'all' ? '' : v);
                 setPage(1);
               }}
-              className="w-auto"
             >
-              {STATUSES.map((s) => (
-                <option key={s} value={s}>
-                  {s || 'All statuses'}
-                </option>
-              ))}
+              <SelectTrigger className="w-auto min-w-36">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All statuses</SelectItem>
+                {STATUSES.filter(Boolean).map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {s}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
             <Select
-              value={tariffFilter}
-              onChange={(e) => {
-                setTariffFilter(e.target.value);
+              value={tariffFilter || 'all'}
+              onValueChange={(v) => {
+                setTariffFilter(v === 'all' ? '' : v);
                 setPage(1);
               }}
-              className="w-auto"
             >
-              {TARIFFS.map((tariff) => (
-                <option key={tariff} value={tariff}>
-                  {tariff || 'All tariffs'}
-                </option>
-              ))}
+              <SelectTrigger className="w-auto min-w-36">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All tariffs</SelectItem>
+                {TARIFFS.filter(Boolean).map((tariff) => (
+                  <SelectItem key={tariff} value={tariff}>
+                    {tariff}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
             <Input
               type="text"

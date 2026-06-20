@@ -1,5 +1,6 @@
 'use client';
 
+import type { ColumnDef } from '@tanstack/react-table';
 import { useTranslations } from 'next-intl';
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
@@ -43,15 +44,15 @@ export default function OwnerPropertiesPage() {
     });
   }, [page, fetchData]);
 
-  const columns = [
-    { key: 'name', header: 'Name', sortable: true },
-    { key: 'address', header: 'Address' },
-    { key: 'rooms', header: 'Rooms' },
-    { key: 'area_sqm', header: 'Area (m²)' },
-    { key: 'status', header: 'Status' },
-    { key: 'tariff', header: 'Tariff' },
-    { key: 'ask_price', header: 'Ask Price' },
-    { key: 'vacant_days', header: 'Vacant Days' },
+  const columns: ColumnDef<OwnerPropertyOutput>[] = [
+    { accessorKey: 'name', header: 'Name' },
+    { accessorKey: 'address', header: 'Address' },
+    { accessorKey: 'rooms', header: 'Rooms' },
+    { accessorKey: 'area_sqm', header: 'Area (m²)' },
+    { accessorKey: 'status', header: 'Status' },
+    { accessorKey: 'tariff', header: 'Tariff' },
+    { accessorKey: 'ask_price', header: 'Ask Price' },
+    { accessorKey: 'vacant_days', header: 'Vacant Days' },
   ];
 
   return (
@@ -76,7 +77,6 @@ export default function OwnerPropertiesPage() {
         <DataTable
           columns={columns}
           data={data}
-          keyExtractor={(item) => String(item.id)}
           rowHref={(item) => `/properties/${item.id}`}
           page={page}
           totalPages={totalPages}

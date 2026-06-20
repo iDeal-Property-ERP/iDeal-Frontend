@@ -1,5 +1,6 @@
 'use client';
 
+import type { ColumnDef } from '@tanstack/react-table';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
@@ -8,6 +9,17 @@ import { DataTable } from '@/components/ui/DataTable';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { apiFetch } from '@/libs/api';
 import type { ServiceCatalogItemOutput, ServiceOrderOutput } from '@/types/vas';
+
+const orderColumns: ColumnDef<ServiceOrderOutput>[] = [
+  { accessorKey: 'catalog_item_name', header: 'Service' },
+  { accessorKey: 'cost', header: 'Cost' },
+  { accessorKey: 'cashback_amount', header: 'Cashback' },
+  {
+    accessorKey: 'status',
+    header: 'Status',
+    cell: ({ row }) => <Badge>{row.original.status}</Badge>,
+  },
+];
 
 /**
  * Tenant value-added services: browse the catalog, order, and track orders.
@@ -100,20 +112,7 @@ export default function TenantServicesPage() {
           </div>
 
           <h3 className="mb-3 text-sm font-semibold text-foreground">{t('vas_my_orders')}</h3>
-          <DataTable
-            columns={[
-              { key: 'catalog_item_name', header: 'Service' },
-              { key: 'cost', header: 'Cost' },
-              { key: 'cashback_amount', header: 'Cashback' },
-              {
-                key: 'status',
-                header: 'Status',
-                render: (o: ServiceOrderOutput) => <Badge>{o.status}</Badge>,
-              },
-            ]}
-            data={orders}
-            keyExtractor={(item) => String(item.id)}
-          />
+          <DataTable columns={orderColumns} data={orders} />
         </>
       )}
     </>

@@ -1,13 +1,31 @@
 'use client';
 
+import type { ColumnDef } from '@tanstack/react-table';
 import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { DataTable } from '@/components/ui/DataTable';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Select } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { apiFetch } from '@/libs/api';
 import { roleVariant } from '@/libs/badges';
 import type { PaginatedData } from '@/types/api';
@@ -77,6 +95,7 @@ export default function ManagementUsersPage() {
       .then((updated) => {
         setData((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
         setEditingUser(null);
+        toast.success('User updated');
       })
       .catch((caughtError: unknown) => {
         setError(caughtError instanceof Error ? caughtError.message : 'Failed to update user');
@@ -88,65 +107,67 @@ export default function ManagementUsersPage() {
 
   if (error) {
     return (
-      <div className="rounded-lg border border-danger/30 bg-danger-subtle p-4 text-danger">
-        {error}
-      </div>
+      <Alert variant="danger">
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
     );
   }
+
+  const columns: ColumnDef<UserOutput>[] = [
+    {
+      id: 'name',
+      header: 'Name',
+      enableSorting: false,
+      cell: ({ row }) =>
+        `${row.original.first_name} ${row.original.last_name}${row.original.patronymic ? ` ${row.original.patronymic}` : ''}`,
+    },
+    { accessorKey: 'email', header: 'Email' },
+    { accessorKey: 'phone', header: 'Phone' },
+    {
+      accessorKey: 'role',
+      header: 'Role',
+      cell: ({ row }) => (
+        <Badge variant={roleVariant(row.original.role)}>{row.original.role}</Badge>
+      ),
+    },
+    {
+      accessorKey: 'is_active',
+      header: 'Active',
+      cell: ({ row }) => (
+        <Badge variant={row.original.is_active ? 'success' : 'danger'}>
+          {row.original.is_active ? 'Yes' : 'No'}
+        </Badge>
+      ),
+    },
+    {
+      id: 'actions',
+      header: 'Actions',
+      enableSorting: false,
+      cell: ({ row }) => (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            setEditingUser(row.original);
+          }}
+        >
+          Edit
+        </Button>
+      ),
+    },
+  ];
 
   return (
     <div className="space-y-6">
       <PageHeader title={t('users')} description={t('users_desc')} />
 
       <DataTable
-        columns={[
-          {
-            key: 'name',
-            header: 'Name',
-            render: (user: UserOutput) =>
-              `${user.first_name} ${user.last_name}${user.patronymic ? ` ${user.patronymic}` : ''}`,
-          },
-          { key: 'email', header: 'Email' },
-          { key: 'phone', header: 'Phone' },
-          {
-            key: 'role',
-            header: 'Role',
-            render: (user: UserOutput) => (
-              <Badge variant={roleVariant(user.role)}>{user.role}</Badge>
-            ),
-          },
-          {
-            key: 'is_active',
-            header: 'Active',
-            render: (user: UserOutput) => (
-              <Badge variant={user.is_active ? 'success' : 'danger'}>
-                {user.is_active ? 'Yes' : 'No'}
-              </Badge>
-            ),
-          },
-          {
-            key: 'actions',
-            header: 'Actions',
-            className: 'w-24',
-            render: (user: UserOutput) => (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setEditingUser(user);
-                }}
-              >
-                Edit
-              </Button>
-            ),
-          },
-        ]}
+        columns={columns}
         data={data}
         isLoading={isLoading}
         emptyMessage="No users found"
-        keyExtractor={(item) => item.id}
         onRowClick={(item: unknown) => {
           const user = item as UserOutput;
           if (user && typeof user === 'object' && 'id' in user) {
@@ -170,101 +191,117 @@ export default function ManagementUsersPage() {
               className="sm:w-80"
             />
             <Select
-              value={roleFilter}
-              onChange={(e) => {
-                setRoleFilter(e.target.value);
+              value={roleFilter || 'all'}
+              onValueChange={(v) => {
+                setRoleFilter(v === 'all' ? '' : v);
                 setPage(1);
               }}
-              className="w-auto"
             >
-              <option value="">All roles</option>
-              {ROLES.map((r) => (
-                <option key={r} value={r}>
-                  {r}
-                </option>
-              ))}
+              <SelectTrigger className="w-auto min-w-36">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All roles</SelectItem>
+                {ROLES.map((r) => (
+                  <SelectItem key={r} value={r}>
+                    {r}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
         }
       />
 
-      {editingUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-md rounded-xl bg-card p-6 shadow-2xl">
-            <h2 className="text-lg font-semibold text-foreground">
-              Edit User &mdash; {editingUser.first_name} {editingUser.last_name}
-            </h2>
-            <div className="mt-4 space-y-4">
-              <label className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  checked={editingUser.is_active}
-                  onChange={(e) => {
-                    setEditingUser({
-                      ...editingUser,
-                      is_active: e.target.checked,
-                    });
-                  }}
-                  className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
-                />
-                <span className="text-sm text-foreground">Active</span>
-              </label>
-              <label className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  checked={editingUser.is_verified}
-                  onChange={(e) => {
-                    setEditingUser({
-                      ...editingUser,
-                      is_verified: e.target.checked,
-                    });
-                  }}
-                  className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
-                />
-                <span className="text-sm text-foreground">Verified</span>
-              </label>
-              <div>
-                <label htmlFor="edit-user-role" className="mb-1 block text-sm text-foreground">
-                  Role
-                </label>
-                <Select
-                  id="edit-user-role"
-                  value={editingUser.role}
-                  onChange={(e) => {
-                    const { value } = e.target;
-                    if (isRole(value)) {
+      <Dialog
+        open={!!editingUser}
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditingUser(null);
+          }
+        }}
+      >
+        <DialogContent>
+          {editingUser && (
+            <>
+              <DialogHeader>
+                <DialogTitle>
+                  Edit User &mdash; {editingUser.first_name} {editingUser.last_name}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <Checkbox
+                    id="edit-user-active"
+                    checked={editingUser.is_active}
+                    onCheckedChange={(checked) => {
                       setEditingUser({
                         ...editingUser,
-                        role: value,
+                        is_active: checked === true,
                       });
-                    }
+                    }}
+                  />
+                  <Label htmlFor="edit-user-active">Active</Label>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Checkbox
+                    id="edit-user-verified"
+                    checked={editingUser.is_verified}
+                    onCheckedChange={(checked) => {
+                      setEditingUser({
+                        ...editingUser,
+                        is_verified: checked === true,
+                      });
+                    }}
+                  />
+                  <Label htmlFor="edit-user-verified">Verified</Label>
+                </div>
+                <div>
+                  <Label htmlFor="edit-user-role" className="mb-1 block">
+                    Role
+                  </Label>
+                  <Select
+                    value={editingUser.role}
+                    onValueChange={(value) => {
+                      if (isRole(value)) {
+                        setEditingUser({
+                          ...editingUser,
+                          role: value,
+                        });
+                      }
+                    }}
+                  >
+                    <SelectTrigger id="edit-user-role">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ROLES.map((r) => (
+                        <SelectItem key={r} value={r}>
+                          {r}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setEditingUser(null);
                   }}
                 >
-                  {ROLES.map((r) => (
-                    <option key={r} value={r}>
-                      {r}
-                    </option>
-                  ))}
-                </Select>
-              </div>
-            </div>
-            <div className="mt-6 flex justify-end gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setEditingUser(null);
-                }}
-              >
-                Cancel
-              </Button>
-              <Button type="button" variant="default" onClick={handleSave} disabled={saving}>
-                {saving ? 'Saving...' : 'Save'}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+                  Cancel
+                </Button>
+                <Button type="button" variant="default" onClick={handleSave} disabled={saving}>
+                  {saving ? 'Saving...' : 'Save'}
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

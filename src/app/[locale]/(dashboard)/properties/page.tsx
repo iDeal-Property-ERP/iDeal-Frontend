@@ -1,5 +1,6 @@
 'use client';
 
+import type { ColumnDef } from '@tanstack/react-table';
 import { useTranslations } from 'next-intl';
 import { useState, useEffect, useCallback } from 'react';
 import { Badge } from '@/components/ui/badge';
@@ -50,24 +51,24 @@ export default function PropertiesPage() {
     });
   }, [page, fetchData]);
 
-  const columns = [
-    { key: 'name', header: 'Name', sortable: true },
-    { key: 'address', header: 'Address' },
-    { key: 'rooms', header: 'Rooms' },
-    { key: 'area_sqm', header: 'Area (m²)' },
+  const columns: ColumnDef<PropertyOutput>[] = [
+    { accessorKey: 'name', header: 'Name' },
+    { accessorKey: 'address', header: 'Address' },
+    { accessorKey: 'rooms', header: 'Rooms' },
+    { accessorKey: 'area_sqm', header: 'Area (m²)' },
     {
-      key: 'status',
+      accessorKey: 'status',
       header: 'Status',
-      render: (item: PropertyOutput) => (
-        <Badge variant={propertyStatusVariant(item.status)}>{item.status}</Badge>
+      cell: ({ row }) => (
+        <Badge variant={propertyStatusVariant(row.original.status)}>{row.original.status}</Badge>
       ),
     },
     {
-      key: 'tariff',
+      accessorKey: 'tariff',
       header: 'Tariff',
-      render: (item: PropertyOutput) => TARIFF_LABEL[item.tariff] ?? item.tariff,
+      cell: ({ row }) => TARIFF_LABEL[row.original.tariff] ?? row.original.tariff,
     },
-    { key: 'vacant_days', header: 'Vacant Days', sortable: true },
+    { accessorKey: 'vacant_days', header: 'Vacant Days' },
   ];
 
   return (
@@ -92,7 +93,6 @@ export default function PropertiesPage() {
         <DataTable
           columns={columns}
           data={data}
-          keyExtractor={(item) => String(item.id)}
           rowHref={(item) => `/properties/${item.id}`}
           page={page}
           totalPages={totalPages}
