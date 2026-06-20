@@ -7,32 +7,6 @@ import { apiFetch } from '@/libs/api';
 import { Env } from '@/libs/Env';
 import type { PortfolioMapOutput } from '@/types/management';
 
-type YandexMap = {
-  geoObjects: {
-    add: (obj: unknown) => void;
-  };
-  setCenter: (coords: number[], zoom?: number) => void;
-};
-
-declare global {
-  // oxlint-disable-next-line typescript/consistent-type-definitions
-  interface Window {
-    ymaps: {
-      ready: (cb: () => void) => void;
-      Map: new (container: HTMLElement, options: Record<string, unknown>) => YandexMap;
-      Placemark: new (
-        coords: number[],
-        properties?: Record<string, unknown>,
-        options?: Record<string, unknown>,
-      ) => unknown;
-      Clusterer: new (options: Record<string, unknown>) => {
-        add: (items: unknown[]) => void;
-      };
-    };
-    handleMapReady?: () => void;
-  }
-}
-
 function fCurrency(amount: string): string {
   const n = Number.parseFloat(amount);
   if (Number.isNaN(n)) {
@@ -55,6 +29,11 @@ export default function PortfolioMapPage() {
     try {
       const data = await apiFetch<PortfolioMapOutput>('/marketplace/listings/map/');
       const { ymaps } = window;
+      if (!ymaps) {
+        setError('Failed to load map data');
+        setIsLoading(false);
+        return;
+      }
 
       ymaps.ready(() => {
         if (!mapRef.current) {

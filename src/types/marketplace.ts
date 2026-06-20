@@ -18,6 +18,8 @@ export type ListingOutput = {
     tariff: Tariff;
     ask_price: string;
     ask_currency: Currency;
+    image_url: string | null;
+    image_urls?: string[];
   };
   property_id: number;
   owner_agreement_id: number;
@@ -27,6 +29,42 @@ export type ListingOutput = {
   listed_price: string;
   created_at: string;
   updated_at: string;
+};
+
+export type ListingMapFeature = {
+  type: 'Feature';
+  geometry: {
+    type: 'Point';
+    coordinates: [number, number]; // [lon, lat]
+  };
+  properties: {
+    id: number;
+    name: string;
+    address: string;
+    rooms: number;
+    area_sqm: number;
+    floor: number;
+    price: string;
+    currency: Currency;
+    image_url: string | null;
+  };
+};
+
+export type ListingMapCollection = {
+  type: 'FeatureCollection';
+  features: ListingMapFeature[];
+};
+
+/** Normalized point used by the map components. */
+export type MapPoint = {
+  id: number;
+  lat: number;
+  lon: number;
+  name: string;
+  address: string;
+  price: string;
+  currency: Currency;
+  image_url: string | null;
 };
 
 export type BookViewingPayload = {
@@ -71,6 +109,20 @@ export type TenantBookingCreatePayload = {
   requested_end_date: string;
   monthly_rent_offer?: string;
   message?: string;
+};
+
+export type ManagementViewingRequestOutput = {
+  id: number;
+  listing_id: number;
+  property_name: string;
+  full_name: string;
+  phone: string;
+  email: string;
+  preferred_date: string;
+  message: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
 };
 
 export type ManagementBookingOutput = {

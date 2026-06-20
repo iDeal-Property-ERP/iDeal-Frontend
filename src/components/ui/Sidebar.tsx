@@ -4,6 +4,7 @@ import {
   BarChart3,
   Building2,
   CalendarCheck,
+  CalendarSearch,
   ClipboardCheck,
   ClipboardList,
   DollarSign,
@@ -53,6 +54,7 @@ type NavItemLabel =
   | 'nav_onboardings'
   | 'nav_inventory'
   | 'nav_bookings'
+  | 'nav_viewing_requests'
   | 'nav_vas_catalog'
   | 'nav_vas_orders'
   | 'nav_submit_property'
@@ -108,6 +110,11 @@ const mgmtSections: NavSection[] = [
       { labelKey: 'nav_payments', href: '/management/payments', icon: DollarSign },
       { labelKey: 'nav_payouts', href: '/management/payouts', icon: HandCoins },
       { labelKey: 'nav_bookings', href: '/management/bookings', icon: CalendarCheck },
+      {
+        labelKey: 'nav_viewing_requests',
+        href: '/management/viewing-requests',
+        icon: CalendarSearch,
+      },
       { labelKey: 'nav_service_requests', href: '/management/service-requests', icon: Wrench },
       { labelKey: 'nav_vas_catalog', href: '/management/vas-catalog', icon: Sparkles },
       { labelKey: 'nav_vas_orders', href: '/management/vas-orders', icon: ClipboardList },
