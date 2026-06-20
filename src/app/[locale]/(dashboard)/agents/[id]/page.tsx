@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/DataTable';
+import { DetailCard, DetailError, DetailLoading, DetailStat } from '@/components/ui/detail';
 import { PropertySelect } from '@/components/ui/entity-selects';
 import { Form } from '@/components/ui/form';
 import { DateField, EntityField, SelectField, TextField } from '@/components/ui/form-fields';
@@ -86,10 +87,10 @@ export default function AgentDetailPage(props: { params: Promise<{ id: string }>
   const { isSubmitting } = form.formState;
 
   if (loading) {
-    return <p className="text-sm text-muted-foreground">Loading...</p>;
+    return <DetailLoading />;
   }
   if (!agent) {
-    return <p className="text-sm text-danger">Agent not found</p>;
+    return <DetailError message="Agent not found" />;
   }
 
   const dealColumns: ColumnDef<DealOutput>[] = [
@@ -110,29 +111,29 @@ export default function AgentDetailPage(props: { params: Promise<{ id: string }>
 
   return (
     <>
-      <PageHeader title={agent.user_name} backHref="/agents" />
-      <div className="mb-6 grid grid-cols-4 gap-4">
-        <div className="rounded-lg border border-border bg-card p-4">
-          <p className="text-xs text-muted-foreground">Total Deals</p>
-          <p className="text-xl font-bold">{agent.total_deals}</p>
-        </div>
-        <div className="rounded-lg border border-border bg-card p-4">
-          <p className="text-xs text-muted-foreground">Total Revenue</p>
-          <p className="text-xl font-bold">{agent.total_revenue}</p>
-        </div>
-        <div className="rounded-lg border border-border bg-card p-4">
-          <p className="text-xs text-muted-foreground">Commission Rate</p>
-          <p className="text-xl font-bold">{agent.commission_rate}</p>
-        </div>
-        <div className="rounded-lg border border-border bg-card p-4">
-          <p className="text-xs text-muted-foreground">Active</p>
+      <PageHeader
+        title={agent.user_name}
+        backHref="/agents"
+        actions={
           <Badge variant={agent.is_active ? 'success' : 'default'}>
-            {agent.is_active ? 'Yes' : 'No'}
+            {agent.is_active ? 'Active' : 'Inactive'}
           </Badge>
-        </div>
+        }
+      />
+      <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
+        <DetailStat label="Total Deals" value={agent.total_deals} />
+        <DetailStat label="Total Revenue" value={agent.total_revenue} />
+        <DetailStat label="Commission Rate" value={agent.commission_rate} />
+        <DetailStat
+          label="Active"
+          value={
+            <Badge variant={agent.is_active ? 'success' : 'default'}>
+              {agent.is_active ? 'Yes' : 'No'}
+            </Badge>
+          }
+        />
       </div>
-      <div className="mb-6 rounded-lg border border-border bg-card p-6">
-        <h3 className="mb-4 text-sm font-medium text-muted-foreground">Create Deal</h3>
+      <DetailCard title="Create Deal" className="mb-6">
         <Form {...form}>
           <form onSubmit={onCreateDeal} className="grid grid-cols-4 items-start gap-4">
             <EntityField control={form.control} name="property_id" label="Property" required>
@@ -172,7 +173,7 @@ export default function AgentDetailPage(props: { params: Promise<{ id: string }>
             </Button>
           </form>
         </Form>
-      </div>
+      </DetailCard>
       <DataTable columns={dealColumns} data={deals} emptyMessage="No deals yet" />
     </>
   );

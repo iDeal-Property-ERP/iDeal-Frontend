@@ -1,0 +1,12 @@
+node_modules
+.next
+.git
+.github
+coverage
+test-results
+storybook-static
+vitest-test-results
+playwright-report
+*.tar.gz
+npm-debug.log*
+.DS_Store

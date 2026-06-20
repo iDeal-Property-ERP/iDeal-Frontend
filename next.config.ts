@@ -22,6 +22,7 @@ function mediaRemotePatterns(): NonNullable<NextConfig['images']>['remotePattern
 }
 
 const baseConfig: NextConfig = {
+  output: 'standalone',
   devIndicators: {
     position: 'bottom-right',
   },

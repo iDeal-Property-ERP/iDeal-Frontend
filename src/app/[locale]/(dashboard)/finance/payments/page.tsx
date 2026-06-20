@@ -95,6 +95,7 @@ export default function PaymentsListPage() {
         <DataTable
           columns={columns}
           data={data}
+          rowHref={(row) => `/finance/payments/${row.id}`}
           page={page}
           totalPages={totalPages}
           onPageChange={setPage}

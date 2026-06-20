@@ -46,15 +46,6 @@ export default function PayoutsPage() {
     });
   }, [page, fetchData]);
 
-  async function markPaid(id: number) {
-    try {
-      await apiFetch(`/finance/payouts/${id}/mark-paid/`, { method: 'POST' });
-      await fetchData(page);
-    } catch {
-      // handled silently
-    }
-  }
-
   const columns: ColumnDef<PayoutOutput>[] = [
     { accessorKey: 'id', header: 'ID' },
     { accessorKey: 'owner_id', header: 'Owner' },
@@ -68,25 +59,6 @@ export default function PayoutsPage() {
       cell: ({ row }) => (
         <Badge variant={paymentStatusVariant(row.original.status)}>{row.original.status}</Badge>
       ),
-    },
-    {
-      id: 'actions',
-      header: '',
-      enableSorting: false,
-      cell: ({ row }) =>
-        row.original.status === 'scheduled' ? (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              markPaid(row.original.id).catch(() => {
-                void 0;
-              });
-            }}
-          >
-            {t('mark_paid')}
-          </Button>
-        ) : null,
     },
   ];
 
@@ -112,6 +84,7 @@ export default function PayoutsPage() {
         <DataTable
           columns={columns}
           data={data}
+          rowHref={(row) => `/finance/payouts/${row.id}`}
           page={page}
           totalPages={totalPages}
           onPageChange={setPage}

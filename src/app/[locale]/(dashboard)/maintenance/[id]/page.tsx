@@ -7,6 +7,15 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  DetailCard,
+  DetailError,
+  DetailGrid,
+  DetailList,
+  DetailLoading,
+  DetailRow,
+  DetailText,
+} from '@/components/ui/detail';
 import { StaffSelect } from '@/components/ui/entity-selects';
 import { Form } from '@/components/ui/form';
 import { EntityField, TextField, TextareaField } from '@/components/ui/form-fields';
@@ -81,64 +90,50 @@ export default function ServiceRequestDetailPage(props: { params: Promise<{ id: 
   });
 
   if (loading) {
-    return <p className="text-sm text-muted-foreground">Loading...</p>;
+    return <DetailLoading />;
   }
   if (!request) {
-    return <p className="text-sm text-danger">Request not found</p>;
+    return <DetailError message="Request not found" />;
   }
 
   return (
     <>
-      <PageHeader title={request.title} backHref="/maintenance" />
-      <div className="grid grid-cols-2 gap-6">
-        <div className="rounded-lg border border-border bg-card p-6">
-          <h3 className="mb-3 text-sm font-medium text-muted-foreground">Details</h3>
-          <dl className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <dt className="text-muted-foreground">Property</dt>
-              <dd>{request.property_id}</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-muted-foreground">Tenant</dt>
-              <dd>{request.tenant_id}</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-muted-foreground">Assigned To</dt>
-              <dd>{request.assigned_to_id}</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-muted-foreground">Priority</dt>
-              <dd>
-                <Badge variant={priorityVariant(request.priority)}>{request.priority}</Badge>
-              </dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-muted-foreground">Status</dt>
-              <dd>
+      <PageHeader
+        title={request.title}
+        backHref="/maintenance"
+        actions={<Badge variant={maintenanceStatusVariant(request.status)}>{request.status}</Badge>}
+      />
+      <DetailGrid>
+        <DetailCard title="Details">
+          <DetailList>
+            <DetailRow label="Property" value={request.property_id} />
+            <DetailRow label="Tenant" value={request.tenant_id} />
+            <DetailRow label="Assigned To" value={request.assigned_to_id} />
+            <DetailRow
+              label="Priority"
+              value={<Badge variant={priorityVariant(request.priority)}>{request.priority}</Badge>}
+            />
+            <DetailRow
+              label="Status"
+              value={
                 <Badge variant={maintenanceStatusVariant(request.status)}>{request.status}</Badge>
-              </dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-muted-foreground">Cost</dt>
-              <dd>{request.cost ?? '--'}</dd>
-            </div>
-          </dl>
-        </div>
-        <div className="rounded-lg border border-border bg-card p-6">
-          <h3 className="mb-3 text-sm font-medium text-muted-foreground">Description</h3>
-          <p className="text-sm text-foreground">{request.description}</p>
-          {request.resolution_notes ? (
-            <div className="mt-4">
-              <h3 className="mb-2 text-sm font-medium text-muted-foreground">Resolution Notes</h3>
-              <p className="text-sm text-foreground">{request.resolution_notes}</p>
-            </div>
-          ) : null}
-        </div>
-      </div>
+              }
+            />
+            <DetailRow label="Cost" value={request.cost} />
+          </DetailList>
+        </DetailCard>
+        <DetailCard title="Description">
+          <div className="space-y-4">
+            <DetailText>{request.description}</DetailText>
+            {request.resolution_notes ? (
+              <DetailText title="Resolution Notes">{request.resolution_notes}</DetailText>
+            ) : null}
+          </div>
+        </DetailCard>
+      </DetailGrid>
       {request.status !== 'resolved' && request.status !== 'cancelled' ? (
-        <div className="mt-6 grid grid-cols-2 gap-6">
-          <div className="rounded-lg border border-border bg-card p-6">
-            <h3 className="mb-4 text-sm font-medium text-muted-foreground">Assign Staff</h3>
+        <DetailGrid className="mt-6">
+          <DetailCard title="Assign Staff">
             <Form {...assignForm}>
               <form onSubmit={handleAssign} className="flex items-end gap-3">
                 <EntityField
@@ -164,9 +159,8 @@ export default function ServiceRequestDetailPage(props: { params: Promise<{ id: 
                 </Button>
               </form>
             </Form>
-          </div>
-          <div className="rounded-lg border border-border bg-card p-6">
-            <h3 className="mb-4 text-sm font-medium text-muted-foreground">Resolve</h3>
+          </DetailCard>
+          <DetailCard title="Resolve">
             <Form {...resolveForm}>
               <form onSubmit={handleResolve} className="space-y-3">
                 <TextField
@@ -196,8 +190,8 @@ export default function ServiceRequestDetailPage(props: { params: Promise<{ id: 
                 </Button>
               </form>
             </Form>
-          </div>
-        </div>
+          </DetailCard>
+        </DetailGrid>
       ) : null}
     </>
   );

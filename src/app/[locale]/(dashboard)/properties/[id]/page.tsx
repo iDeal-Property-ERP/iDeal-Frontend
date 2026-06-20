@@ -3,6 +3,16 @@
 import { useState, useEffect, use } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  DetailCard,
+  DetailError,
+  DetailGrid,
+  DetailList,
+  DetailLoading,
+  DetailRow,
+  DetailStat,
+  DetailText,
+} from '@/components/ui/detail';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { apiFetch } from '@/libs/api';
 import { propertyStatusVariant } from '@/libs/badges';
@@ -43,10 +53,10 @@ export default function PropertyDetailPage(props: { params: Promise<{ id: string
   };
 
   if (loading) {
-    return <p className="text-sm text-muted-foreground">Loading...</p>;
+    return <DetailLoading />;
   }
   if (!property) {
-    return <p className="text-sm text-danger">Property not found</p>;
+    return <DetailError message="Property not found" />;
   }
 
   return (
@@ -70,96 +80,61 @@ export default function PropertyDetailPage(props: { params: Promise<{ id: string
           </div>
         }
       />
-      <div className="grid grid-cols-2 gap-6 rounded-lg border border-border bg-card p-6">
-        <div>
-          <h3 className="mb-3 text-sm font-medium text-muted-foreground">General</h3>
-          <dl className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <dt className="text-muted-foreground">Address</dt>
-              <dd>{property.address}</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-muted-foreground">District</dt>
-              <dd>
-                {property.district.name}, {property.district.city}
-              </dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-muted-foreground">Owner</dt>
-              <dd>
-                {property.owner.first_name} {property.owner.last_name}
-              </dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-muted-foreground">Status</dt>
-              <dd>
+      <DetailGrid>
+        <DetailCard title="General">
+          <DetailList>
+            <DetailRow label="Address" value={property.address} />
+            <DetailRow
+              label="District"
+              value={`${property.district.name}, ${property.district.city}`}
+            />
+            <DetailRow
+              label="Owner"
+              value={`${property.owner.first_name} ${property.owner.last_name}`}
+            />
+            <DetailRow
+              label="Status"
+              value={
                 <Badge variant={propertyStatusVariant(property.status)}>{property.status}</Badge>
-              </dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-muted-foreground">Score</dt>
-              <dd>{property.score}</dd>
-            </div>
-          </dl>
-        </div>
-        <div>
-          <h3 className="mb-3 text-sm font-medium text-muted-foreground">Details</h3>
-          <dl className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <dt className="text-muted-foreground">Rooms</dt>
-              <dd>{property.rooms}</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-muted-foreground">Area</dt>
-              <dd>{property.area_sqm} m²</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-muted-foreground">Floor</dt>
-              <dd>
-                {property.floor}
-                {property.total_floors ? ` / ${property.total_floors}` : ''}
-              </dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-muted-foreground">Tariff</dt>
-              <dd>{property.tariff}</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-muted-foreground">Vacant Days</dt>
-              <dd>{property.vacant_days}</dd>
-            </div>
-          </dl>
-        </div>
-        <div className="col-span-2">
-          <h3 className="mb-3 text-sm font-medium text-muted-foreground">Pricing</h3>
-          <dl className="grid grid-cols-3 gap-4 text-sm">
-            <div className="rounded-lg border border-border p-3">
-              <dt className="text-muted-foreground">Ask Price</dt>
-              <dd className="mt-1 font-semibold">
-                {property.ask_price} {property.ask_currency}
-              </dd>
-            </div>
-            <div className="rounded-lg border border-border p-3">
-              <dt className="text-muted-foreground">Owner Guaranteed</dt>
-              <dd className="mt-1 font-semibold">
-                {property.owner_guaranteed_price} {property.owner_guaranteed_currency}
-              </dd>
-            </div>
-            <div className="rounded-lg border border-border p-3">
-              <dt className="text-muted-foreground">Tenant Charge</dt>
-              <dd className="mt-1 font-semibold">
-                {property.tenant_charge_price} {property.tenant_charge_currency}
-              </dd>
-            </div>
-          </dl>
-        </div>
+              }
+            />
+            <DetailRow label="Score" value={property.score} />
+          </DetailList>
+        </DetailCard>
+        <DetailCard title="Details">
+          <DetailList>
+            <DetailRow label="Rooms" value={property.rooms} />
+            <DetailRow label="Area" value={`${property.area_sqm} m²`} />
+            <DetailRow
+              label="Floor"
+              value={`${property.floor}${property.total_floors ? ` / ${property.total_floors}` : ''}`}
+            />
+            <DetailRow label="Tariff" value={property.tariff} />
+            <DetailRow label="Vacant Days" value={property.vacant_days} />
+          </DetailList>
+        </DetailCard>
+        <DetailCard title="Pricing" className="md:col-span-2">
+          <DetailGrid columns={3}>
+            <DetailStat
+              label="Ask Price"
+              value={`${property.ask_price} ${property.ask_currency}`}
+            />
+            <DetailStat
+              label="Owner Guaranteed"
+              value={`${property.owner_guaranteed_price} ${property.owner_guaranteed_currency}`}
+            />
+            <DetailStat
+              label="Tenant Charge"
+              value={`${property.tenant_charge_price} ${property.tenant_charge_currency}`}
+            />
+          </DetailGrid>
+        </DetailCard>
         {property.description ? (
-          <div className="col-span-2">
-            <h3 className="mb-2 text-sm font-medium text-muted-foreground">Description</h3>
-            <p className="text-sm text-foreground">{property.description}</p>
-          </div>
+          <DetailCard title="Description" className="md:col-span-2">
+            <DetailText>{property.description}</DetailText>
+          </DetailCard>
         ) : null}
-      </div>
+      </DetailGrid>
     </>
   );
 }

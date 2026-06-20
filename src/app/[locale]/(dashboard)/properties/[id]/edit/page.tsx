@@ -1,19 +1,17 @@
 'use client';
 
-import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2Icon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { use, useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
+import { use } from 'react';
 import { Button } from '@/components/ui/button';
+import { FormLoading } from '@/components/ui/detail';
 import { OwnerSelect } from '@/components/ui/entity-selects';
 import { Form } from '@/components/ui/form';
 import { EntityField, SelectField, TextareaField, TextField } from '@/components/ui/form-fields';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useEntityForm } from '@/hooks/useEntityForm';
 import { apiFetch } from '@/libs/api';
-import { createApiSubmit, getApiErrorMessage } from '@/libs/forms';
+import { createApiSubmit } from '@/libs/forms';
 import { useRouter } from '@/libs/I18nNavigation';
 import { PROPERTY_STATUS_OPTIONS, propertySchema, TARIFF_OPTIONS } from '@/libs/schemas/property';
 import type { PropertyOutput } from '@/types/property';
@@ -27,48 +25,36 @@ export default function EditPropertyPage(props: { params: Promise<{ id: string }
   const t = useTranslations('Pages');
   const params = use(props.params);
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [ownerLabel, setOwnerLabel] = useState<string | undefined>();
 
-  const form = useForm({
-    resolver: zodResolver(propertySchema),
+  const { form, loading, data } = useEntityForm({
+    path: `/properties/${params.id}/`,
+    schema: propertySchema,
+    errorMessage: 'Failed to load property',
+    toFormValues: (p: PropertyOutput) => ({
+      name: p.name,
+      address: p.address,
+      district_id: p.district.id,
+      owner_id: p.owner.id,
+      rooms: p.rooms,
+      area_sqm: p.area_sqm,
+      floor: p.floor,
+      total_floors: p.total_floors ?? undefined,
+      status: p.status,
+      tariff: p.tariff,
+      ask_price: p.ask_price,
+      ask_currency: p.ask_currency,
+      owner_guaranteed_price: p.owner_guaranteed_price,
+      owner_guaranteed_currency: p.owner_guaranteed_currency,
+      tenant_charge_price: p.tenant_charge_price,
+      tenant_charge_currency: p.tenant_charge_currency,
+      description: p.description ?? undefined,
+      score: p.score,
+      vacant_since: p.vacant_since ?? undefined,
+      vacant_days: p.vacant_days,
+    }),
   });
 
-  useEffect(() => {
-    const run = async () => {
-      try {
-        const p = await apiFetch<PropertyOutput>(`/properties/${params.id}/`);
-        setOwnerLabel(`${p.owner.first_name} ${p.owner.last_name}`.trim());
-        form.reset({
-          name: p.name,
-          address: p.address,
-          district_id: p.district.id,
-          owner_id: p.owner.id,
-          rooms: p.rooms,
-          area_sqm: p.area_sqm,
-          floor: p.floor,
-          total_floors: p.total_floors ?? undefined,
-          status: p.status,
-          tariff: p.tariff,
-          ask_price: p.ask_price,
-          ask_currency: p.ask_currency,
-          owner_guaranteed_price: p.owner_guaranteed_price,
-          owner_guaranteed_currency: p.owner_guaranteed_currency,
-          tenant_charge_price: p.tenant_charge_price,
-          tenant_charge_currency: p.tenant_charge_currency,
-          description: p.description ?? undefined,
-          score: p.score,
-          vacant_since: p.vacant_since ?? undefined,
-          vacant_days: p.vacant_days,
-        });
-      } catch (error) {
-        toast.error(getApiErrorMessage(error, 'Failed to load property'));
-      } finally {
-        setLoading(false);
-      }
-    };
-    void run();
-  }, [params.id, form]);
+  const ownerLabel = data ? `${data.owner.first_name} ${data.owner.last_name}`.trim() : undefined;
 
   const onSubmit = createApiSubmit(form, {
     submit: async (values) =>
@@ -84,11 +70,7 @@ export default function EditPropertyPage(props: { params: Promise<{ id: string }
     return (
       <>
         <PageHeader title={t('edit_property')} backHref={`/properties/${params.id}`} />
-        <div className="max-w-2xl space-y-4">
-          {Array.from({ length: 6 }, (_, i) => (
-            <Skeleton key={`field-skeleton-${i}`} className="h-9 w-full" />
-          ))}
-        </div>
+        <FormLoading />
       </>
     );
   }

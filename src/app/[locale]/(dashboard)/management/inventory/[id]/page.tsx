@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { DetailError, DetailLoading } from '@/components/ui/detail';
 import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/ui/PageHeader';
 import {
@@ -16,7 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
 import { apiFetch, apiUpload } from '@/libs/api';
 import { getApiErrorMessage } from '@/libs/forms';
 import type { ConditionRating } from '@/types/enums';
@@ -109,17 +109,11 @@ export default function InventoryActDetailPage() {
   }
 
   if (loadError) {
-    return <p className="text-sm text-muted-foreground">Failed to load inventory act.</p>;
+    return <DetailError message="Failed to load inventory act." />;
   }
 
   if (!act) {
-    return (
-      <div className="space-y-6">
-        <Skeleton className="h-8 w-72" />
-        <Skeleton className="h-40 w-full" />
-        <Skeleton className="h-40 w-full" />
-      </div>
-    );
+    return <DetailLoading />;
   }
 
   return (

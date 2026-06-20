@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { apiFetch } from '@/libs/api';
+import { Link } from '@/libs/I18nNavigation';
 import type { ListingOutput } from '@/types/marketplace';
 
 /**
@@ -34,7 +35,11 @@ export default function MarketplacePage() {
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {listings.map((listing) => (
-            <div key={listing.id} className="rounded-xl border border-border bg-card p-6 shadow-sm">
+            <Link
+              key={listing.id}
+              href={`/marketplace/${listing.id}`}
+              className="rounded-xl border border-border bg-card p-6 shadow-sm transition-colors hover:border-primary"
+            >
               <h2 className="text-lg font-semibold text-foreground">{listing.property.name}</h2>
               <p className="text-sm text-muted-foreground">{listing.property.address}</p>
               <div className="mt-3 flex gap-4 text-sm text-muted-foreground">
@@ -45,7 +50,7 @@ export default function MarketplacePage() {
               <p className="mt-3 text-lg font-bold text-foreground">
                 {listing.listed_price} {listing.property.ask_currency}
               </p>
-            </div>
+            </Link>
           ))}
           {listings.length === 0 ? (
             <p className="text-sm text-muted-foreground">{t('browse_no_listings')}</p>

@@ -3,21 +3,10 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
-import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { DataTable } from '@/components/ui/DataTable';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { PageHeader } from '@/components/ui/PageHeader';
 import {
   Select,
@@ -30,16 +19,12 @@ import { apiFetch } from '@/libs/api';
 import { roleVariant } from '@/libs/badges';
 import type { PaginatedData } from '@/types/api';
 import type { Role } from '@/types/enums';
-import type { UserOutput, UserUpdatePayload } from '@/types/management';
+import type { UserOutput } from '@/types/management';
 
 const ROLES: Role[] = ['mgmt', 'owner', 'tenant', 'agent'];
 
-function isRole(value: string): value is Role {
-  return (ROLES as string[]).includes(value);
-}
-
 /**
- * Management users page — lists all users and allows editing role/status.
+ * Management users page — lists all users and links to per-user detail/edit.
  * @returns The management users page component.
  */
 export default function ManagementUsersPage() {
@@ -51,8 +36,6 @@ export default function ManagementUsersPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
-  const [editingUser, setEditingUser] = useState<UserOutput | null>(null);
-  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     setIsLoading(true);
@@ -77,33 +60,6 @@ export default function ManagementUsersPage() {
         setIsLoading(false);
       });
   }, [page, search, roleFilter]);
-
-  const handleSave = () => {
-    if (!editingUser) {
-      return;
-    }
-    setSaving(true);
-    const payload: UserUpdatePayload = {
-      is_active: editingUser.is_active,
-      is_verified: editingUser.is_verified,
-      role: editingUser.role,
-    };
-    apiFetch<UserOutput>(`/management/users/${editingUser.id}/`, {
-      method: 'PATCH',
-      body: payload,
-    })
-      .then((updated) => {
-        setData((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
-        setEditingUser(null);
-        toast.success('User updated');
-      })
-      .catch((caughtError: unknown) => {
-        setError(caughtError instanceof Error ? caughtError.message : 'Failed to update user');
-      })
-      .finally(() => {
-        setSaving(false);
-      });
-  };
 
   if (error) {
     return (
@@ -139,24 +95,6 @@ export default function ManagementUsersPage() {
         </Badge>
       ),
     },
-    {
-      id: 'actions',
-      header: 'Actions',
-      enableSorting: false,
-      cell: ({ row }) => (
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={(e) => {
-            e.stopPropagation();
-            setEditingUser(row.original);
-          }}
-        >
-          Edit
-        </Button>
-      ),
-    },
   ];
 
   return (
@@ -168,12 +106,7 @@ export default function ManagementUsersPage() {
         data={data}
         isLoading={isLoading}
         emptyMessage="No users found"
-        onRowClick={(item: unknown) => {
-          const user = item as UserOutput;
-          if (user && typeof user === 'object' && 'id' in user) {
-            setEditingUser(user);
-          }
-        }}
+        rowHref={(row) => `/management/users/${row.id}`}
         page={page}
         totalPages={totalPages}
         onPageChange={setPage}
@@ -212,96 +145,6 @@ export default function ManagementUsersPage() {
           </div>
         }
       />
-
-      <Dialog
-        open={!!editingUser}
-        onOpenChange={(open) => {
-          if (!open) {
-            setEditingUser(null);
-          }
-        }}
-      >
-        <DialogContent>
-          {editingUser && (
-            <>
-              <DialogHeader>
-                <DialogTitle>
-                  Edit User &mdash; {editingUser.first_name} {editingUser.last_name}
-                </DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <Checkbox
-                    id="edit-user-active"
-                    checked={editingUser.is_active}
-                    onCheckedChange={(checked) => {
-                      setEditingUser({
-                        ...editingUser,
-                        is_active: checked === true,
-                      });
-                    }}
-                  />
-                  <Label htmlFor="edit-user-active">Active</Label>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Checkbox
-                    id="edit-user-verified"
-                    checked={editingUser.is_verified}
-                    onCheckedChange={(checked) => {
-                      setEditingUser({
-                        ...editingUser,
-                        is_verified: checked === true,
-                      });
-                    }}
-                  />
-                  <Label htmlFor="edit-user-verified">Verified</Label>
-                </div>
-                <div>
-                  <Label htmlFor="edit-user-role" className="mb-1 block">
-                    Role
-                  </Label>
-                  <Select
-                    value={editingUser.role}
-                    onValueChange={(value) => {
-                      if (isRole(value)) {
-                        setEditingUser({
-                          ...editingUser,
-                          role: value,
-                        });
-                      }
-                    }}
-                  >
-                    <SelectTrigger id="edit-user-role">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ROLES.map((r) => (
-                        <SelectItem key={r} value={r}>
-                          {r}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setEditingUser(null);
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button type="button" variant="default" onClick={handleSave} disabled={saving}>
-                  {saving ? 'Saving...' : 'Save'}
-                </Button>
-              </DialogFooter>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

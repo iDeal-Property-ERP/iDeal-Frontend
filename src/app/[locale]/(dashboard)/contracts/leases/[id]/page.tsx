@@ -7,12 +7,21 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  DetailCard,
+  DetailError,
+  DetailGrid,
+  DetailList,
+  DetailLoading,
+  DetailRow,
+} from '@/components/ui/detail';
 import { Form } from '@/components/ui/form';
 import { DateField, TextField } from '@/components/ui/form-fields';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { apiFetch } from '@/libs/api';
 import { leaseStatusVariant } from '@/libs/badges';
 import { createApiSubmit } from '@/libs/forms';
+import { useRouter } from '@/libs/I18nNavigation';
 import type { LeaseOutput } from '@/types/contract';
 
 const renewSchema = z
@@ -34,6 +43,7 @@ const renewSchema = z
  */
 export default function LeaseDetailPage(props: { params: Promise<{ id: string }> }) {
   const params = use(props.params);
+  const router = useRouter();
 
   const [lease, setLease] = useState<LeaseOutput | null>(null);
   const [loading, setLoading] = useState(true);
@@ -70,64 +80,54 @@ export default function LeaseDetailPage(props: { params: Promise<{ id: string }>
   const { isSubmitting } = form.formState;
 
   if (loading) {
-    return <p className="text-sm text-muted-foreground">Loading...</p>;
+    return <DetailLoading />;
   }
   if (!lease) {
-    return <p className="text-sm text-danger">Lease not found</p>;
+    return <DetailError message="Lease not found" />;
   }
 
   return (
     <>
-      <PageHeader title={`Lease #${lease.id}`} backHref="/contracts/leases" />
-      <div className="grid grid-cols-2 gap-6">
-        <div className="rounded-lg border border-border bg-card p-6">
-          <h3 className="mb-3 text-sm font-medium text-muted-foreground">Lease Details</h3>
-          <dl className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <dt className="text-muted-foreground">Property</dt>
-              <dd>{lease.property_id}</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-muted-foreground">Tenant</dt>
-              <dd>{lease.tenant_id}</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-muted-foreground">Agreement</dt>
-              <dd>{lease.owner_agreement_id}</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-muted-foreground">Status</dt>
-              <dd>
-                <Badge variant={leaseStatusVariant(lease.status)}>{lease.status}</Badge>
-              </dd>
-            </div>
-          </dl>
-        </div>
-        <div className="rounded-lg border border-border bg-card p-6">
-          <h3 className="mb-3 text-sm font-medium text-muted-foreground">Dates &amp; Payments</h3>
-          <dl className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <dt className="text-muted-foreground">Start</dt>
-              <dd>{lease.start_date}</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-muted-foreground">End</dt>
-              <dd>{lease.end_date}</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-muted-foreground">Monthly Rent</dt>
-              <dd className="font-semibold">{lease.monthly_rent}</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-muted-foreground">Deposit</dt>
-              <dd>{lease.deposit}</dd>
-            </div>
-          </dl>
-        </div>
-      </div>
+      <PageHeader
+        title={`Lease #${lease.id}`}
+        backHref="/contracts/leases"
+        actions={
+          <div className="flex items-center gap-2">
+            <Badge variant={leaseStatusVariant(lease.status)}>{lease.status}</Badge>
+            <Button
+              variant="outline"
+              onClick={() => {
+                router.push(`/contracts/leases/${params.id}/edit`);
+              }}
+            >
+              Edit
+            </Button>
+          </div>
+        }
+      />
+      <DetailGrid>
+        <DetailCard title="Lease Details">
+          <DetailList>
+            <DetailRow label="Property" value={lease.property_id} />
+            <DetailRow label="Tenant" value={lease.tenant_id} />
+            <DetailRow label="Agreement" value={lease.owner_agreement_id} />
+            <DetailRow
+              label="Status"
+              value={<Badge variant={leaseStatusVariant(lease.status)}>{lease.status}</Badge>}
+            />
+          </DetailList>
+        </DetailCard>
+        <DetailCard title="Dates & Payments">
+          <DetailList>
+            <DetailRow label="Start" value={lease.start_date} />
+            <DetailRow label="End" value={lease.end_date} />
+            <DetailRow label="Monthly Rent" value={lease.monthly_rent} emphasized />
+            <DetailRow label="Deposit" value={lease.deposit} />
+          </DetailList>
+        </DetailCard>
+      </DetailGrid>
       {lease.status === 'active' || lease.status === 'renewed' ? (
-        <div className="mt-6 rounded-lg border border-border bg-card p-6">
-          <h3 className="mb-4 text-sm font-medium text-muted-foreground">Renew Lease</h3>
+        <DetailCard title="Renew Lease" className="mt-6">
           <Form {...form}>
             <form onSubmit={onRenew} className="max-w-lg space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -168,7 +168,7 @@ export default function LeaseDetailPage(props: { params: Promise<{ id: string }>
               </Button>
             </form>
           </Form>
-        </div>
+        </DetailCard>
       ) : null}
     </>
   );
