@@ -3,22 +3,29 @@ import withBundleAnalyzer from '@next/bundle-analyzer';
 import type { NextConfig } from 'next';
 import createNextIntlPlugin from 'next-intl/plugin';
 
-// Allow next/image to load property photos served from the backend media host.
+// Allow next/image to load property photos served from the media host(s). The media files live on
+// the public site domain (NEXT_PUBLIC_APP_URL) and/or the API host (NEXT_PUBLIC_API_URL); allow both
+// hosts over either scheme so the optimizer accepts the URL regardless of how the backend builds it.
 function mediaRemotePatterns(): NonNullable<NextConfig['images']>['remotePatterns'] {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000/api/v1';
-  try {
-    const { protocol, hostname, port } = new URL(apiUrl);
-    return [
-      {
-        protocol: protocol.replace(':', '') as 'http' | 'https',
-        hostname,
-        port: port || undefined,
-        pathname: '/media/**',
-      },
-    ];
-  } catch {
-    return [];
+  const sources = [process.env.NEXT_PUBLIC_APP_URL, process.env.NEXT_PUBLIC_API_URL].filter(Boolean);
+  const patterns: NonNullable<NextConfig['images']>['remotePatterns'] = [];
+  const seen = new Set<string>();
+  for (const src of sources) {
+    try {
+      const { hostname, port } = new URL(src as string);
+      for (const protocol of ['http', 'https'] as const) {
+        const key = `${protocol}//${hostname}:${port}`;
+        if (seen.has(key)) {
+          continue;
+        }
+        seen.add(key);
+        patterns.push({ protocol, hostname, port: port || undefined, pathname: '/media/**' });
+      }
+    } catch {
+      // ignore unparseable URLs
+    }
   }
+  return patterns;
 }
 
 // Production-only optimizations. In dev (`next dev`) these are skipped so iteration stays fast
