@@ -1,8 +1,8 @@
 name: Build and Deploy (Production)
 
 on:
-#  push:
-#    branches: [production]
+  #  push:
+  #    branches: [production]
   repository_dispatch:
     types: [trigger-deploy]
 

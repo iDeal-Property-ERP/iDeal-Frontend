@@ -5,7 +5,7 @@ import createNextIntlPlugin from 'next-intl/plugin';
 
 // Allow next/image to load property photos served from the backend media host.
 function mediaRemotePatterns(): NonNullable<NextConfig['images']>['remotePatterns'] {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8009/api/v1';
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000/api/v1';
   try {
     const { protocol, hostname, port } = new URL(apiUrl);
     return [
@@ -21,14 +21,18 @@ function mediaRemotePatterns(): NonNullable<NextConfig['images']>['remotePattern
   }
 }
 
+// Production-only optimizations. In dev (`next dev`) these are skipped so iteration stays fast
+// (Turbopack + Fast Refresh, no optimized standalone bundle).
+const isProd = process.env.NODE_ENV === 'production';
+
 const baseConfig: NextConfig = {
-  output: 'standalone',
+  output: isProd ? 'standalone' : undefined,
   devIndicators: {
     position: 'bottom-right',
   },
   poweredByHeader: false,
-  reactStrictMode: true,
-  reactCompiler: process.env.NODE_ENV === 'production',
+  reactStrictMode: isProd,
+  reactCompiler: isProd,
   images: {
     remotePatterns: mediaRemotePatterns(),
   },

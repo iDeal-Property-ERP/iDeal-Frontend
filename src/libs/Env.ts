@@ -5,7 +5,7 @@ export const Env = createEnv({
   server: {},
   client: {
     NEXT_PUBLIC_APP_URL: z.string().optional(),
-    NEXT_PUBLIC_API_URL: z.string().default('http://localhost:8009/api/v1'),
+    NEXT_PUBLIC_API_URL: z.string().default('http://localhost:8000/api/v1'),
     NEXT_PUBLIC_YANDEX_MAPS_API_KEY: z.string().default(''),
     NEXT_PUBLIC_LOGGING_LEVEL: z
       .enum(['error', 'info', 'debug', 'warning', 'trace', 'fatal'])

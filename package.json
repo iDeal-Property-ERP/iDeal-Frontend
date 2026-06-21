@@ -2,7 +2,7 @@
   "name": "ideal-frontend",
   "type": "module",
   "scripts": {
-    "dev:next": "next dev",
+    "dev:next": "next dev --turbopack",
     "dev": "run-p dev:next",
     "build:next": "next build",
     "build-local": "next build",
