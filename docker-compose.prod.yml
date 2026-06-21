@@ -26,4 +26,5 @@ services:
 
 networks:
   network-default:
-    driver: bridge
+    name: ideal-prod-net
+    external: true
