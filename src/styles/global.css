@@ -89,14 +89,14 @@
 .dark {
   /* Surfaces — exact Figma dark "Surface/*" tokens */
   --background: #080f1a;
-  --foreground: #f3f5fa;
-  --card: #060910;
-  --card-foreground: #f3f5fa;
-  --muted: #0e131c;
-  --muted-foreground: #7a808e;
+  --foreground: #e9eff8;
+  --card: #0f1827;
+  --card-foreground: #e9eff8;
+  --muted: #172230;
+  --muted-foreground: #94a0b4;
 
   /* Interactive chrome */
-  --border: #1d232f;
+  --border: #222d3e;
   --input: #222d3e;
   --ring: #548cff;
 
@@ -114,14 +114,14 @@
   --accent-brand-subtle-foreground: #aecbf6;
 
   /* Secondary */
-  --secondary: #0e131c;
-  --secondary-foreground: #f3f5fa;
+  --secondary: #172230;
+  --secondary-foreground: #e9eff8;
 
   /* shadcn aliases — popover mirrors card, accent mirrors muted */
-  --popover: #060910;
-  --popover-foreground: #f3f5fa;
-  --accent: #0e131c;
-  --accent-foreground: #f3f5fa;
+  --popover: #0f1827;
+  --popover-foreground: #e9eff8;
+  --accent: #172230;
+  --accent-foreground: #e9eff8;
   /* destructive aliases the danger scale so shadcn components drop in cleanly */
   --destructive: oklch(0.65 0.18 27);
   --destructive-foreground: oklch(0.09 0 0);
