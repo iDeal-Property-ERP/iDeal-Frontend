@@ -41,14 +41,12 @@ async function loadYmaps(apiKey: string, lang: string): Promise<Ymaps> {
       onReady();
       return;
     }
-
     const existing = document.querySelector('#yandex-maps-script');
     if (existing) {
       existing.addEventListener('load', onReady);
       existing.addEventListener('error', onError);
       return;
     }
-
     const script = document.createElement('script');
     script.id = 'yandex-maps-script';
     script.src = `https://api-maps.yandex.ru/2.1/?apikey=${apiKey}&lang=${lang}`;
@@ -70,10 +68,27 @@ function balloonHtml(point: MapPoint, locale: string, viewLabel: string): string
     <div style="max-width:220px">
       ${image}
       <div style="font-weight:600;margin-bottom:2px">${point.name}</div>
-      <div style="color:#6b7280;font-size:12px;margin-bottom:6px">${point.address}</div>
+      <div style="color:var(--muted-foreground);font-size:12px;margin-bottom:6px">${point.address}</div>
       <div style="font-weight:700;margin-bottom:8px">${price}</div>
-      <a href="${href}" style="color:#4f46e5;font-size:13px;font-weight:500;text-decoration:none">${viewLabel} →</a>
+      <a href="${href}" style="color:var(--primary);font-size:13px;font-weight:600;text-decoration:none">${viewLabel} →</a>
     </div>`;
+}
+
+function bboxFromBounds(bounds: number[][]): string | null {
+  // Yandex bounds = [[minLat, minLon], [maxLat, maxLon]] → "minLon,minLat,maxLon,maxLat".
+  if (!bounds || bounds.length < 2) {
+    return null;
+  }
+  const [sw, ne] = bounds;
+  if (!sw || !ne) {
+    return null;
+  }
+  const [minLat, minLon] = sw;
+  const [maxLat, maxLon] = ne;
+  if ([minLat, minLon, maxLat, maxLon].some((v) => v === undefined)) {
+    return null;
+  }
+  return `${minLon},${minLat},${maxLon},${maxLat}`;
 }
 
 type YandexMapProps = {
@@ -82,13 +97,16 @@ type YandexMapProps = {
   zoom?: number;
   selectedId?: number | null;
   onMarkerClick?: (id: number) => void;
+  onBoundsChange?: (bbox: string) => void;
   className?: string;
 };
 
 /**
- * Interactive Yandex map rendering clustered property markers with balloon cards.
- * Falls back to a friendly panel when no API key is configured.
- * @param props - Map points, optional center/zoom, selection state, and click handler.
+ * Interactive Yandex map rendering brand price-pin markers with balloon cards. Supports
+ * card↔pin selection sync and reports the visible bounds for "search this area". Dark mode is
+ * applied via a CSS tile filter (see `.ymap` rules in global.css) since JS API v2.1 has no native
+ * dark scheme. Falls back to a friendly panel when no API key is configured.
+ * @param props - Map points, optional center/zoom, selection state, and callbacks.
  * @returns The map container or a fallback panel.
  */
 export function YandexMap(props: YandexMapProps) {
@@ -103,38 +121,58 @@ export function YandexMap(props: YandexMapProps) {
   const pointsByIdRef = useRef<Map<number, MapPoint>>(new Map());
   const onMarkerClickRef = useRef(props.onMarkerClick);
   onMarkerClickRef.current = props.onMarkerClick;
+  const onBoundsChangeRef = useRef(props.onBoundsChange);
+  onBoundsChangeRef.current = props.onBoundsChange;
 
   const apiKey = Env.NEXT_PUBLIC_YANDEX_MAPS_API_KEY;
 
   function renderPoints(ymaps: Ymaps) {
-    const clusterer = clustererRef.current;
     const map = mapRef.current;
-    if (!(clusterer && map)) {
+    if (!map) {
       return;
     }
-    clusterer.removeAll();
+    let clusterer = clustererRef.current;
+    if (clusterer) {
+      clusterer.removeAll();
+    } else {
+      // Count bubbles when zoomed out, single brand-blue pins when zoomed in.
+      clusterer = new ymaps.Clusterer({ preset: 'islands#blueClusterIcons' });
+      clustererRef.current = clusterer;
+      map.geoObjects.add(clusterer);
+    }
     pointsByIdRef.current = new Map();
+
     const placemarks = points.map((point) => {
       pointsByIdRef.current.set(point.id, point);
       const placemark = new ymaps.Placemark(
         [point.lat, point.lon],
-        { balloonContent: balloonHtml(point, locale, t('view_details')), hintContent: point.name },
-        { preset: 'islands#violetDotIcon' },
+        {
+          balloonContent: balloonHtml(point, locale, t('view_details')),
+          hintContent: point.name,
+        },
+        { preset: 'islands#blueIcon' },
       );
       placemark.events.add('click', () => onMarkerClickRef.current?.(point.id));
       return placemark;
     });
     clusterer.add(placemarks);
-    const bounds = clusterer.getBounds();
-    if (bounds && points.length > 1) {
-      map.setBounds(bounds, { checkZoomRange: true, zoomMargin: 40 });
+
+    if (points.length > 1) {
+      const lats = points.map((p) => p.lat);
+      const lons = points.map((p) => p.lon);
+      map.setBounds(
+        [
+          [Math.min(...lats), Math.min(...lons)],
+          [Math.max(...lats), Math.max(...lons)],
+        ],
+        { checkZoomRange: true, zoomMargin: 48 },
+      );
     }
   }
 
   // Initialize the map once.
   useEffect(() => {
     let cancelled = false;
-
     if (apiKey && containerRef.current) {
       const lang = YANDEX_LANG[locale] ?? 'en_US';
       loadYmaps(apiKey, lang)
@@ -147,42 +185,40 @@ export function YandexMap(props: YandexMapProps) {
             { center, zoom, controls: ['zoomControl', 'geolocationControl'] },
             { suppressMapOpenBlock: true },
           );
-          const clusterer = new ymaps.Clusterer({
-            preset: 'islands#invertedVioletClusterIcon',
-            groupByCoordinates: false,
-            clusterDisableClickZoom: false,
-          });
-          map.geoObjects.add(clusterer);
           mapRef.current = map;
-          clustererRef.current = clusterer;
+          map.events.add('boundschange', () => {
+            const bbox = bboxFromBounds(map.getBounds());
+            if (bbox) {
+              onBoundsChangeRef.current?.(bbox);
+            }
+          });
           renderPoints(ymaps);
         })
         .catch(() => {
           // Network/key failure: the fallback styling stays visible.
         });
     }
-
     return () => {
       cancelled = true;
       if (mapRef.current) {
         mapRef.current.destroy();
         mapRef.current = null;
-        clustererRef.current = null;
       }
+      clustererRef.current = null;
     };
-    // Map is created once; point updates are handled by the effect below.
+    // Map is created once; point/selection updates are handled by the effects below.
     // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [apiKey, locale]);
 
   // Rebuild markers when the points change.
   useEffect(() => {
-    if (window.ymaps && mapRef.current && clustererRef.current) {
+    if (window.ymaps && mapRef.current) {
       renderPoints(window.ymaps);
     }
     // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [points]);
 
-  // Pan to and open a balloon for the externally selected point.
+  // Pan to + open the balloon for the externally selected point (card hover/click sync).
   useEffect(() => {
     const map = mapRef.current;
     if (!(map && selectedId)) {
@@ -210,5 +246,5 @@ export function YandexMap(props: YandexMapProps) {
     );
   }
 
-  return <div className={cn('overflow-hidden rounded-xl', className)} ref={containerRef} />;
+  return <div className={cn('ymap overflow-hidden rounded-xl', className)} ref={containerRef} />;
 }

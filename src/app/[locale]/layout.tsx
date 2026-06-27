@@ -2,6 +2,7 @@ import { GeistSans } from 'geist/font/sans';
 import type { Metadata, Viewport } from 'next';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
+import { Bricolage_Grotesque } from 'next/font/google';
 import { notFound } from 'next/navigation';
 import { Toaster } from '@/components/ui/sonner';
 import { ThemeProvider } from '@/components/ui/ThemeProvider';
@@ -9,6 +10,13 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { routing } from '@/libs/I18nRouting';
 import { logger } from '@/libs/Logger';
 import '@/styles/global.css';
+
+const bricolage = Bricolage_Grotesque({
+  subsets: ['latin'],
+  weight: ['600', '700'],
+  variable: '--font-bricolage',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   icons: [
@@ -58,7 +66,11 @@ export default async function RootLayout(props: {
   logger.info(`Locale set to ${locale}`);
 
   return (
-    <html lang={locale} suppressHydrationWarning className={GeistSans.variable}>
+    <html
+      lang={locale}
+      suppressHydrationWarning
+      className={`${GeistSans.variable} ${bricolage.variable}`}
+    >
       <body>
         <ThemeProvider>
           <NextIntlClientProvider>

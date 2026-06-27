@@ -7,12 +7,14 @@ import createNextIntlPlugin from 'next-intl/plugin';
 // the public site domain (NEXT_PUBLIC_APP_URL) and/or the API host (NEXT_PUBLIC_API_URL); allow both
 // hosts over either scheme so the optimizer accepts the URL regardless of how the backend builds it.
 function mediaRemotePatterns(): NonNullable<NextConfig['images']>['remotePatterns'] {
-  const sources = [process.env.NEXT_PUBLIC_APP_URL, process.env.NEXT_PUBLIC_API_URL].filter(Boolean);
+  const sources = [process.env.NEXT_PUBLIC_APP_URL, process.env.NEXT_PUBLIC_API_URL].filter(
+    Boolean,
+  );
   const patterns: NonNullable<NextConfig['images']>['remotePatterns'] = [];
   const seen = new Set<string>();
   for (const src of sources) {
     try {
-      const { hostname, port } = new URL(src as string);
+      const { hostname, port } = new URL(src!);
       for (const protocol of ['http', 'https'] as const) {
         const key = `${protocol}//${hostname}:${port}`;
         if (seen.has(key)) {
@@ -42,6 +44,9 @@ const baseConfig: NextConfig = {
   reactCompiler: isProd,
   images: {
     remotePatterns: mediaRemotePatterns(),
+    // Next 16 refuses to optimize images served from private/localhost IPs (SSRF guard). Allow it in
+    // dev so the local backend's `/media` photos render; prod fetches from a public domain.
+    dangerouslyAllowLocalIP: !isProd,
   },
   logging: {
     browserToTerminal: process.env.BROWSER_TO_TERMINAL_DISABLED !== 'true',

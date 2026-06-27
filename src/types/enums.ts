@@ -6,6 +6,14 @@ export type PropertyStatus = 'vacant' | 'rented' | 'maintenance';
 
 export type Tariff = 'standard' | 'comfort' | 'premium';
 
+export type PropertyType = 'apartment' | 'house' | 'studio' | 'room';
+
+export type Furnishing = 'furnished' | 'semi_furnished' | 'unfurnished';
+
+export type ListingStatus = 'draft' | 'pending_review' | 'published' | 'rejected' | 'archived';
+
+export type ViewingTimeSlot = '10:00' | '13:00' | '15:00' | '18:00';
+
 export type PaymentStatus = 'pending' | 'paid' | 'overdue' | 'cancelled';
 
 export type PaymentMethod = 'cash' | 'bank_transfer' | 'online';

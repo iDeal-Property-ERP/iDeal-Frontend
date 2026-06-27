@@ -4,7 +4,6 @@ const config: KnipConfig = {
   ignore: [
     'src/libs/I18n.ts',
     'src/types/I18n.ts',
-    'src/components/LocaleSwitcher.tsx',
     'src/templates/BaseTemplate.tsx',
     // shadcn/ui is a vendored component library: keep primitives available
     // even when not yet consumed by a page.

@@ -8,42 +8,50 @@
 /* ─── Design tokens ──────────────────────────────────────────────────────── */
 
 :root {
-  /* Surfaces — faint indigo tint so neutrals feel alive, not dead-gray */
-  --background: oklch(0.985 0.007 265);
-  --foreground: oklch(0.13 0.025 265);
-  --card: oklch(0.995 0.004 265);
-  --card-foreground: oklch(0.13 0.025 265);
-  --muted: oklch(0.955 0.013 265);
-  --muted-foreground: oklch(0.48 0.03 265);
+  /* Surfaces — exact Figma "Surface/*" tokens (blue-tinted neutrals) */
+  --background: #f4f7fc;
+  --foreground: #040711;
+  --card: #fcfdff;
+  --card-foreground: #040711;
+  --muted: #ecf0f9;
+  --muted-foreground: #555e6f;
 
-  /* Interactive chrome */
-  --border: oklch(0.898 0.012 265);
-  --input: oklch(0.898 0.012 265);
-  --ring: oklch(0.52 0.24 265);
+  /* Interactive chrome — Figma "Chrome/border" */
+  --border: #d9dde6;
+  --input: #dee3ec;
+  --ring: #2253f0;
 
-  /* Brand accent — purplish-blue (indigo) */
-  --primary: oklch(0.52 0.24 265);
-  --primary-foreground: oklch(0.985 0 0);
-  --primary-muted: oklch(0.91 0.07 265);
+  /* Brand — Figma "Brand/*" (v2 brand blue) */
+  --primary: #2253f0;
+  --primary-foreground: #fafafa;
+  --primary-subtle: #dde6f8;
+  --primary-subtle-foreground: #143a86;
+  --primary-muted: #dde6f8;
+
+  /* Accent — Figma "Accent/*" (lighter brand blue) */
+  --accent-brand: #4a84e1;
+  --accent-brand-foreground: #ffffff;
+  --accent-brand-subtle: #e3ecfb;
+  --accent-brand-subtle-foreground: #1e4bb0;
 
   /* Secondary */
-  --secondary: oklch(0.955 0.013 265);
-  --secondary-foreground: oklch(0.2 0.02 265);
+  --secondary: #ecf0f9;
+  --secondary-foreground: #040711;
 
-  /* shadcn aliases — popover mirrors card, accent mirrors muted */
-  --popover: oklch(0.995 0.004 265);
-  --popover-foreground: oklch(0.13 0.025 265);
-  --accent: oklch(0.955 0.013 265);
-  --accent-foreground: oklch(0.2 0.02 265);
+  /* shadcn aliases — popover mirrors card, accent mirrors muted (component hover) */
+  --popover: #fcfdff;
+  --popover-foreground: #040711;
+  --accent: #ecf0f9;
+  --accent-foreground: #040711;
   /* destructive aliases the danger scale so shadcn components drop in cleanly */
   --destructive: oklch(0.47 0.19 27);
   --destructive-foreground: oklch(0.985 0 0);
 
-  /* Semantic status */
-  --success: oklch(0.46 0.14 145);
-  --success-foreground: oklch(0.985 0 0);
-  --success-subtle: oklch(0.94 0.04 145);
-  --success-subtle-foreground: oklch(0.35 0.12 145);
+  /* Semantic status — Figma "Status/success" + tuned warning/danger/info */
+  --success: #0a7e57;
+  --success-foreground: #ffffff;
+  --success-subtle: #dcf1e8;
+  --success-subtle-foreground: #0a6e4c;
 
   --warning: oklch(0.6 0.17 67);
   --warning-foreground: oklch(0.985 0 0);
@@ -55,11 +63,11 @@
   --danger-subtle: oklch(0.94 0.04 27);
   --danger-subtle-foreground: oklch(0.4 0.18 27);
 
-  /* Info shifted to sky-blue (220) — clearly distinct from indigo primary */
-  --info: oklch(0.44 0.16 220);
-  --info-foreground: oklch(0.985 0 0);
-  --info-subtle: oklch(0.93 0.05 220);
-  --info-subtle-foreground: oklch(0.37 0.15 220);
+  /* Info mirrors the brand accent blue */
+  --info: #1e4bb0;
+  --info-foreground: #ffffff;
+  --info-subtle: #e3ecfb;
+  --info-subtle-foreground: #1e4bb0;
 
   /* Sidebar (shadcn sidebar tokens) — mirror surface palette */
   --sidebar: var(--card);
@@ -71,47 +79,58 @@
   --sidebar-border: var(--border);
   --sidebar-ring: var(--ring);
 
+  /* Elevation/sm — exact Figma two-layer drop shadow */
+  --shadow-elevation-sm: 0 1px 2px 0 #0a0d1f0f, 0 1px 1px 0 #0a0d1f14;
+
   /* Shape */
   --radius: 0.5rem;
 }
 
 .dark {
-  /* Surfaces — deep indigo-black, not pure neutral black */
-  --background: oklch(0.095 0.02 265);
-  --foreground: oklch(0.97 0.007 265);
-  --card: oklch(0.138 0.018 265);
-  --card-foreground: oklch(0.97 0.007 265);
-  --muted: oklch(0.185 0.02 265);
-  --muted-foreground: oklch(0.6 0.022 265);
+  /* Surfaces — exact Figma dark "Surface/*" tokens */
+  --background: #080f1a;
+  --foreground: #f3f5fa;
+  --card: #060910;
+  --card-foreground: #f3f5fa;
+  --muted: #0e131c;
+  --muted-foreground: #7a808e;
 
   /* Interactive chrome */
-  --border: oklch(0.255 0.025 265);
-  --input: oklch(0.255 0.025 265);
-  --ring: oklch(0.68 0.22 265);
+  --border: #1d232f;
+  --input: #222d3e;
+  --ring: #548cff;
 
-  /* Brand accent — brighter indigo for dark surfaces */
-  --primary: oklch(0.68 0.22 265);
-  --primary-foreground: oklch(0.095 0.02 265);
-  --primary-muted: oklch(0.225 0.09 265);
+  /* Brand — on dark surfaces the brand reads as the lighter blue */
+  --primary: #548cff;
+  --primary-foreground: #010308;
+  --primary-subtle: #0e2350;
+  --primary-subtle-foreground: #a9c6f5;
+  --primary-muted: #0e2350;
+
+  /* Accent */
+  --accent-brand: #7fa8ee;
+  --accent-brand-foreground: #07142e;
+  --accent-brand-subtle: #122444;
+  --accent-brand-subtle-foreground: #aecbf6;
 
   /* Secondary */
-  --secondary: oklch(0.185 0.02 265);
-  --secondary-foreground: oklch(0.97 0.007 265);
+  --secondary: #0e131c;
+  --secondary-foreground: #f3f5fa;
 
   /* shadcn aliases — popover mirrors card, accent mirrors muted */
-  --popover: oklch(0.138 0.018 265);
-  --popover-foreground: oklch(0.97 0.007 265);
-  --accent: oklch(0.185 0.02 265);
-  --accent-foreground: oklch(0.97 0.007 265);
+  --popover: #060910;
+  --popover-foreground: #f3f5fa;
+  --accent: #0e131c;
+  --accent-foreground: #f3f5fa;
   /* destructive aliases the danger scale so shadcn components drop in cleanly */
   --destructive: oklch(0.65 0.18 27);
   --destructive-foreground: oklch(0.09 0 0);
 
-  /* Semantic status — adjusted for dark surfaces */
-  --success: oklch(0.62 0.16 145);
-  --success-foreground: oklch(0.09 0 0);
-  --success-subtle: oklch(0.18 0.05 145);
-  --success-subtle-foreground: oklch(0.72 0.15 145);
+  /* Semantic status — Figma dark "Status/success" + tuned warning/danger/info */
+  --success: #25c28a;
+  --success-foreground: #07142e;
+  --success-subtle: #0f2e22;
+  --success-subtle-foreground: #7fe0bb;
 
   --warning: oklch(0.72 0.16 67);
   --warning-foreground: oklch(0.09 0 0);
@@ -123,10 +142,49 @@
   --danger-subtle: oklch(0.2 0.06 27);
   --danger-subtle-foreground: oklch(0.72 0.17 27);
 
-  --info: oklch(0.63 0.16 220);
-  --info-foreground: oklch(0.09 0 0);
-  --info-subtle: oklch(0.18 0.06 220);
-  --info-subtle-foreground: oklch(0.72 0.15 220);
+  --info: #7fa8ee;
+  --info-foreground: #07142e;
+  --info-subtle: #122444;
+  --info-subtle-foreground: #aecbf6;
+
+  /* Elevation/sm — slightly stronger on dark surfaces */
+  --shadow-elevation-sm: 0 1px 2px 0 #00000040, 0 1px 1px 0 #00000033;
+}
+
+/* ─── Landing route palette ──────────────────────────────────────────────── */
+/* The Figma "🚀 Landing" frame predates the v2 token refresh and still uses the
+   navy brand + slightly cooler neutrals. These values are scoped to the landing
+   route only (applied by MarketingShell when the pathname is "/"), so the home
+   page matches Figma exactly without re-skinning the dashboard / marketplace.
+   Guarded to light mode so the neutrals don't leak into the dark landing — dark
+   inherits the global dark surfaces and only re-skins the two brand deltas below. */
+html:not(.dark) .theme-landing {
+  --primary: #0e2a6b;
+  --primary-foreground: #ffffff;
+  --ring: #0e2a6b;
+  --foreground: #0b1220;
+  --card: #ffffff;
+  --card-foreground: #0b1220;
+  --muted: #eaeff6;
+  --muted-foreground: #586377;
+  --border: #dee3ec;
+  --input: #dee3ec;
+  --secondary: #eaeff6;
+  --secondary-foreground: #0b1220;
+  --popover: #ffffff;
+  --popover-foreground: #0b1220;
+  --accent: #eaeff6;
+  --accent-foreground: #0b1220;
+}
+
+/* Dark landing also predates the refresh: brand reads as #4a84e1 on a lighter card. */
+.dark .theme-landing {
+  --primary: #4a84e1;
+  --ring: #4a84e1;
+  --card: #0f1827;
+  --card-foreground: #f3f5fa;
+  --popover: #0f1827;
+  --popover-foreground: #f3f5fa;
 }
 
 /* ─── Tailwind theme mapping ─────────────────────────────────────────────── */
@@ -149,6 +207,14 @@
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary-muted: var(--primary-muted);
+  --color-primary-subtle: var(--primary-subtle);
+  --color-primary-subtle-foreground: var(--primary-subtle-foreground);
+
+  /* Accent (brand blue) */
+  --color-accent-brand: var(--accent-brand);
+  --color-accent-brand-foreground: var(--accent-brand-foreground);
+  --color-accent-brand-subtle: var(--accent-brand-subtle);
+  --color-accent-brand-subtle-foreground: var(--accent-brand-subtle-foreground);
 
   /* Secondary */
   --color-secondary: var(--secondary);
@@ -199,8 +265,18 @@
   --radius-lg: calc(var(--radius) + 0.125rem);
   --radius-xl: calc(var(--radius) + 0.375rem);
 
-  /* Font */
+  /* Elevation — Figma "Elevation/sm" mapped onto Tailwind's shadow-sm utility */
+  --shadow-sm: var(--shadow-elevation-sm);
+
+  /* Font — Geist for body/UI, Bricolage Grotesque for display headings + prices */
   --font-sans: var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif);
+  --font-display: var(
+    --font-bricolage,
+    var(--font-geist-sans),
+    ui-sans-serif,
+    system-ui,
+    sans-serif
+  );
   --font-mono: var(--font-geist-mono, ui-monospace, monospace);
 }
 
@@ -218,4 +294,31 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+
+  /* Display headings use Bricolage Grotesque with the Figma's tight tracking. */
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+}
+
+/* ─── Yandex map dark mode ────────────────────────────────────────────────── */
+/* JS API v2.1 has no native dark scheme, so in dark mode invert just the tile ground-pane —
+   placemarks, the balloon and controls live in other panes and stay un-inverted. Scoped to the
+   marketplace map (the .ymap container) so other embedded maps are unaffected. */
+
+.dark .ymap [class*='-ground-pane'] {
+  filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9);
+}
+
+.dark .ymap [class*='-balloon__layout'],
+.dark .ymap [class*='-balloon__content'] {
+  background: var(--card) !important;
+  color: var(--foreground) !important;
+}
+
+.dark .ymap [class*='-balloon__tail']::after {
+  background: var(--card) !important;
 }
