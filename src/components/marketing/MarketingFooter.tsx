@@ -50,7 +50,7 @@ export function MarketingFooter() {
 
   return (
     <footer className="border-t border-border bg-muted">
-      <div className="mx-auto flex max-w-6xl flex-col gap-12 px-4 py-14 lg:flex-row lg:justify-between">
+      <div className="container-page flex flex-col gap-12 py-14 lg:flex-row lg:justify-between">
         <div className="max-w-sm">
           <Link
             href="/"
@@ -83,7 +83,7 @@ export function MarketingFooter() {
       </div>
 
       <div className="border-t border-border">
-        <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-5 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+        <div className="container-page flex flex-col gap-3 py-5 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <p>{t('footer_rights')}</p>
           <div className="flex items-center gap-5">
             <span>{t('footer_lang')}</span>

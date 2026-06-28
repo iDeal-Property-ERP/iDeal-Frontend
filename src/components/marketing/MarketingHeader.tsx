@@ -28,7 +28,7 @@ export function MarketingHeader() {
 
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-card/80 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
+      <div className="container-page flex items-center justify-between gap-4 py-3">
         <Link
           href="/"
           className="flex items-center gap-2 text-xl font-bold tracking-tight text-foreground"

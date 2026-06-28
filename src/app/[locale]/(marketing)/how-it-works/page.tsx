@@ -31,7 +31,7 @@ export default async function HowItWorksPage(props: { params: Promise<{ locale: 
   const faqs = await fetchFaqs();
 
   return (
-    <div className="mx-auto max-w-6xl px-4">
+    <div className="container-page">
       {/* Hero */}
       <section className="flex flex-col items-start gap-5 pt-14 pb-12 md:pt-20">
         <p className="text-xs font-medium tracking-[0.12em] text-primary uppercase">

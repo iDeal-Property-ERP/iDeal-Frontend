@@ -32,7 +32,7 @@ export async function FeaturedHomes(props: { locale: string }) {
           <ArrowRight className="size-4" />
         </Link>
       </div>
-      <div className="-mx-4 flex snap-x snap-mandatory [scrollbar-width:none] gap-6 overflow-x-auto px-4 pb-2 [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+      <div className="flex snap-x snap-mandatory [scrollbar-width:none] gap-6 overflow-x-auto pb-2 [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         {listings.map((listing, i) => (
           <div key={listing.id} className="w-[320px] shrink-0 snap-start sm:w-[360px] lg:w-[388px]">
             <ListingCard listing={listing} priority={i < 3} />

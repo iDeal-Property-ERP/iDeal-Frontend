@@ -89,7 +89,7 @@ export default async function ListingDetailPage(props: {
     : [];
 
   return (
-    <div className="mx-auto max-w-6xl px-4 pt-6 pb-28 lg:pb-12">
+    <div className="container-page pt-6 pb-28 lg:pb-12">
       {/* Breadcrumb (desktop) */}
       <nav className="mb-5 hidden items-center gap-2 text-[14px] text-muted-foreground lg:flex">
         <Link className="hover:text-foreground" href="/listings">
@@ -149,7 +149,7 @@ export default async function ListingDetailPage(props: {
       <div className="mt-6 grid gap-8 lg:mt-8 lg:grid-cols-[1fr_380px]">
         <div className="space-y-6">
           {/* Specs */}
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
             <SpecCard
               icon={<Bed className="size-[19px]" />}
               label={t('bedrooms')}
@@ -218,7 +218,7 @@ export default async function ListingDetailPage(props: {
           {property.amenities.length > 0 && (
             <div>
               <h2 className="text-[18px] font-semibold text-foreground">{t('amenities')}</h2>
-              <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3.5 lg:grid-cols-3">
+              <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3.5 md:grid-cols-3">
                 {property.amenities.map((a) => {
                   const Icon = AMENITY_ICONS[a.icon] ?? Check;
                   return (

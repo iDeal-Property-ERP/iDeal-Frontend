@@ -93,7 +93,7 @@ export default async function ListingsPage(props: {
   ]);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
+    <div className="container-page py-8">
       <div className="mb-6">
         <h1 className="text-3xl font-bold tracking-[-0.02em] text-foreground">{t('title')}</h1>
         <p className="mt-1 text-muted-foreground">{t('subtitle')}</p>

@@ -15,14 +15,14 @@ export function RenterSteps() {
   const t = useTranslations('Landing');
   return (
     <section className="bg-muted py-14">
-      <div className="mx-auto max-w-6xl px-4">
+      <div className="container-page">
         <div className="flex flex-col items-center gap-2 text-center">
           <h2 className="text-[32px] leading-[38px] font-bold tracking-[-0.02em] text-foreground">
             {t('hiw_title')}
           </h2>
           <p className="text-muted-foreground">{t('hiw_subtitle')}</p>
         </div>
-        <div className="mt-8 grid gap-6 lg:grid-cols-3">
+        <div className="mt-8 grid gap-6 sm:grid-cols-3">
           {STEPS.map(({ icon: Icon, key }, i) => (
             <div
               key={key}

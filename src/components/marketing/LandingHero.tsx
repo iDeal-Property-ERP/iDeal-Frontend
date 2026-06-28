@@ -32,21 +32,23 @@ export function LandingHero() {
         <p className="max-w-xl text-lg text-muted-foreground">{t('hero_subtitle')}</p>
 
         <form
-          className="flex h-16 w-full items-center gap-2.5 rounded-[14px] border border-border bg-card pr-2 pl-4 shadow-[0_6px_16px_0_rgba(10,13,31,0.1)]"
+          className="flex flex-col gap-2.5 sm:h-16 sm:flex-row sm:items-center sm:rounded-[14px] sm:border sm:border-border sm:bg-card sm:pr-2 sm:pl-4 sm:shadow-[0_6px_16px_0_rgba(10,13,31,0.1)]"
           onSubmit={(e) => {
             e.preventDefault();
             router.push(q.trim() ? `/listings?q=${encodeURIComponent(q.trim())}` : '/listings');
           }}
         >
-          <Search className="size-5 shrink-0 text-muted-foreground" />
-          <input
-            className="flex-1 bg-transparent text-[15px] text-foreground outline-none placeholder:text-muted-foreground"
-            onChange={(e) => setQ(e.target.value)}
-            placeholder={t('hero_search_placeholder')}
-            value={q}
-          />
+          <div className="flex h-14 items-center gap-2.5 rounded-[14px] border border-border bg-card px-4 shadow-[0_6px_16px_0_rgba(10,13,31,0.1)] sm:h-auto sm:flex-1 sm:rounded-none sm:border-0 sm:bg-transparent sm:px-0 sm:shadow-none">
+            <Search className="size-5 shrink-0 text-muted-foreground" />
+            <input
+              className="min-w-0 flex-1 bg-transparent text-[15px] text-foreground outline-none placeholder:text-muted-foreground"
+              onChange={(e) => setQ(e.target.value)}
+              placeholder={t('hero_search_placeholder')}
+              value={q}
+            />
+          </div>
           <button
-            className="inline-flex h-12 items-center justify-center gap-2 rounded-[10px] bg-primary px-5 text-[15px] font-semibold text-primary-foreground transition hover:bg-primary/90"
+            className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-[10px] bg-primary px-5 text-[15px] font-semibold text-primary-foreground transition hover:bg-primary/90 sm:w-auto sm:shrink-0"
             type="submit"
           >
             <Search className="size-4" />

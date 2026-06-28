@@ -71,7 +71,7 @@ export function ListingGallery(props: {
   return (
     <>
       {/* Desktop: hero + 2×2 thumbnail grid */}
-      <div className="hidden grid-cols-[868fr_480fr] gap-3 lg:grid">
+      <div className="hidden grid-cols-[868fr_480fr] gap-3 md:grid">
         <button
           className="relative aspect-[868/464] overflow-hidden rounded-[20px] bg-muted"
           onClick={() => openAt(0)}
@@ -108,8 +108,8 @@ export function ListingGallery(props: {
         </div>
       </div>
 
-      {/* Mobile: full-width hero + thumbnail strip */}
-      <div className="lg:hidden">
+      {/* Mobile + small tablet: full-width hero + thumbnail strip */}
+      <div className="md:hidden">
         <div className="relative aspect-[3/2] overflow-hidden rounded-2xl bg-muted">
           {hero && (
             <Image

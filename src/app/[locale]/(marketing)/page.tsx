@@ -22,13 +22,13 @@ export default async function LandingPage(props: { params: Promise<{ locale: str
 
   return (
     <>
-      <div className="mx-auto max-w-6xl px-4">
+      <div className="container-page">
         <LandingHero />
         <TrustBand />
         <FeaturedHomes locale={locale} />
       </div>
       <RenterSteps />
-      <div className="mx-auto max-w-6xl px-4">
+      <div className="container-page">
         <OwnersCta />
       </div>
     </>

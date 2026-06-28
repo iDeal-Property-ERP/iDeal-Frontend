@@ -13,7 +13,7 @@ export default async function MarketingLayout(props: {
   return (
     <MarketingShell>
       <MarketingHeader />
-      <main className="flex-1">{props.children}</main>
+      <main className="flex-1 overflow-x-clip">{props.children}</main>
       <MarketingFooter />
     </MarketingShell>
   );
