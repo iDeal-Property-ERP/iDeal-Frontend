@@ -153,7 +153,6 @@ export function ListingGallery(props: {
               <Heart className={cn('size-4', saved && 'fill-current')} />
             </button>
           </div>
-          {verified && <VerifiedBadge label={t('verified_by')} />}
           <span className="pointer-events-none absolute right-3 bottom-3 z-10 inline-flex items-center rounded-full bg-[rgba(8,13,26,0.62)] px-3 py-1.5 text-xs font-semibold text-white">
             1 / {photos.length}
           </span>

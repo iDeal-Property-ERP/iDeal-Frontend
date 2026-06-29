@@ -2,6 +2,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { DiscoveryFilterChips } from '@/components/listings/DiscoveryFilterChips';
 import { DiscoveryResults } from '@/components/listings/DiscoveryResults';
 import { DiscoverySearchBar } from '@/components/listings/DiscoverySearchBar';
+import { MobileSearchSheet } from '@/components/listings/MobileSearchSheet';
 import { ViewSwitch } from '@/components/listings/ViewSwitch';
 import {
   fetchAmenities,
@@ -99,7 +100,12 @@ export default async function ListingsPage(props: {
         <p className="mt-1 text-muted-foreground">{t('subtitle')}</p>
       </div>
 
-      <DiscoverySearchBar districts={districts} />
+      <div className="hidden md:block">
+        <DiscoverySearchBar districts={districts} />
+      </div>
+      <div className="md:hidden">
+        <MobileSearchSheet amenities={amenities} districts={districts} />
+      </div>
 
       <div className="mt-4 mb-6 flex items-center justify-between gap-3">
         <div className="min-w-0 flex-1">

@@ -50,7 +50,7 @@ export function MarketingFooter() {
 
   return (
     <footer className="border-t border-border bg-muted">
-      <div className="container-page flex flex-col gap-12 py-14 lg:flex-row lg:justify-between">
+      <div className="container-page flex flex-col gap-6 pt-10 pb-6 lg:flex-row lg:justify-between lg:gap-12 lg:py-14">
         <div className="max-w-sm">
           <Link
             href="/"
@@ -64,10 +64,12 @@ export function MarketingFooter() {
           <p className="mt-4 text-sm text-muted-foreground">{t('footer_tagline')}</p>
         </div>
 
-        <div className="grid grid-cols-2 gap-x-12 gap-y-8 sm:grid-cols-4 lg:gap-x-16">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-4 sm:gap-x-12 sm:gap-y-8 lg:gap-x-16">
           {COLUMNS.map((col) => (
             <div key={col.heading}>
-              <p className="text-sm font-semibold text-foreground">{t(col.heading)}</p>
+              <p className="text-[13px] font-semibold text-foreground lg:text-sm">
+                {t(col.heading)}
+              </p>
               <ul className="mt-3 space-y-2.5 text-sm text-muted-foreground">
                 {col.links.map((link) => (
                   <li key={link.key}>
@@ -85,7 +87,7 @@ export function MarketingFooter() {
       <div className="border-t border-border">
         <div className="container-page flex flex-col gap-3 py-5 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <p>{t('footer_rights')}</p>
-          <div className="flex items-center gap-5">
+          <div className="hidden items-center gap-5 sm:flex">
             <span>{t('footer_lang')}</span>
             <Link href="/" className="transition-colors hover:text-foreground">
               {t('link_privacy')}

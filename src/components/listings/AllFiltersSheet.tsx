@@ -12,6 +12,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { useListingParams } from '@/hooks/useListingParams';
 import { cn } from '@/libs/utils';
 import type { Furnishing, PropertyType, Tariff } from '@/types/enums';
@@ -106,6 +107,8 @@ export function AllFiltersSheet(props: {
   const tx = t as unknown as (key: string) => string;
   const { get, set } = useListingParams();
   const [open, setOpen] = useState(false);
+  // Mobile rises from the bottom (Figma); desktop keeps the right-side drawer.
+  const isMobile = useIsMobile();
 
   const initial = (): Draft => ({
     district_id: get('district_id'),
@@ -183,12 +186,15 @@ export function AllFiltersSheet(props: {
           </button>
         )}
       </SheetTrigger>
-      <SheetContent className="flex w-full flex-col gap-0 overflow-y-auto sm:max-w-md">
+      <SheetContent
+        className={cn('flex flex-col gap-0', isMobile ? '' : 'w-full overflow-y-auto sm:max-w-md')}
+        side={isMobile ? 'bottom' : 'right'}
+      >
         <SheetHeader>
           <SheetTitle>{t('all_filters')}</SheetTitle>
         </SheetHeader>
 
-        <div className="flex-1 space-y-6 px-4 py-4">
+        <div className={cn('flex-1 space-y-6 px-4 py-4', isMobile && 'overflow-y-auto')}>
           <Field label={t('filter_district')}>
             <select
               className={INPUT}

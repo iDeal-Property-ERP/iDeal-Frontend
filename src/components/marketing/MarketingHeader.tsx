@@ -1,11 +1,19 @@
 'use client';
 
-import { Moon, Sun } from 'lucide-react';
+import { Menu, Moon, Sun } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 import { LocaleSwitcher } from '@/components/LocaleSwitcher';
 import { buttonVariants } from '@/components/ui/button';
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 import { Link, usePathname } from '@/libs/I18nNavigation';
 import { cn } from '@/libs/utils';
 
@@ -54,7 +62,7 @@ export function MarketingHeader() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-2">
+        <div className="hidden items-center gap-2 md:flex">
           <LocaleSwitcher />
           <button
             aria-label={t('theme_toggle')}
@@ -68,6 +76,71 @@ export function MarketingHeader() {
             {t('sign_in')}
           </Link>
         </div>
+
+        <Sheet>
+          <SheetTrigger asChild>
+            <button
+              aria-label={t('open_menu')}
+              className="-mr-1 inline-flex size-10 items-center justify-center rounded-lg text-foreground transition hover:bg-muted md:hidden"
+              type="button"
+            >
+              <Menu className="size-5" />
+            </button>
+          </SheetTrigger>
+          <SheetContent
+            side="right"
+            className={cn('w-[84%] gap-0 sm:max-w-sm', pathname === '/' && 'theme-landing')}
+          >
+            <SheetHeader>
+              <SheetTitle className="flex items-center gap-2 text-xl font-bold tracking-tight text-foreground">
+                <span className="grid size-8 place-items-center rounded-lg bg-primary text-primary-foreground">
+                  i
+                </span>
+                iDeal
+              </SheetTitle>
+            </SheetHeader>
+            <nav className="flex flex-col px-4">
+              {NAV.map((item) => (
+                <SheetClose asChild key={item.href}>
+                  <Link
+                    href={item.href}
+                    className={cn(
+                      'py-3 text-base font-medium transition-colors',
+                      pathname === item.href
+                        ? 'text-foreground'
+                        : 'text-muted-foreground hover:text-foreground',
+                    )}
+                  >
+                    {t(item.key)}
+                  </Link>
+                </SheetClose>
+              ))}
+            </nav>
+            <div className="mx-4 mt-2 mb-4 h-px bg-border" />
+            <div className="px-4">
+              <SheetClose asChild>
+                <Link href="/login" className={cn(buttonVariants({ size: 'sm' }), 'h-11 w-full')}>
+                  {t('sign_in')}
+                </Link>
+              </SheetClose>
+            </div>
+            <div className="mt-4 flex items-center gap-2 px-4">
+              <button
+                aria-label={t('theme_toggle')}
+                className="inline-flex size-10 items-center justify-center rounded-lg border border-border text-muted-foreground transition hover:text-foreground"
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                type="button"
+              >
+                {mounted && theme === 'dark' ? (
+                  <Sun className="size-4" />
+                ) : (
+                  <Moon className="size-4" />
+                )}
+              </button>
+              <LocaleSwitcher />
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
     </header>
   );
