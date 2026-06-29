@@ -14,30 +14,36 @@ const STEPS = [
 export function RenterSteps() {
   const t = useTranslations('Landing');
   return (
-    <section className="bg-muted py-14">
+    <section className="bg-muted pt-10 pb-11 sm:py-14">
       <div className="container-page">
-        <div className="flex flex-col items-center gap-2 text-center">
-          <h2 className="text-[32px] leading-[38px] font-bold tracking-[-0.02em] text-foreground">
+        <div className="flex flex-col items-start gap-1.5 sm:items-center sm:gap-2 sm:text-center">
+          <h2 className="text-[26px] leading-[32px] font-bold tracking-[-0.02em] text-foreground sm:text-[32px] sm:leading-[38px]">
             {t('hiw_title')}
           </h2>
-          <p className="text-muted-foreground">{t('hiw_subtitle')}</p>
+          <p className="text-[15px] leading-[22px] text-muted-foreground sm:text-base">
+            {t('hiw_subtitle')}
+          </p>
         </div>
-        <div className="mt-8 grid gap-6 sm:grid-cols-3">
+        <div className="mt-5 flex flex-col gap-5 sm:mt-8 sm:grid sm:grid-cols-3 sm:gap-6">
           {STEPS.map(({ icon: Icon, key }, i) => (
             <div
               key={key}
-              className="flex flex-col gap-3.5 rounded-[20px] border border-border bg-card px-[26px] py-7 shadow-sm"
+              className="flex items-start gap-3.5 rounded-[16px] border border-border bg-card p-[18px] shadow-sm sm:flex-col sm:items-stretch sm:rounded-[20px] sm:px-[26px] sm:py-7"
             >
-              <div className="flex items-center gap-3">
+              <div className="flex shrink-0 items-center gap-3">
                 <span className="grid size-9 place-items-center rounded-[18px] bg-primary text-base font-bold text-primary-foreground">
                   {i + 1}
                 </span>
-                <span className="grid size-10 place-items-center rounded-xl bg-accent-brand-subtle text-accent-brand-subtle-foreground">
+                <span className="hidden size-10 place-items-center rounded-xl bg-accent-brand-subtle text-accent-brand-subtle-foreground sm:grid">
                   <Icon className="size-5" />
                 </span>
               </div>
-              <h3 className="text-lg font-semibold text-foreground">{t(`hiw_${key}_title`)}</h3>
-              <p className="text-sm text-muted-foreground">{t(`hiw_${key}_desc`)}</p>
+              <div className="flex min-w-0 flex-col gap-[3px] sm:gap-3.5">
+                <h3 className="text-base font-semibold text-foreground sm:text-lg">
+                  {t(`hiw_${key}_title`)}
+                </h3>
+                <p className="text-sm text-muted-foreground">{t(`hiw_${key}_desc`)}</p>
+              </div>
             </div>
           ))}
         </div>
