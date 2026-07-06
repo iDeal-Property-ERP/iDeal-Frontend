@@ -1,206 +1,724 @@
 'use client';
 
-import type { ColumnDef } from '@tanstack/react-table';
+import { Building2, ClipboardCheck, Coins, Download, PieChart, Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useState, useEffect } from 'react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
-import { DataTable } from '@/components/ui/DataTable';
-import { Input } from '@/components/ui/input';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import { EntityCell } from '@/components/management/columns/EntityCell';
+import { NumericCell } from '@/components/management/columns/NumericCell';
+import { PropertyThumbnail } from '@/components/management/columns/PropertyThumbnail';
+import { RowActions } from '@/components/management/columns/RowActions';
+import { propertyStatusTone, StatusPill } from '@/components/management/columns/StatusPill';
+import { formatMoney } from '@/components/management/format';
+import { KpiCard } from '@/components/management/KpiStrip';
+import type { KpiItem } from '@/components/management/KpiStrip';
+import { ManagementPageHeader } from '@/components/management/ManagementPageHeader';
+import { PropertyRecordPanel } from '@/components/management/record-panel/PropertyRecordPanel';
+import { EmptyState } from '@/components/management/states/EmptyState';
+import { ErrorState } from '@/components/management/states/ErrorState';
+import { FilteredEmptyState } from '@/components/management/states/FilteredEmptyState';
+import { BulkSelectionBar } from '@/components/management/workbench/BulkSelectionBar';
+import { SavedViewTabs } from '@/components/management/workbench/SavedViewTabs';
+import type { SavedView } from '@/components/management/workbench/SavedViewTabs';
+import { WorkbenchPagination } from '@/components/management/workbench/WorkbenchPagination';
+import { WorkbenchShell } from '@/components/management/workbench/WorkbenchShell';
+import { WorkbenchTable } from '@/components/management/workbench/WorkbenchTable';
+import type { WorkbenchColumn } from '@/components/management/workbench/WorkbenchTable';
+import { WorkbenchTableSkeleton } from '@/components/management/workbench/WorkbenchTableSkeleton';
+import { WorkbenchToolbar } from '@/components/management/workbench/WorkbenchToolbar';
+import type { ChipFilter } from '@/components/management/workbench/WorkbenchToolbar';
+import { Button } from '@/components/ui/button';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { apiFetch } from '@/libs/api';
-import { propertyStatusVariant } from '@/libs/badges';
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { usePaginatedResource } from '@/hooks/management/usePaginatedResource';
+import { useRowSelection } from '@/hooks/management/useRowSelection';
+import { useUndoableAction } from '@/hooks/useUndoableAction';
 import { Link } from '@/libs/I18nNavigation';
-import type { PaginatedData } from '@/types/api';
+import {
+  bulkChangeStatus,
+  exportPropertiesCsv,
+  getDistricts,
+  getStatusCounts,
+  getWorkbenchKpis,
+  listProperties,
+  PROPERTY_STATUSES,
+  PROPERTY_TARIFFS,
+} from '@/libs/management/propertiesAdapter';
+import type {
+  DistrictOption,
+  StatusCounts,
+  WorkbenchKpis,
+} from '@/libs/management/propertiesAdapter';
 import type { ManagementPropertyOutput } from '@/types/management';
 
-const TARIFF_VARIANT: Record<string, 'default' | 'info' | 'warning'> = {
-  standard: 'default',
-  comfort: 'info',
-  premium: 'warning',
+type Translator = ReturnType<typeof useTranslations>;
+type Overrides = Record<number, string>;
+
+const PRICE_RANGES: Record<string, [number, number]> = {
+  '0-400': [0, 400],
+  '400-600': [400, 600],
+  '600-800': [600, 800],
+  '800+': [800, Number.POSITIVE_INFINITY],
 };
 
-const STATUSES = ['', 'vacant', 'rented', 'maintenance'];
-const TARIFFS = ['', 'standard', 'comfort', 'premium'];
-
-const columns: ColumnDef<ManagementPropertyOutput>[] = [
-  {
-    accessorKey: 'name',
-    header: 'Name',
-    cell: ({ row }) => (
-      <Link
-        href={`/properties/${row.original.id}`}
-        className="font-medium text-primary hover:text-primary/80"
-      >
-        {row.original.name}
-      </Link>
-    ),
-  },
-  { accessorKey: 'address', header: 'Address' },
-  { accessorKey: 'district_name', header: 'District' },
-  { accessorKey: 'rooms', header: 'Rooms' },
-  {
-    accessorKey: 'area_sqm',
-    header: 'Area',
-    cell: ({ row }) => `${row.original.area_sqm} m²`,
-  },
-  {
-    accessorKey: 'status',
-    header: 'Status',
-    cell: ({ row }) => (
-      <Badge variant={propertyStatusVariant(row.original.status)}>{row.original.status}</Badge>
-    ),
-  },
-  {
-    accessorKey: 'tariff',
-    header: 'Tariff',
-    cell: ({ row }) => (
-      <Badge variant={TARIFF_VARIANT[row.original.tariff]}>{row.original.tariff}</Badge>
-    ),
-  },
-  {
-    accessorKey: 'ask_price',
-    header: 'Price',
-    cell: ({ row }) => `${row.original.ask_price} ${row.original.ask_currency}`,
-  },
-];
+const SAVED_VIEW_DEFS = [
+  { id: 'all', labelKey: 'view_all', countKey: 'all' },
+  { id: 'rented', labelKey: 'view_rented', countKey: 'rented' },
+  { id: 'vacant', labelKey: 'view_vacant', countKey: 'vacant' },
+  { id: 'maintenance', labelKey: 'view_maintenance', countKey: 'maintenance' },
+  { id: 'pending', labelKey: 'view_pending', countKey: 'pending_review' },
+] as const satisfies { id: string; labelKey: string; countKey: keyof StatusCounts }[];
 
 /**
- * Management properties page — lists all properties with filtering.
- * @returns The management properties page component.
+ * Maps a saved-view id to the backend status filter.
+ * @param view - The saved-view id.
+ * @returns The backend status, or undefined for "all".
+ */
+function statusForView(view: string): string | undefined {
+  if (view === 'all') {
+    return undefined;
+  }
+  return view === 'pending' ? 'pending_review' : view;
+}
+
+/**
+ * Maps a backend status back to the saved-view id.
+ * @param status - The active status filter (or undefined).
+ * @returns The matching saved-view id.
+ */
+function viewFromStatus(status: string | undefined): string {
+  if (!status) {
+    return 'all';
+  }
+  return status === 'pending_review' ? 'pending' : status;
+}
+
+/**
+ * The effective monthly rent for a property (tenant charge, falling back to ask).
+ * @param row - The property row.
+ * @returns The rent as a number, or 0 when unset.
+ */
+function rentOf(row: ManagementPropertyOutput): number {
+  const charge = Number.parseFloat(row.tenant_charge_price);
+  if (!Number.isNaN(charge) && charge > 0) {
+    return charge;
+  }
+  const ask = Number.parseFloat(row.ask_price);
+  return Number.isNaN(ask) ? 0 : ask;
+}
+
+/**
+ * The display currency symbol for a property.
+ * @param row - The property row.
+ * @returns A currency prefix.
+ */
+function currencyOf(row: ManagementPropertyOutput): string {
+  return row.ask_currency === 'UZS' ? "so'm " : '$';
+}
+
+/**
+ * Sorts rows client-side (the backend fixes ordering to newest-first).
+ * @param rows - The rows to sort.
+ * @param sort - The sort key.
+ * @returns A new sorted array.
+ */
+function sortRows(rows: ManagementPropertyOutput[], sort: string): ManagementPropertyOutput[] {
+  return rows.toSorted((a, b) => {
+    if (sort === 'rent_high') {
+      return rentOf(b) - rentOf(a);
+    }
+    if (sort === 'rent_low') {
+      return rentOf(a) - rentOf(b);
+    }
+    if (sort === 'name') {
+      return a.name.localeCompare(b.name);
+    }
+    if (sort === 'oldest') {
+      return a.created_at.localeCompare(b.created_at);
+    }
+    return 0;
+  });
+}
+
+/**
+ * Returns a copy of the overrides map with the given ids removed (no in-place
+ * delete of dynamic keys).
+ * @param overrides - The current overrides.
+ * @param ids - The ids to drop.
+ * @returns A new overrides map.
+ */
+function withoutOverrides(overrides: Overrides, ids: number[]): Overrides {
+  const drop = new Set(ids);
+  const next: Overrides = {};
+  for (const [key, value] of Object.entries(overrides)) {
+    if (!drop.has(Number(key))) {
+      next[Number(key)] = value;
+    }
+  }
+  return next;
+}
+
+/**
+ * Builds the four KPI-strip cards from the loaded metrics.
+ * @param t - The translator.
+ * @param kpis - The KPI bundle.
+ * @param view - The active saved-view id (for the clickable card active state).
+ * @param onVacant - Handler for the Vacant card.
+ * @param onPending - Handler for the Pending card.
+ * @returns The KPI items.
+ */
+function buildKpiItems(
+  t: Translator,
+  kpis: WorkbenchKpis,
+  view: string,
+  onVacant: () => void,
+  onPending: () => void,
+): KpiItem[] {
+  const hasChange = kpis.occupancyChange !== 0;
+  return [
+    {
+      id: 'occupancy',
+      label: t('kpi_occupancy'),
+      value: `${kpis.occupancyRate}%`,
+      icon: PieChart,
+      delta: hasChange
+        ? `${kpis.occupancyChange > 0 ? '+' : ''}${kpis.occupancyChange}`
+        : undefined,
+      deltaDirection: kpis.occupancyChange >= 0 ? 'up' : 'down',
+      deltaTone: kpis.occupancyChange >= 0 ? 'success' : 'danger',
+      sublabel: hasChange ? t('kpi_vs_last_month') : undefined,
+    },
+    {
+      id: 'vacant',
+      label: t('kpi_vacant_units'),
+      value: String(kpis.vacantUnits),
+      icon: Building2,
+      sublabel: t('kpi_loss_per_day', { amount: formatMoney(kpis.lossPerDay) }),
+      onClick: onVacant,
+      active: view === 'vacant',
+    },
+    {
+      id: 'avg_rent',
+      label: t('kpi_avg_rent'),
+      value: formatMoney(kpis.avgRent),
+      icon: Coins,
+      sublabel: t('kpi_avg_rent_sub'),
+    },
+    {
+      id: 'pending',
+      label: t('kpi_pending_review'),
+      value: String(kpis.pendingReview),
+      icon: ClipboardCheck,
+      sublabel: t('kpi_pending_sub'),
+      onClick: onPending,
+      active: view === 'pending',
+    },
+  ];
+}
+
+/**
+ * The Properties Workbench — the list-screen archetype: KPI strip, saved-view
+ * tabs, filter toolbar, selectable table with a floating bulk bar, pagination,
+ * and an in-flow record panel. The reusable foundation for every Management list
+ * screen; wired to the live backend via the properties adapter.
+ * @returns The properties workbench page.
  */
 export default function ManagementPropertiesPage() {
-  const t = useTranslations('Pages');
-  const [data, setData] = useState<ManagementPropertyOutput[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [districtFilter, setDistrictFilter] = useState('');
-  const [tariffFilter, setTariffFilter] = useState('');
+  const t = useTranslations('Management');
 
+  const resource = usePaginatedResource<ManagementPropertyOutput>(async ({ page, query }) => {
+    const result = await listProperties({
+      page,
+      search: query.search as string | undefined,
+      status: query.status as string | undefined,
+      districtId: query.district_id as number | undefined,
+      tariff: query.tariff as string | undefined,
+    });
+    return result;
+  });
+
+  const search = (resource.query.search as string | undefined) ?? '';
+  const status = resource.query.status as string | undefined;
+  const districtId = resource.query.district_id as number | undefined;
+  const tariff = resource.query.tariff as string | undefined;
+  const view = viewFromStatus(status);
+
+  const [price, setPrice] = useState<string | null>(null);
+  const [sort, setSort] = useState('newest');
+  const [selected, setSelected] = useState<ManagementPropertyOutput | null>(null);
+  const [overrides, setOverrides] = useState<Overrides>({});
+  const [counts, setCounts] = useState<StatusCounts | null>(null);
+  const [kpis, setKpis] = useState<WorkbenchKpis | null>(null);
+  const [districts, setDistricts] = useState<DistrictOption[]>([]);
+
+  const undo = useUndoableAction();
+
+  // Status counts (drive the tab + KPI numbers) refresh with the search term.
   useEffect(() => {
-    setIsLoading(true);
-    setError(null);
-    const query: Record<string, string | number> = { page };
-    if (search) {
-      query.search = search;
-    }
-    if (statusFilter) {
-      query.status = statusFilter;
-    }
-    if (districtFilter) {
-      query.district = districtFilter;
-    }
-    if (tariffFilter) {
-      query.tariff = tariffFilter;
-    }
+    let active = true;
+    const load = async () => {
+      try {
+        const nextCounts = await getStatusCounts(search || undefined);
+        if (!active) {
+          return;
+        }
+        setCounts(nextCounts);
+        const nextKpis = await getWorkbenchKpis(nextCounts);
+        if (active) {
+          setKpis(nextKpis);
+        }
+      } catch {
+        // KPIs are supplementary; the table still renders without them.
+      }
+    };
+    void load();
+    return () => {
+      active = false;
+    };
+  }, [search]);
 
-    apiFetch<PaginatedData<ManagementPropertyOutput>>('/management/properties/', { query })
-      .then((res) => {
-        setData(res.page.object_list);
-        setTotalPages(res.num_pages);
-      })
-      .catch((caughtError: unknown) => {
-        setError(caughtError instanceof Error ? caughtError.message : 'Failed to load properties');
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
-  }, [page, search, statusFilter, districtFilter, tariffFilter]);
+  // District options for the filter chip (derived once).
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      try {
+        const next = await getDistricts();
+        if (active) {
+          setDistricts(next);
+        }
+      } catch {
+        // The filter still works without district options.
+      }
+    };
+    void load();
+    return () => {
+      active = false;
+    };
+  }, []);
 
-  if (error) {
-    return (
-      <Alert variant="danger">
-        <AlertDescription>{error}</AlertDescription>
-      </Alert>
+  const statusLabel = (value: string): string => {
+    const normalized = value.toLowerCase();
+    if (/rent|active|occupied/u.test(normalized)) {
+      return t('status_rented');
+    }
+    if (/maintenance|repair/u.test(normalized)) {
+      return t('status_maintenance');
+    }
+    if (/pending|review/u.test(normalized)) {
+      return t('status_pending');
+    }
+    if (/vacant|available/u.test(normalized)) {
+      return t('status_vacant');
+    }
+    return value.replaceAll('_', ' ');
+  };
+
+  const tariffLabel = (value: string): string => {
+    if (value === 'standard') {
+      return t('tariff_standard');
+    }
+    if (value === 'comfort') {
+      return t('tariff_comfort');
+    }
+    if (value === 'premium') {
+      return t('tariff_premium');
+    }
+    return value;
+  };
+
+  // Apply optimistic status overrides, then the client-only price filter and sort.
+  const overridden = resource.data.map((row) => {
+    const override = overrides[row.id];
+    return override ? { ...row, status: override } : row;
+  });
+  const range = price ? PRICE_RANGES[price] : undefined;
+  const filteredRows = range
+    ? overridden.filter((row) => rentOf(row) >= range[0] && rentOf(row) < range[1])
+    : overridden;
+  const rows = sortRows(filteredRows, sort);
+
+  const pageIds = rows.map((row) => row.id);
+  const selection = useRowSelection(pageIds);
+
+  const openRecord = (row: ManagementPropertyOutput) => setSelected(row);
+  const closeRecord = () => setSelected(null);
+
+  const changeStatus = (ids: number[], nextStatus: string) => {
+    undo.run({
+      message: t('status_changed', { count: ids.length, status: statusLabel(nextStatus) }),
+      undoLabel: t('undo'),
+      onOptimistic: () => {
+        setOverrides((prev) => {
+          const next = { ...prev };
+          for (const id of ids) {
+            next[id] = nextStatus;
+          }
+          return next;
+        });
+      },
+      onRevert: () => setOverrides((prev) => withoutOverrides(prev, ids)),
+      onCommit: async () => {
+        const result = await bulkChangeStatus(ids, nextStatus);
+        setOverrides((prev) => withoutOverrides(prev, ids));
+        resource.refetch();
+        if (result.failed.length > 0) {
+          throw new Error('partial');
+        }
+      },
+      onError: () => toast.error(t('status_change_failed')),
+    });
+    selection.clear();
+  };
+
+  const savedViews: SavedView[] = SAVED_VIEW_DEFS.map((def) => ({
+    id: def.id,
+    label: t(def.labelKey),
+    count: counts ? counts[def.countKey] : undefined,
+  }));
+
+  const chipFilters: ChipFilter[] = [
+    {
+      id: 'district',
+      label: t('filter_district'),
+      anyLabel: t('filter_any_district'),
+      value: districtId === undefined ? null : String(districtId),
+      options: districts.map((district) => ({ value: String(district.id), label: district.name })),
+      onChange: (value) => resource.patchQuery({ district_id: value ? Number(value) : undefined }),
+    },
+    {
+      id: 'tariff',
+      label: t('filter_tariff'),
+      anyLabel: t('filter_any_tariff'),
+      value: tariff ?? null,
+      options: PROPERTY_TARIFFS.map((value) => ({ value, label: tariffLabel(value) })),
+      onChange: (value) => resource.patchQuery({ tariff: value ?? undefined }),
+    },
+    {
+      id: 'price',
+      label: t('filter_price'),
+      anyLabel: t('filter_any_price'),
+      value: price,
+      options: [
+        { value: '0-400', label: t('price_lt_400') },
+        { value: '400-600', label: '$400 – $600' },
+        { value: '600-800', label: '$600 – $800' },
+        { value: '800+', label: t('price_gt_800') },
+      ],
+      onChange: setPrice,
+    },
+  ];
+
+  const activeFilterCount = [districtId, tariff, price].filter(Boolean).length;
+  const hasQuery = [search, status, districtId, tariff, price].some(Boolean);
+
+  const clearAll = () => {
+    resource.setQuery({ search: search || undefined });
+    setPrice(null);
+  };
+
+  const columns: WorkbenchColumn<ManagementPropertyOutput>[] = [
+    {
+      id: 'property',
+      header: t('col_property'),
+      cell: (row) => (
+        <EntityCell
+          thumbnail={<PropertyThumbnail alt={row.name} />}
+          name={row.name}
+          secondary={row.address}
+        />
+      ),
+    },
+    {
+      id: 'district',
+      header: t('col_district'),
+      width: 130,
+      cell: (row) => <span className="text-muted-foreground">{row.district_name}</span>,
+    },
+    {
+      id: 'rooms',
+      header: t('col_rooms'),
+      width: 96,
+      secondary: true,
+      cell: (row) => (
+        <span className="text-muted-foreground">{t('rooms_count', { count: row.rooms })}</span>
+      ),
+    },
+    {
+      id: 'status',
+      header: t('col_status'),
+      width: 132,
+      cell: (row) => (
+        <StatusPill tone={propertyStatusTone(row.status)} label={statusLabel(row.status)} />
+      ),
+    },
+    {
+      id: 'tariff',
+      header: t('col_tariff'),
+      width: 104,
+      secondary: true,
+      cell: (row) => <span className="text-muted-foreground">{tariffLabel(row.tariff)}</span>,
+    },
+    {
+      id: 'rent',
+      header: t('col_rent'),
+      width: 110,
+      align: 'right',
+      cell: (row) => <NumericCell>{formatMoney(rentOf(row), currencyOf(row))}</NumericCell>,
+    },
+    {
+      id: 'owner',
+      header: t('col_owner'),
+      width: 150,
+      secondary: true,
+      cell: (row) => <span className="truncate text-muted-foreground">{row.owner_name}</span>,
+    },
+  ];
+
+  const header = (
+    <ManagementPageHeader
+      title={t('properties')}
+      subtitle={t('properties_subtitle', { count: resource.total })}
+      showBell={false}
+      actions={
+        <div className="flex items-center gap-2.5">
+          <Button
+            variant="outline"
+            className="h-10 gap-2 rounded-[10px] px-4 shadow-none"
+            onClick={() => exportPropertiesCsv(rows, 'properties.csv')}
+          >
+            <Download className="size-[17px]" />
+            {t('export')}
+          </Button>
+          <Button asChild className="h-10 gap-2 rounded-[10px] px-4 text-[15px] shadow-sm">
+            <Link href="/properties/new">
+              <Plus className="size-[17px]" />
+              {t('add_property')}
+            </Link>
+          </Button>
+        </div>
+      }
+    />
+  );
+
+  const kpi = (
+    <div className={selected ? 'grid grid-cols-2 gap-4' : 'grid grid-cols-2 gap-4 md:grid-cols-4'}>
+      {kpis
+        ? buildKpiItems(
+            t,
+            kpis,
+            view,
+            () => resource.patchQuery({ status: statusForView('vacant') }),
+            () => resource.patchQuery({ status: statusForView('pending') }),
+          ).map((item) => <KpiCard key={item.id} {...item} />)
+        : Array.from({ length: 4 }, (_, index) => (
+            <div key={`kpi-skeleton-${index}`} className="h-[140px] rounded-[16px] bg-muted/40" />
+          ))}
+    </div>
+  );
+
+  const tabs = (
+    <SavedViewTabs
+      views={savedViews}
+      active={view}
+      onChange={(next) => resource.patchQuery({ status: statusForView(next) })}
+    />
+  );
+
+  const toolbar = (
+    <WorkbenchToolbar
+      search={{
+        value: search,
+        onChange: (value) => resource.patchQuery({ search: value || undefined }),
+      }}
+      filters={chipFilters}
+      sort={{
+        value: sort,
+        onChange: setSort,
+        options: [
+          { value: 'newest', label: t('sort_newest') },
+          { value: 'oldest', label: t('sort_oldest') },
+          { value: 'rent_high', label: t('sort_rent_high') },
+          { value: 'rent_low', label: t('sort_rent_low') },
+          { value: 'name', label: t('sort_name') },
+        ],
+      }}
+      activeFilterCount={activeFilterCount}
+      onClearAll={clearAll}
+      labels={{
+        filters: t('filters'),
+        clearAll: t('clear_all'),
+        filtersTitle: t('filters_title'),
+        done: t('done'),
+        columns: t('columns'),
+        sort: t('sort'),
+        search: {
+          placeholder: t('search_properties'),
+          aria: t('search_properties_aria'),
+          clear: t('search_clear'),
+        },
+      }}
+    />
+  );
+
+  const rowActions = (row: ManagementPropertyOutput) => (
+    <RowActions
+      onOpen={() => openRecord(row)}
+      quickClassName="opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
+      labels={{ open: t('row_open'), edit: t('row_edit'), more: t('row_more') }}
+      menuItems={[
+        { id: 'open', label: t('row_open'), onSelect: () => openRecord(row) },
+        ...PROPERTY_STATUSES.filter((value) => value !== row.status).map((value) => ({
+          id: `status-${value}`,
+          label: t('row_set_status', { status: statusLabel(value) }),
+          onSelect: () => changeStatus([row.id], value),
+        })),
+      ]}
+    />
+  );
+
+  const emptyBody = hasQuery ? (
+    <FilteredEmptyState
+      title={t('no_matches')}
+      description={t('no_matches_desc')}
+      clearLabel={t('clear_filters')}
+      onClear={clearAll}
+    />
+  ) : (
+    <EmptyState
+      icon={Building2}
+      title={t('empty_properties')}
+      description={t('empty_properties_desc')}
+      action={
+        <Button asChild className="h-9 gap-2 rounded-[10px]">
+          <Link href="/properties/new">
+            <Plus className="size-4" />
+            {t('add_first_property')}
+          </Link>
+        </Button>
+      }
+    />
+  );
+
+  let body: React.ReactNode;
+  if (resource.error) {
+    body = (
+      <ErrorState
+        title={t('error_title')}
+        message={t('error_properties')}
+        retryLabel={t('retry')}
+        onRetry={resource.refetch}
+      />
+    );
+  } else if (resource.isLoading) {
+    body = <WorkbenchTableSkeleton />;
+  } else if (rows.length === 0) {
+    body = emptyBody;
+  } else {
+    body = (
+      <WorkbenchTable
+        columns={columns}
+        rows={rows}
+        getRowId={(row) => row.id}
+        isSelected={selection.isSelected}
+        onToggleRow={selection.toggle}
+        allChecked={selection.allChecked}
+        someChecked={selection.someChecked}
+        onToggleAll={selection.toggleAll}
+        onOpenRecord={openRecord}
+        activeId={selected?.id ?? null}
+        dense={Boolean(selected)}
+        rowActions={rowActions}
+        labels={{ selectAll: t('select_all'), selectRow: t('select_row') }}
+      />
     );
   }
 
-  return (
-    <div className="space-y-6">
-      <PageHeader title={t('properties')} description={t('properties_desc')} />
+  const showPagination = !resource.isLoading && !resource.error && rows.length > 0;
+  const pagination = showPagination ? (
+    <WorkbenchPagination
+      page={resource.page}
+      totalPages={resource.totalPages}
+      onPageChange={resource.setPage}
+      summary={t('pagination_summary', {
+        from: (resource.page - 1) * 20 + 1,
+        to: (resource.page - 1) * 20 + rows.length,
+        total: resource.total,
+      })}
+      labels={{ previous: t('previous'), next: t('next'), perPage: t('per_page') }}
+    />
+  ) : undefined;
 
-      <DataTable
-        columns={columns}
-        data={data}
-        isLoading={isLoading}
-        emptyMessage="No properties found"
-        page={page}
-        totalPages={totalPages}
-        onPageChange={setPage}
-        filters={
-          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <Input
-              type="text"
-              placeholder="Search by name or address..."
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-              className="sm:w-64"
-            />
-            <Select
-              value={statusFilter || 'all'}
-              onValueChange={(v) => {
-                setStatusFilter(v === 'all' ? '' : v);
-                setPage(1);
-              }}
-            >
-              <SelectTrigger className="w-auto min-w-36">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All statuses</SelectItem>
-                {STATUSES.filter(Boolean).map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {s}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select
-              value={tariffFilter || 'all'}
-              onValueChange={(v) => {
-                setTariffFilter(v === 'all' ? '' : v);
-                setPage(1);
-              }}
-            >
-              <SelectTrigger className="w-auto min-w-36">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All tariffs</SelectItem>
-                {TARIFFS.filter(Boolean).map((tariff) => (
-                  <SelectItem key={tariff} value={tariff}>
-                    {tariff}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Input
-              type="text"
-              placeholder="District..."
-              value={districtFilter}
-              onChange={(e) => {
-                setDistrictFilter(e.target.value);
-                setPage(1);
-              }}
-              className="sm:w-40"
-            />
-          </div>
-        }
-      />
-    </div>
+  const bulkBar = (
+    <BulkSelectionBar
+      open={selection.count > 0}
+      countLabel={t('bulk_selected', { count: selection.count })}
+      onClear={selection.clear}
+      clearLabel={t('bulk_clear')}
+      actions={
+        <>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="flex h-9 items-center rounded-full px-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-foreground/10 focus-visible:ring-2 focus-visible:ring-primary-foreground/60 focus-visible:outline-none"
+              >
+                {t('bulk_change_status')}
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="center" className="w-52">
+              {PROPERTY_STATUSES.map((value) => (
+                <DropdownMenuItem
+                  key={value}
+                  onSelect={() => changeStatus([...selection.selected] as number[], value)}
+                >
+                  <StatusPill tone={propertyStatusTone(value)} label={statusLabel(value)} />
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <button
+            type="button"
+            onClick={() => {
+              const chosen = rows.filter((row) => selection.selected.has(row.id));
+              exportPropertiesCsv(chosen, 'properties.csv');
+            }}
+            className="flex h-9 items-center rounded-full px-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-foreground/10 focus-visible:ring-2 focus-visible:ring-primary-foreground/60 focus-visible:outline-none"
+          >
+            {t('bulk_export')}
+          </button>
+        </>
+      }
+    />
+  );
+
+  return (
+    <WorkbenchShell
+      header={header}
+      kpi={kpi}
+      tabs={tabs}
+      toolbar={toolbar}
+      pagination={pagination}
+      panel={
+        <PropertyRecordPanel
+          property={selected}
+          open={Boolean(selected)}
+          onClose={closeRecord}
+          onChangeStatus={(next) => {
+            if (selected) {
+              changeStatus([selected.id], next);
+            }
+          }}
+          statusLabel={statusLabel}
+          tariffLabel={tariffLabel}
+        />
+      }
+      bulkBar={bulkBar}
+    >
+      {body}
+    </WorkbenchShell>
   );
 }

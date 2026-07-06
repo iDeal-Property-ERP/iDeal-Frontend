@@ -1,4 +1,5 @@
-import { getTranslations, setRequestLocale } from 'next-intl/server';
+import { setRequestLocale } from 'next-intl/server';
+import { ManagementPageContainer } from '@/components/management/ManagementPageContainer';
 
 export default async function ManagementLayout(props: {
   children: React.ReactNode;
@@ -6,7 +7,6 @@ export default async function ManagementLayout(props: {
 }) {
   const { locale } = await props.params;
   setRequestLocale(locale);
-  await getTranslations({ locale, namespace: 'Dashboard' as const });
 
-  return <>{props.children}</>;
+  return <ManagementPageContainer>{props.children}</ManagementPageContainer>;
 }

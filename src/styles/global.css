@@ -8,27 +8,27 @@
 /* ─── Design tokens ──────────────────────────────────────────────────────── */
 
 :root {
-  /* Surfaces — exact Figma "Surface/*" tokens (blue-tinted neutrals) */
+  /* Surfaces — exact Figma Theme v2 "Surface/*" tokens (blue-tinted neutrals) */
   --background: #f4f7fc;
-  --foreground: #040711;
-  --card: #fcfdff;
-  --card-foreground: #040711;
-  --muted: #ecf0f9;
-  --muted-foreground: #555e6f;
+  --foreground: #0b1220;
+  --card: #ffffff;
+  --card-foreground: #0b1220;
+  --muted: #eaeff6;
+  --muted-foreground: #586377;
 
-  /* Interactive chrome — Figma "Chrome/border" */
-  --border: #d9dde6;
+  /* Interactive chrome — Figma "Chrome/*" */
+  --border: #dee3ec;
   --input: #dee3ec;
-  --ring: #2253f0;
+  --ring: #2a5bd7;
 
-  /* Brand — Figma "Brand/*" (v2 brand blue) */
-  --primary: #2253f0;
-  --primary-foreground: #fafafa;
+  /* Brand — Figma Theme v2 "Brand/*" (Sapphire navy) */
+  --primary: #0e2a6b;
+  --primary-foreground: #ffffff;
   --primary-subtle: #dde6f8;
   --primary-subtle-foreground: #143a86;
   --primary-muted: #dde6f8;
 
-  /* Accent — Figma "Accent/*" (lighter brand blue) */
+  /* Accent — Figma "Accent/*" (signal blue) */
   --accent-brand: #4a84e1;
   --accent-brand-foreground: #ffffff;
   --accent-brand-subtle: #e3ecfb;
@@ -44,30 +44,29 @@
   --accent: #ecf0f9;
   --accent-foreground: #040711;
   /* destructive aliases the danger scale so shadcn components drop in cleanly */
-  --destructive: oklch(0.47 0.19 27);
-  --destructive-foreground: oklch(0.985 0 0);
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
 
-  /* Semantic status — Figma "Status/success" + tuned warning/danger/info */
+  /* Semantic status — exact Figma Theme v2 "Status/*" (functional colors) */
   --success: #0a7e57;
   --success-foreground: #ffffff;
   --success-subtle: #dcf1e8;
-  --success-subtle-foreground: #0a6e4c;
+  --success-subtle-foreground: #075c40;
 
-  --warning: oklch(0.6 0.17 67);
-  --warning-foreground: oklch(0.985 0 0);
-  --warning-subtle: oklch(0.96 0.05 83);
-  --warning-subtle-foreground: oklch(0.45 0.15 67);
+  --warning: #b45309;
+  --warning-foreground: #ffffff;
+  --warning-subtle: #fbebcb;
+  --warning-subtle-foreground: #7c3d06;
 
-  --danger: oklch(0.47 0.19 27);
-  --danger-foreground: oklch(0.985 0 0);
-  --danger-subtle: oklch(0.94 0.04 27);
-  --danger-subtle-foreground: oklch(0.4 0.18 27);
+  --danger: #dc2626;
+  --danger-foreground: #ffffff;
+  --danger-subtle: #fbe0e0;
+  --danger-subtle-foreground: #991b1b;
 
-  /* Info mirrors the brand accent blue */
-  --info: #1e4bb0;
+  --info: #2563eb;
   --info-foreground: #ffffff;
-  --info-subtle: #e3ecfb;
-  --info-subtle-foreground: #1e4bb0;
+  --info-subtle: #dee8fe;
+  --info-subtle-foreground: #1e40af;
 
   /* Sidebar (shadcn sidebar tokens) — mirror surface palette */
   --sidebar: var(--card);
@@ -79,8 +78,11 @@
   --sidebar-border: var(--border);
   --sidebar-ring: var(--ring);
 
-  /* Elevation/sm — exact Figma two-layer drop shadow */
+  /* Elevation — exact Figma two-layer drop shadows (cool-ink tint) */
   --shadow-elevation-sm: 0 1px 2px 0 #0a0d1f0f, 0 1px 1px 0 #0a0d1f14;
+  --shadow-elevation-md: 0 4px 8px 0 #0a0d1f0f, 0 2px 4px 0 #0a0d1f0f;
+  --shadow-elevation-lg: 0 10px 20px 0 #0a0d1f1a, 0 4px 8px 0 #0a0d1f0f;
+  --shadow-elevation-xl: 0 20px 32px 0 #0a0d1f1f, 0 8px 16px 0 #0a0d1f14;
 
   /* Shape */
   --radius: 0.5rem;
@@ -98,11 +100,11 @@
   /* Interactive chrome */
   --border: #222d3e;
   --input: #222d3e;
-  --ring: #548cff;
+  --ring: #6f9cf0;
 
-  /* Brand — on dark surfaces the brand reads as the lighter blue */
-  --primary: #548cff;
-  --primary-foreground: #010308;
+  /* Brand — on dark surfaces the brand reads as the signal blue */
+  --primary: #4a84e1;
+  --primary-foreground: #06122e;
   --primary-subtle: #0e2350;
   --primary-subtle-foreground: #a9c6f5;
   --primary-muted: #0e2350;
@@ -123,32 +125,35 @@
   --accent: #172230;
   --accent-foreground: #e9eff8;
   /* destructive aliases the danger scale so shadcn components drop in cleanly */
-  --destructive: oklch(0.65 0.18 27);
-  --destructive-foreground: oklch(0.09 0 0);
+  --destructive: #f87171;
+  --destructive-foreground: #06122e;
 
-  /* Semantic status — Figma dark "Status/success" + tuned warning/danger/info */
+  /* Semantic status — exact Figma Theme v2 dark "Status/*" */
   --success: #25c28a;
   --success-foreground: #07142e;
   --success-subtle: #0f2e22;
-  --success-subtle-foreground: #7fe0bb;
+  --success-subtle-foreground: #6fe3bd;
 
-  --warning: oklch(0.72 0.16 67);
-  --warning-foreground: oklch(0.09 0 0);
-  --warning-subtle: oklch(0.2 0.06 67);
-  --warning-subtle-foreground: oklch(0.78 0.15 67);
+  --warning: #f59e0b;
+  --warning-foreground: #06122e;
+  --warning-subtle: #2a1e07;
+  --warning-subtle-foreground: #fbc56b;
 
-  --danger: oklch(0.65 0.18 27);
-  --danger-foreground: oklch(0.09 0 0);
-  --danger-subtle: oklch(0.2 0.06 27);
-  --danger-subtle-foreground: oklch(0.72 0.17 27);
+  --danger: #f87171;
+  --danger-foreground: #06122e;
+  --danger-subtle: #2c1414;
+  --danger-subtle-foreground: #fca5a5;
 
-  --info: #7fa8ee;
-  --info-foreground: #07142e;
-  --info-subtle: #122444;
-  --info-subtle-foreground: #aecbf6;
+  --info: #60a5fa;
+  --info-foreground: #06122e;
+  --info-subtle: #11203d;
+  --info-subtle-foreground: #93c5fd;
 
-  /* Elevation/sm — slightly stronger on dark surfaces */
+  /* Elevation — stronger on dark surfaces */
   --shadow-elevation-sm: 0 1px 2px 0 #00000040, 0 1px 1px 0 #00000033;
+  --shadow-elevation-md: 0 4px 8px 0 #0000004d, 0 2px 4px 0 #00000040;
+  --shadow-elevation-lg: 0 10px 20px 0 #00000059, 0 4px 8px 0 #0000004d;
+  --shadow-elevation-xl: 0 20px 32px 0 #00000066, 0 8px 16px 0 #00000059;
 }
 
 /* ─── Landing route palette ──────────────────────────────────────────────── */
@@ -259,14 +264,18 @@ html:not(.dark) .theme-landing {
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  /* Radius */
+  /* Radius — Figma sm6 · md8 · lg10 · xl14 · 2xl20 */
   --radius-sm: calc(var(--radius) - 0.125rem);
   --radius-md: var(--radius);
   --radius-lg: calc(var(--radius) + 0.125rem);
   --radius-xl: calc(var(--radius) + 0.375rem);
+  --radius-2xl: calc(var(--radius) + 0.75rem);
 
-  /* Elevation — Figma "Elevation/sm" mapped onto Tailwind's shadow-sm utility */
+  /* Elevation — Figma "Elevation/*" mapped onto Tailwind shadow utilities */
   --shadow-sm: var(--shadow-elevation-sm);
+  --shadow-md: var(--shadow-elevation-md);
+  --shadow-lg: var(--shadow-elevation-lg);
+  --shadow-xl: var(--shadow-elevation-xl);
 
   /* Font — Geist for body/UI, Bricolage Grotesque for display headings + prices */
   --font-sans: var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif);

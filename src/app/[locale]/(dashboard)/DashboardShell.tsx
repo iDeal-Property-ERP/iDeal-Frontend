@@ -1,5 +1,6 @@
 'use client';
 
+import type { CSSProperties } from 'react';
 import { AppSidebar } from '@/components/ui/app-sidebar';
 import { Header } from '@/components/ui/Header';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
@@ -32,12 +33,14 @@ function DashboardContent(props: { children: React.ReactNode }) {
     return null;
   }
 
+  const isManagement = pathname.startsWith('/management');
+
   return (
-    <SidebarProvider>
+    <SidebarProvider style={{ '--sidebar-width': '252px' } as CSSProperties}>
       <AppSidebar role={user.role} />
       <SidebarInset>
-        <Header />
-        <main className="flex-1 p-4 lg:p-6">{props.children}</main>
+        {isManagement ? null : <Header />}
+        <main className={isManagement ? 'flex-1' : 'flex-1 p-4 lg:p-6'}>{props.children}</main>
       </SidebarInset>
     </SidebarProvider>
   );

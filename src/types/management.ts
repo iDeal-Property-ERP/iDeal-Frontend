@@ -113,27 +113,79 @@ export type ManagementPaymentOutput = {
   lease_id: number;
   tenant_id: number;
   tenant_name: string;
-  paid_by_id: number;
+  paid_by_id: number | null;
+  paid_by_name: string | null;
+  property_id: number | null;
+  property_name: string | null;
   amount: string;
   currency: string;
   payment_date: string;
   due_date: string;
   status: string;
   method: string;
+  gateway_ref: string | null;
   notes: string | null;
+  linked_payout_id: number | null;
   created_at: string;
 };
 
 export type ManagementPayoutOutput = {
   id: number;
+  owner_agreement_id: number;
   owner_id: number;
   owner_name: string;
+  property_id: number | null;
+  property_name: string | null;
+  property_address: string | null;
+  source_payment_id: number | null;
   amount: string;
   currency: string;
   scheduled_date: string;
   paid_date: string | null;
   status: string;
+  status_reason: string | null;
+  method: string;
   created_at: string;
+};
+
+export type PaymentsStats = {
+  month: string;
+  collected_month: string;
+  outstanding: string;
+  overdue_total: string;
+  payouts_due: string;
+  counts: { overdue: number; due_month: number; paid_month: number; all: number };
+};
+
+export type PayoutsStats = {
+  next_run_date: string;
+  due_next_run: string;
+  this_month: string;
+  held_total: string;
+  next_30_days: string;
+  counts: { due: number; held: number; paid: number; cancelled: number; all: number };
+};
+
+export type PaymentCreatePayload = {
+  lease_id: number;
+  tenant_id: number;
+  paid_by_id: number;
+  amount: string;
+  currency: string;
+  payment_date: string;
+  due_date: string;
+  status?: string;
+  method: string;
+  gateway_ref?: string | null;
+  notes?: string | null;
+};
+
+export type PayoutCreatePayload = {
+  owner_agreement_id: number;
+  amount: string;
+  currency: string;
+  scheduled_date: string;
+  method: string;
 };
 
 export type ManagementServiceRequestOutput = {
@@ -263,4 +315,158 @@ export type PortfolioMapOutput = {
     };
     properties: PortfolioMapProperties;
   }[];
+};
+
+// --- Agents (People) ---
+
+export type AgentOutput = {
+  id: number;
+  user_id: number;
+  user_name: string;
+  total_deals: number;
+  total_revenue: string;
+  commission_rate: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type AgentDealOutput = {
+  id: number;
+  agent_id: number;
+  property_id: number;
+  property_name: string;
+  deal_date: string;
+  rent_amount: string;
+  commission_amount: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type AgentCreatePayload = {
+  user_id: number;
+  commission_rate: string;
+  is_active?: boolean;
+};
+
+export type AgentUpdatePayload = {
+  commission_rate?: string;
+  is_active?: boolean;
+};
+
+export type AgentDealCreatePayload = {
+  property_id: number;
+  deal_date: string;
+  rent_amount: string;
+  status?: string;
+};
+
+// --- Inventory acts (Portfolio) ---
+
+export type InventoryActListOutput = {
+  id: number;
+  property_id: number;
+  property_name: string;
+  lease_id: number | null;
+  act_type: string;
+  status: string;
+  item_count: number;
+  photo_count: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type InventoryActItemOutput = {
+  id: number;
+  area: string;
+  condition: string;
+  notes: string | null;
+  sort_order: number;
+};
+
+export type InventoryActPhotoOutput = {
+  id: number;
+  item_id: number | null;
+  image_url: string | null;
+  caption: string | null;
+  created_at: string;
+};
+
+export type InventoryActOutput = {
+  id: number;
+  property_id: number;
+  property_name: string;
+  lease_id: number | null;
+  act_type: string;
+  status: string;
+  created_by_id: number;
+  notes: string | null;
+  finalized_at: string | null;
+  acknowledged_by_name: string | null;
+  acknowledged_at: string | null;
+  items: InventoryActItemOutput[];
+  photos: InventoryActPhotoOutput[];
+  created_at: string;
+  updated_at: string;
+};
+
+export type InventoryActCreatePayload = {
+  property_id: number;
+  lease_id?: number | null;
+  act_type: string;
+  notes?: string | null;
+};
+
+// --- Lease / Agreement write payloads (management CRUD) ---
+
+export type LeaseCreatePayload = {
+  property_id: number;
+  owner_agreement_id: number;
+  tenant_id: number;
+  start_date: string;
+  end_date: string;
+  monthly_rent: string;
+  deposit: string;
+};
+
+export type LeaseRenewPayload = {
+  new_start_date: string;
+  new_end_date: string;
+  new_monthly_rent: string;
+  deposit?: string;
+};
+
+export type LeaseTerminatePayload = {
+  end_date?: string;
+  reason?: string;
+};
+
+export type AgreementCreatePayload = {
+  owner_id: number;
+  property_id: number;
+  agreement_number: string;
+  signed_date: string;
+  start_date: string;
+  end_date: string;
+  commission_rate: string;
+  terms?: string;
+};
+
+export type AgreementRenewPayload = {
+  new_start_date: string;
+  new_end_date: string;
+  commission_rate?: string;
+  agreement_number?: string;
+  terms?: string;
+};
+
+export type UserInvitePayload = {
+  first_name: string;
+  last_name?: string;
+  email: string;
+  phone?: string;
+  role: string;
+  is_active?: boolean;
+  is_verified?: boolean;
 };

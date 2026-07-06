@@ -15,9 +15,11 @@ const POLL_INTERVAL_MS = 30_000;
 /**
  * Notification bell with unread badge and dropdown list.
  * Polls the unread count every 30s and loads the list on open.
+ * @param props - Optional appearance ("ghost" default, or "bordered" 40px square).
  * @returns Bell button with dropdown panel.
  */
-export function NotificationBell() {
+export function NotificationBell(props: { appearance?: 'ghost' | 'bordered' }) {
+  const bordered = props.appearance === 'bordered';
   const { isAuthenticated } = useAuth();
   const t = useTranslations('Dashboard');
   const [unread, setUnread] = useState(0);
@@ -88,12 +90,15 @@ export function NotificationBell() {
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <Button
-          variant="ghost"
-          size="icon"
-          className="relative text-muted-foreground hover:text-foreground"
+          variant={bordered ? 'outline' : 'ghost'}
+          size={bordered ? 'icon-lg' : 'icon'}
+          className={cn(
+            'relative text-muted-foreground hover:text-foreground',
+            bordered && 'rounded-[10px] bg-card shadow-none',
+          )}
           aria-label={t('notifications_title')}
         >
-          <Bell className="size-5" />
+          <Bell className={bordered ? 'size-[18px]' : 'size-5'} />
           {unread > 0 && (
             <span className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-destructive text-[10px] font-semibold text-destructive-foreground">
               {unread > 9 ? '9+' : unread}

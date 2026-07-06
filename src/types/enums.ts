@@ -16,9 +16,11 @@ export type ViewingTimeSlot = '10:00' | '13:00' | '15:00' | '18:00';
 
 export type PaymentStatus = 'pending' | 'paid' | 'overdue' | 'cancelled';
 
-export type PaymentMethod = 'cash' | 'bank_transfer' | 'online';
+export type PaymentMethod = 'cash' | 'bank_transfer' | 'online' | 'click' | 'payme' | 'uzum';
 
-export type PayoutStatus = 'scheduled' | 'paid' | 'cancelled';
+export type PayoutStatus = 'scheduled' | 'held' | 'paid' | 'cancelled';
+
+export type PayoutMethod = 'bank_transfer' | 'card' | 'cash';
 
 export type LeaseStatus = 'active' | 'expired' | 'renewed' | 'terminated';
 
