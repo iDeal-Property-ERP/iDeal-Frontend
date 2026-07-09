@@ -14,6 +14,7 @@ import {
 import { KpiCard } from '@/components/management/KpiStrip';
 import type { KpiItem } from '@/components/management/KpiStrip';
 import { ManagementPageHeader } from '@/components/management/ManagementPageHeader';
+import { AgreementsMobileView } from '@/components/management/mobile/AgreementsMobileView';
 import {
   AgreementRecordPanel,
   OwnerCell,
@@ -34,6 +35,7 @@ import type { ChipFilter } from '@/components/management/workbench/WorkbenchTool
 import { Button } from '@/components/ui/button';
 import { usePaginatedResource } from '@/hooks/management/usePaginatedResource';
 import { useRowSelection } from '@/hooks/management/useRowSelection';
+import { useIsMobile } from '@/hooks/use-mobile';
 import {
   AGREEMENT_EXPIRING_WINDOW,
   exportAgreementsCsv,
@@ -146,6 +148,7 @@ function monthsUntil(iso: string): number | null {
  */
 export default function ManagementAgreementsPage() {
   const t = useTranslations('Management');
+  const isMobile = useIsMobile();
 
   const resource = usePaginatedResource<ManagementAgreementOutput>(
     async ({ page, query }) =>
@@ -402,41 +405,43 @@ export default function ManagementAgreementsPage() {
     />
   );
 
-  let body: React.ReactNode;
-  if (resource.error) {
-    body = (
-      <ErrorState
-        title={t('error_title')}
-        message={t('agr_error')}
-        retryLabel={t('retry')}
-        onRetry={resource.refetch}
-      />
-    );
-  } else if (resource.isLoading) {
-    body = <WorkbenchTableSkeleton />;
-  } else if (rows.length === 0) {
-    body = hasQuery ? (
-      <FilteredEmptyState
-        title={t('no_matches')}
-        description={t('no_matches_desc')}
-        clearLabel={t('clear_filters')}
-        onClear={clearAll}
-      />
-    ) : (
-      <EmptyState
-        icon={ShieldCheck}
-        title={t('agr_empty')}
-        description={t('agr_empty_desc')}
-        action={
-          <Button className="h-9 gap-2 rounded-[10px]" onClick={() => setNewOpen(true)}>
-            <Plus className="size-4" />
-            {t('new_agreement')}
-          </Button>
-        }
-      />
-    );
-  } else {
-    body = (
+  const body = ((): React.ReactNode => {
+    if (resource.error) {
+      return (
+        <ErrorState
+          title={t('error_title')}
+          message={t('agr_error')}
+          retryLabel={t('retry')}
+          onRetry={resource.refetch}
+        />
+      );
+    }
+    if (resource.isLoading) {
+      return <WorkbenchTableSkeleton />;
+    }
+    if (rows.length === 0) {
+      return hasQuery ? (
+        <FilteredEmptyState
+          title={t('no_matches')}
+          description={t('no_matches_desc')}
+          clearLabel={t('clear_filters')}
+          onClear={clearAll}
+        />
+      ) : (
+        <EmptyState
+          icon={ShieldCheck}
+          title={t('agr_empty')}
+          description={t('agr_empty_desc')}
+          action={
+            <Button className="h-9 gap-2 rounded-[10px]" onClick={() => setNewOpen(true)}>
+              <Plus className="size-4" />
+              {t('new_agreement')}
+            </Button>
+          }
+        />
+      );
+    }
+    return (
       <WorkbenchTable
         columns={columns}
         rows={rows}
@@ -453,9 +458,63 @@ export default function ManagementAgreementsPage() {
         labels={{ selectAll: t('select_all'), selectRow: t('select_row') }}
       />
     );
-  }
+  })();
 
   const showPagination = !resource.isLoading && !resource.error && rows.length > 0;
+
+  const agreementRecord = (
+    <AgreementRecordPanel
+      agreement={selected}
+      open={Boolean(selected)}
+      onClose={() => setSelected(null)}
+      onRenew={() => selected && setRenewTarget(selected)}
+      onTerminate={() => selected && setTerminateTarget(selected)}
+      statusLabel={statusLabel}
+    />
+  );
+
+  const dialogs = (
+    <>
+      <NewAgreementDialog open={newOpen} onOpenChange={setNewOpen} onSuccess={resource.refetch} />
+      <RenewAgreementDialog
+        agreement={renewTarget}
+        open={Boolean(renewTarget)}
+        onOpenChange={(open) => !open && setRenewTarget(null)}
+        onSuccess={resource.refetch}
+      />
+      <TerminateAgreementDialog
+        agreement={terminateTarget}
+        open={Boolean(terminateTarget)}
+        onOpenChange={(open) => !open && setTerminateTarget(null)}
+        onSuccess={resource.refetch}
+      />
+    </>
+  );
+
+  if (isMobile) {
+    return (
+      <>
+        <AgreementsMobileView
+          t={t}
+          title={t('agreements')}
+          subtitle={t('agr_subtitle', { active: counts?.active ?? resource.total })}
+          searchPlaceholder={t('agr_search')}
+          rows={rows}
+          chips={savedViews.map((v) => ({ id: v.id, label: v.label, count: v.count }))}
+          activeChip={view}
+          onChip={(next) => resource.patchQuery(queryForView(next))}
+          search={search}
+          onSearch={(value) => resource.patchQuery({ search: value || undefined })}
+          statusLabel={statusLabel}
+          onOpen={setSelected}
+          record={selected ? agreementRecord : undefined}
+          onCloseRecord={() => setSelected(null)}
+          empty={body}
+        />
+        {dialogs}
+      </>
+    );
+  }
 
   return (
     <>
@@ -561,16 +620,7 @@ export default function ManagementAgreementsPage() {
             />
           ) : undefined
         }
-        panel={
-          <AgreementRecordPanel
-            agreement={selected}
-            open={Boolean(selected)}
-            onClose={() => setSelected(null)}
-            onRenew={() => selected && setRenewTarget(selected)}
-            onTerminate={() => selected && setTerminateTarget(selected)}
-            statusLabel={statusLabel}
-          />
-        }
+        panel={agreementRecord}
         bulkBar={
           <BulkSelectionBar
             open={selection.count > 0}
@@ -594,20 +644,7 @@ export default function ManagementAgreementsPage() {
       >
         {body}
       </WorkbenchShell>
-
-      <NewAgreementDialog open={newOpen} onOpenChange={setNewOpen} onSuccess={resource.refetch} />
-      <RenewAgreementDialog
-        agreement={renewTarget}
-        open={Boolean(renewTarget)}
-        onOpenChange={(open) => !open && setRenewTarget(null)}
-        onSuccess={resource.refetch}
-      />
-      <TerminateAgreementDialog
-        agreement={terminateTarget}
-        open={Boolean(terminateTarget)}
-        onOpenChange={(open) => !open && setTerminateTarget(null)}
-        onSuccess={resource.refetch}
-      />
+      {dialogs}
     </>
   );
 }

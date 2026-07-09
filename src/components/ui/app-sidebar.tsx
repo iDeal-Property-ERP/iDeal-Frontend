@@ -63,6 +63,8 @@ type NavItemLabel =
   | 'nav_pnl'
   | 'nav_portfolio_map'
   | 'nav_leads'
+  | 'nav_inquiries'
+  | 'nav_my_listings'
   | 'nav_maintenance'
   | 'nav_how_it_works'
   | 'nav_browse_homes'
@@ -117,7 +119,7 @@ const mgmtSections: NavSection[] = [
     items: [
       {
         labelKey: 'nav_leads',
-        href: '/management/viewing-requests',
+        href: '/management/leads',
         icon: Inbox,
         countKey: 'leads',
       },
@@ -127,6 +129,7 @@ const mgmtSections: NavSection[] = [
         icon: ClipboardCheck,
         countKey: 'onboardings',
       },
+      { labelKey: 'nav_inquiries', href: '/management/inquiries', icon: Inbox },
     ],
   },
   {
@@ -161,11 +164,11 @@ const mgmtSections: NavSection[] = [
     items: [
       {
         labelKey: 'nav_maintenance',
-        href: '/management/service-requests',
+        href: '/management/maintenance',
         icon: Wrench,
         countKey: 'maintenance',
       },
-      { labelKey: 'nav_services', href: '/management/vas-orders', icon: Sparkles },
+      { labelKey: 'nav_services', href: '/management/services', icon: Sparkles },
     ],
   },
   {
@@ -183,6 +186,7 @@ const ownerSections: NavSection[] = [
     items: [
       { labelKey: 'nav_dashboard', href: '/owner', icon: LayoutDashboard },
       { labelKey: 'nav_my_properties', href: '/owner/properties', icon: Building2 },
+      { labelKey: 'nav_my_listings', href: '/owner/listings', icon: ClipboardList },
       { labelKey: 'nav_submit_property', href: '/owner/onboarding', icon: FilePlus },
       { labelKey: 'nav_earnings', href: '/owner/earnings', icon: DollarSign },
       { labelKey: 'nav_how_it_works', href: '/owner/how-it-works', icon: HelpCircle },

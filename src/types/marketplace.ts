@@ -322,6 +322,7 @@ export type ManagementViewingRequestOutput = {
   phone: string;
   email: string;
   preferred_date: string;
+  preferred_time: string | null;
   message: string | null;
   status: string;
   created_at: string;

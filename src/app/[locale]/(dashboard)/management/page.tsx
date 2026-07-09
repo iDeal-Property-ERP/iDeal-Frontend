@@ -13,9 +13,11 @@ import { formatMoney, formatMonthLabel } from '@/components/management/format';
 import type { KpiItem } from '@/components/management/KpiStrip';
 import { KpiStrip } from '@/components/management/KpiStrip';
 import { ManagementPageHeader } from '@/components/management/ManagementPageHeader';
+import { HomeMobileView } from '@/components/management/mobile/HomeMobileView';
 import { ErrorState } from '@/components/management/states/ErrorState';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { apiFetch } from '@/libs/api';
 import { Link } from '@/libs/I18nNavigation';
 import type { PaginatedData } from '@/types/api';
@@ -80,6 +82,7 @@ function buildAttention(
  */
 export default function ManagementDashboardPage() {
   const t = useTranslations('Management');
+  const isMobile = useIsMobile();
   const [data, setData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -135,7 +138,7 @@ export default function ManagementDashboardPage() {
           asChild
           className="h-10 gap-2 rounded-[10px] px-4 text-[15px] font-medium shadow-sm"
         >
-          <Link href="/properties/new">
+          <Link href="/management/properties/new">
             <Plus className="size-[17px]" />
             {t('add_property')}
           </Link>
@@ -247,6 +250,10 @@ export default function ManagementDashboardPage() {
   };
 
   const attention = buildAttention(dashboard, statusLabel);
+
+  if (isMobile) {
+    return <HomeMobileView t={t} dashboard={dashboard} kpiItems={kpiItems} attention={attention} />;
+  }
 
   return (
     <div className="flex flex-col gap-6">

@@ -40,6 +40,59 @@ export type PropertyOutput = {
   updated_at: string;
 };
 
+export type PropertyPhoto = {
+  id: number;
+  image_url: string;
+  caption: string | null;
+  is_primary: boolean;
+  sort_order: number;
+};
+
+export type VerificationVisit = {
+  id: number;
+  scheduled_for: string;
+  status: 'scheduled' | 'completed' | 'cancelled';
+  completed_at: string | null;
+  notes: string;
+};
+
+/**
+ * The management property detail shape. Publish-required fields are nullable
+ * because a DRAFT can be saved partially; includes photos, verification, and the
+ * derived `is_verified` flag. Distinct from {@link PropertyOutput} (the legacy,
+ * always-complete shape) so legacy pages stay untouched.
+ */
+export type PropertyDetail = {
+  id: number;
+  name: string;
+  address: string;
+  district: DistrictOutput | null;
+  rooms: number | null;
+  area_sqm: number | null;
+  floor: number | null;
+  total_floors: number | null;
+  owner: OwnerBrief | null;
+  status: PropertyStatus | 'draft' | 'pending_review';
+  is_verified: boolean;
+  score: string;
+  map_lat: string | null;
+  map_lon: string | null;
+  description: string | null;
+  tariff: Tariff;
+  ask_price: string | null;
+  ask_currency: Currency;
+  owner_guaranteed_price: string | null;
+  owner_guaranteed_currency: Currency;
+  tenant_charge_price: string | null;
+  tenant_charge_currency: Currency;
+  vacant_since: string | null;
+  vacant_days: number;
+  photos: PropertyPhoto[];
+  verification: VerificationVisit | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type PropertyCreatePayload = {
   name: string;
   address: string;

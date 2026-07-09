@@ -69,7 +69,7 @@ export function PropertiesPreview(props: { rows: ManagementPropertyOutput[]; lab
               />
             </span>
             <span className="w-[72px] shrink-0 text-right text-sm font-medium text-foreground tabular-nums">
-              {formatMoney(row.tenant_charge_price || row.ask_price)}
+              {formatMoney(row.tenant_charge_price ?? row.ask_price ?? '0')}
             </span>
             <span className="hidden w-[104px] shrink-0 truncate text-sm text-muted-foreground sm:block">
               {labels.occupancyText(row)}

@@ -26,6 +26,7 @@ import {
 import { formatCurrency } from '@/components/management/format';
 import type { KpiItem } from '@/components/management/KpiStrip';
 import { ManagementPageHeader } from '@/components/management/ManagementPageHeader';
+import { PayoutsMobileView } from '@/components/management/mobile/PayoutsMobileView';
 import { PayoutRecordPanel } from '@/components/management/record-panel/PayoutRecordPanel';
 import { EmptyState } from '@/components/management/states/EmptyState';
 import { ErrorState } from '@/components/management/states/ErrorState';
@@ -46,6 +47,7 @@ import { Button } from '@/components/ui/button';
 import { usePaginatedResource } from '@/hooks/management/usePaginatedResource';
 import type { QueryParams } from '@/hooks/management/usePaginatedResource';
 import { useRowSelection } from '@/hooks/management/useRowSelection';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { useUndoableAction } from '@/hooks/useUndoableAction';
 import { downloadTable } from '@/libs/management/exportFile';
 import {
@@ -157,6 +159,7 @@ function PayoutSchedSubline(props: {
  */
 export default function ManagementPayoutsPage() {
   const t = useTranslations('Management');
+  const isMobile = useIsMobile();
   const undo = useUndoableAction();
 
   const resource = usePaginatedResource<ManagementPayoutOutput>(
@@ -202,6 +205,8 @@ export default function ManagementPayoutsPage() {
     t(`payout_status_${value.toLowerCase()}` as 'payout_status_paid');
   const methodLabel = (value: string): string =>
     t(`method_${value.toLowerCase()}` as 'method_cash');
+
+  const nextRunDate = stats ? shortDate(stats.next_run_date) : '';
 
   const runConfirm = (ids: number[], onDone?: () => void) => {
     undo.run({
@@ -254,7 +259,7 @@ export default function ManagementPayoutsPage() {
   );
 
   const activeFilterCount = [resource.query.scheduled_from].filter(Boolean).length;
-  const hasQuery = Boolean(search) || activeFilterCount > 0 || view !== 'due';
+  const hasQuery = [Boolean(search), activeFilterCount > 0, view !== 'due'].some(Boolean);
 
   const clearAll = () => {
     resource.setQuery({
@@ -473,15 +478,98 @@ export default function ManagementPayoutsPage() {
 
   const showPagination = !resource.isLoading && !resource.error && rows.length > 0;
 
+  const payoutRecord = (
+    <PayoutRecordPanel
+      payout={selected}
+      open={Boolean(selected)}
+      onClose={() => setSelected(null)}
+      onConfirm={() => selected && runConfirm([selected.id], () => setSelected(null))}
+      onHold={() => selected && setHoldTarget(selected)}
+      onRelease={() => selected && runRelease(selected.id)}
+      onCancel={() => selected && setCancelTarget(selected)}
+      statusLabel={statusLabel}
+      methodLabel={methodLabel}
+    />
+  );
+
+  const dialogs = (
+    <>
+      <SchedulePayoutDialog
+        open={scheduleOpen}
+        onOpenChange={setScheduleOpen}
+        onSuccess={resource.refetch}
+      />
+      <HoldPayoutDialog
+        payout={holdTarget}
+        open={Boolean(holdTarget)}
+        onOpenChange={(open) => !open && setHoldTarget(null)}
+        onSuccess={resource.refetch}
+      />
+      <CancelPayoutDialog
+        payout={cancelTarget}
+        open={Boolean(cancelTarget)}
+        onOpenChange={(open) => !open && setCancelTarget(null)}
+        onSuccess={resource.refetch}
+      />
+      <ExportDialog
+        open={exportOpen}
+        onOpenChange={setExportOpen}
+        title={t('export_payouts')}
+        currentViewLabel={t('export_current_view', {
+          view: savedViews.find((v) => v.id === view)?.label ?? '',
+          count: resource.total,
+        })}
+        counts={exportCounts}
+        onExport={onExport}
+        labels={{
+          scopeTitle: t('export_scope'),
+          filtered: (count: number) => t('export_filtered', { count }),
+          all: (count: number) => t('export_all', { count }),
+          selected: (count: number) => t('export_selected', { count }),
+          formatTitle: t('export_format'),
+          footnote: t('export_footnote'),
+          cancel: t('cancel'),
+          submit: (count: number) => t('export_submit', { count }),
+          failed: t('export_failed'),
+        }}
+      />
+    </>
+  );
+
+  if (isMobile) {
+    return (
+      <>
+        <PayoutsMobileView
+          t={t}
+          title={t('payouts')}
+          subtitle={t('payout_subtitle', { date: nextRunDate })}
+          searchPlaceholder={t('payout_search')}
+          rows={rows}
+          chips={savedViews.map((v) => ({ id: v.id, label: v.label, count: v.count }))}
+          activeChip={view}
+          onChip={(next) => resource.patchQuery(queryForView(next))}
+          search={search}
+          onSearch={(value) => resource.patchQuery({ search: value || undefined })}
+          statusLabel={statusLabel}
+          onOpen={setSelected}
+          onPaid={(row) => runConfirm([row.id])}
+          onHold={(row) => setHoldTarget(row)}
+          record={selected ? payoutRecord : undefined}
+          onCloseRecord={() => setSelected(null)}
+          empty={body}
+        />
+        {dialogs}
+      </>
+    );
+  }
+
   return (
     <>
       <WorkbenchShell
         header={
           <ManagementPageHeader
             title={t('payouts')}
-            subtitle={t('payout_subtitle', {
-              date: stats ? shortDate(stats.next_run_date) : '',
-            })}
+            subtitle={t('payout_subtitle', { date: nextRunDate })}
             showBell={false}
             actions={
               <div className="flex items-center gap-2.5">
@@ -565,19 +653,7 @@ export default function ManagementPayoutsPage() {
             />
           ) : undefined
         }
-        panel={
-          <PayoutRecordPanel
-            payout={selected}
-            open={Boolean(selected)}
-            onClose={() => setSelected(null)}
-            onConfirm={() => selected && runConfirm([selected.id], () => setSelected(null))}
-            onHold={() => selected && setHoldTarget(selected)}
-            onRelease={() => selected && runRelease(selected.id)}
-            onCancel={() => selected && setCancelTarget(selected)}
-            statusLabel={statusLabel}
-            methodLabel={methodLabel}
-          />
-        }
+        panel={payoutRecord}
         bulkBar={
           <BulkSelectionBar
             open={selection.count > 0}
@@ -610,46 +686,7 @@ export default function ManagementPayoutsPage() {
       >
         {body}
       </WorkbenchShell>
-
-      <SchedulePayoutDialog
-        open={scheduleOpen}
-        onOpenChange={setScheduleOpen}
-        onSuccess={resource.refetch}
-      />
-      <HoldPayoutDialog
-        payout={holdTarget}
-        open={Boolean(holdTarget)}
-        onOpenChange={(open) => !open && setHoldTarget(null)}
-        onSuccess={resource.refetch}
-      />
-      <CancelPayoutDialog
-        payout={cancelTarget}
-        open={Boolean(cancelTarget)}
-        onOpenChange={(open) => !open && setCancelTarget(null)}
-        onSuccess={resource.refetch}
-      />
-      <ExportDialog
-        open={exportOpen}
-        onOpenChange={setExportOpen}
-        title={t('export_payouts')}
-        currentViewLabel={t('export_current_view', {
-          view: savedViews.find((v) => v.id === view)?.label ?? '',
-          count: resource.total,
-        })}
-        counts={exportCounts}
-        onExport={onExport}
-        labels={{
-          scopeTitle: t('export_scope'),
-          filtered: (count: number) => t('export_filtered', { count }),
-          all: (count: number) => t('export_all', { count }),
-          selected: (count: number) => t('export_selected', { count }),
-          formatTitle: t('export_format'),
-          footnote: t('export_footnote'),
-          cancel: t('cancel'),
-          submit: (count: number) => t('export_submit', { count }),
-          failed: t('export_failed'),
-        }}
-      />
+      {dialogs}
     </>
   );
 }

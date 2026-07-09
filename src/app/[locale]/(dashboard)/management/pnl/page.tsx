@@ -1,251 +1,413 @@
 'use client';
 
+import { Banknote, Download, Landmark, TrendingUp, Wallet } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { PageHeader } from '@/components/ui/PageHeader';
-import { StatsCard } from '@/components/ui/StatsCard';
+import { ExportDialog } from '@/components/management/dialogs/ExportDialog';
+import type { ExportScope } from '@/components/management/dialogs/ExportDialog';
+import { ManagementPageHeader } from '@/components/management/ManagementPageHeader';
+import { MethodSegmented } from '@/components/management/MethodSegmented';
+import { PnlMobileView } from '@/components/management/mobile/PnlMobileView';
+import type { PnlMobileTile } from '@/components/management/mobile/PnlMobileView';
+import { AnalyticsChart } from '@/components/management/reports/AnalyticsChart';
+import { CategoryBreakdown } from '@/components/management/reports/CategoryBreakdown';
+import { MetricTile } from '@/components/management/reports/MetricTile';
+import { ReportCard } from '@/components/management/reports/ReportCard';
+import { SourcesFilter } from '@/components/management/reports/SourcesFilter';
+import { ErrorState } from '@/components/management/states/ErrorState';
+import { Button } from '@/components/ui/button';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { apiFetch } from '@/libs/api';
-import type { PnlBarItem, PnlOutput } from '@/types/management';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useIsMobile } from '@/hooks/use-mobile';
+import type { ExportFormat } from '@/libs/management/exportFile';
+import { downloadTable } from '@/libs/management/exportFile';
+import { buildPnlExportRows, getPnl } from '@/libs/management/pnlAdapter';
+import type { PnlOutput } from '@/types/management';
 
-function fCurrency(amount: string): string {
-  const n = Number.parseFloat(amount);
-  if (Number.isNaN(n)) {
-    return `$${amount}`;
-  }
-  return `$${n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
-}
+const ALL_SOURCES = ['lease', 'vas', 'payouts', 'maintenance'];
+const CURRENT_YEAR = 2026;
+const YEARS = [CURRENT_YEAR, CURRENT_YEAR - 1, CURRENT_YEAR - 2];
 
-function SectionLabel(props: { children: React.ReactNode }) {
-  return (
-    <h3 className="mb-3 flex items-center gap-2 text-xs font-bold tracking-widest text-muted-foreground uppercase">
-      <span className="block h-px flex-1 bg-border" />
-      {props.children}
-    </h3>
-  );
-}
-
-function GrowthChart(props: { actual: PnlBarItem[]; projected: PnlBarItem[] }) {
-  const months = props.actual.map((a) => a.month);
-  const maxVal = Math.max(
-    ...props.actual.map((a) => Number.parseFloat(a.revenue) || 0),
-    ...props.projected.map((p) => Number.parseFloat(p.revenue) || 0),
-    1,
-  );
-
-  return (
-    <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
-      <div className="flex items-end gap-3" style={{ height: 160 }}>
-        {months.map((m) => {
-          const actual = props.actual.find((a) => a.month === m);
-          const projected = props.projected.find((p) => p.month === m);
-          const actualVal = actual ? Number.parseFloat(actual.revenue) || 0 : 0;
-          const projectedVal = projected ? Number.parseFloat(projected.revenue) || 0 : 0;
-
-          return (
-            <div
-              key={m}
-              className="flex flex-1 flex-col items-center justify-end gap-1"
-              style={{ height: '100%' }}
-            >
-              {actualVal > 0 && (
-                <div
-                  className="w-full max-w-[24px] rounded-t bg-primary"
-                  style={{ height: `${(actualVal / maxVal) * 140}px` }}
-                />
-              )}
-              {projectedVal > 0 && (
-                <div
-                  className="w-full max-w-[24px] rounded-t border-2 border-dashed border-border bg-transparent"
-                  style={{ height: `${(projectedVal / maxVal) * 140}px` }}
-                />
-              )}
-              <span className="text-[10px] text-muted-foreground">{m}</span>
-            </div>
-          );
-        })}
-      </div>
-      <div className="mt-4 flex gap-4 text-xs">
-        <span className="flex items-center gap-1.5 text-muted-foreground">
-          <span className="size-3 rounded bg-primary" />
-          Actual
-        </span>
-        <span className="flex items-center gap-1.5 text-muted-foreground">
-          <span className="size-3 rounded border-2 border-dashed border-border" />
-          Projected
-        </span>
-      </div>
-    </div>
-  );
+/**
+ * Formats an amount as UZS. Tax is always accrued in UZS on the backend
+ * regardless of the display currency, so it renders with a fixed UZS suffix.
+ * @param amount - The decimal string amount.
+ * @returns The formatted `"1,234 UZS"` string.
+ */
+function formatUzs(amount: string): string {
+  return `${Math.round(Number.parseFloat(amount) || 0).toLocaleString('en-US')} UZS`;
 }
 
 /**
- * Management profit and loss page — displays revenue, payouts, and growth charts.
- * @returns The P&L page component.
+ * Computes a whole-number percentage of `part` over `whole`.
+ * @param part - The numerator decimal string.
+ * @param whole - The denominator decimal string.
+ * @returns The rounded percentage, or 0 when `whole` is 0.
  */
+function percentOf(part: string, whole: string): number {
+  const w = Number.parseFloat(whole);
+  return w > 0 ? Math.round((Number.parseFloat(part) / w) * 100) : 0;
+}
+
 export default function PnlPage() {
-  const t = useTranslations('Pages');
+  const t = useTranslations('Management');
+  const isMobile = useIsMobile();
+
+  const [year, setYear] = useState(CURRENT_YEAR);
+  const [currency, setCurrency] = useState('USD');
+  const [sources, setSources] = useState<string[]>(ALL_SOURCES);
   const [data, setData] = useState<PnlOutput | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [exportOpen, setExportOpen] = useState(false);
 
   useEffect(() => {
-    async function load() {
-      setError(null);
-      try {
-        const result = await apiFetch<PnlOutput>('/management/pnl/');
-        setData(result);
-      } catch (caughtError: unknown) {
-        setError(caughtError instanceof Error ? caughtError.message : 'Failed to load P&L');
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    load();
-  }, []);
+    let active = true;
+    setIsLoading(true);
+    setError(null);
+    getPnl({ year, currency, sources })
+      .then((result) => {
+        if (active) {
+          setData(result);
+        }
+      })
+      .catch((caughtError: unknown) => {
+        if (active) {
+          setError(caughtError instanceof Error ? caughtError.message : t('pnl_error'));
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setIsLoading(false);
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [year, currency, sources, t]);
+
+  const money = (amount: string): string => {
+    const n = Number.parseFloat(amount);
+    const rounded = Number.isNaN(n) ? 0 : Math.round(n);
+    const formatted = rounded.toLocaleString('en-US');
+    return currency === 'UZS' ? `${formatted} UZS` : `$${formatted}`;
+  };
+
+  const sourceLabel = (source: string) => t(`pnl_source_${source}` as never);
+
+  const controls = (
+    <div className="flex flex-wrap items-center gap-2.5">
+      <SourcesFilter
+        options={ALL_SOURCES.map((s) => ({ value: s, label: sourceLabel(s) }))}
+        selected={sources}
+        onChange={setSources}
+        labels={{
+          title: t('pnl_sources'),
+          all: t('pnl_sources_all'),
+          count: (n) => t('pnl_sources_count', { count: n }),
+        }}
+      />
+      <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
+        <SelectTrigger className="h-9 w-auto rounded-full">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {YEARS.map((y) => (
+            <SelectItem key={y} value={String(y)}>
+              {y} · {t('pnl_ytd')}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <MethodSegmented
+        value={currency}
+        onChange={setCurrency}
+        options={[
+          { value: 'USD', label: 'USD' },
+          { value: 'UZS', label: 'UZS' },
+        ]}
+      />
+      <Button variant="outline" onClick={() => setExportOpen(true)} disabled={!data}>
+        <Download className="size-4" />
+        {t('pnl_export')}
+      </Button>
+    </div>
+  );
+
+  const header = (
+    <ManagementPageHeader
+      title={t('nav_pnl')}
+      subtitle={t('pnl_subtitle', { year, currency })}
+      showBell={false}
+      actions={controls}
+    />
+  );
 
   if (error) {
     return (
-      <Alert variant="danger">
-        <AlertDescription>{error}</AlertDescription>
-      </Alert>
+      <ErrorState
+        title={t('pnl_error')}
+        message={error}
+        onRetry={() => setYear((y) => y)}
+        retryLabel={t('retry')}
+      />
     );
   }
 
   if (isLoading || !data) {
     return (
-      <div className="space-y-6">
-        <PageHeader title={t('profit_and_loss')} description={t('profit_and_loss_desc')} />
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="flex flex-col gap-6">
+        {header}
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-24 animate-pulse rounded-lg border border-border bg-card" />
+            <div
+              key={i}
+              className="h-32 animate-pulse rounded-[16px] border border-border bg-card"
+            />
           ))}
         </div>
       </div>
     );
   }
 
-  const { summary, monthly, growth, investor } = data;
-  const netMargin =
-    summary.gross_revenue !== '0.00'
-      ? Math.round(
-          (Number.parseFloat(summary.net_profit) / Number.parseFloat(summary.gross_revenue)) * 100,
-        )
-      : 0;
+  const { summary, monthly, growth, investor, breakdown } = data;
+  const tiles: PnlMobileTile[] = [
+    {
+      label: t('pnl_kpi_revenue'),
+      value: money(summary.gross_revenue),
+      icon: Banknote,
+      caption: t('pnl_kpi_revenue_caption'),
+      captionTone: 'success',
+    },
+    {
+      label: t('pnl_kpi_payouts'),
+      value: money(summary.owner_payouts),
+      icon: Wallet,
+      caption: t('pnl_kpi_payouts_caption', {
+        pct: percentOf(summary.owner_payouts, summary.gross_revenue),
+      }),
+    },
+    {
+      label: t('pnl_kpi_profit'),
+      value: money(summary.net_profit),
+      icon: TrendingUp,
+      caption: t('pnl_kpi_profit_caption', {
+        pct: percentOf(summary.net_profit, summary.gross_revenue),
+      }),
+      captionTone: 'success',
+    },
+    {
+      label: t('pnl_kpi_tax'),
+      value: formatUzs(summary.tax),
+      icon: Landmark,
+      caption: t('pnl_kpi_tax_caption'),
+    },
+  ];
+  const onExport = async (_scope: ExportScope, format: ExportFormat) => {
+    await downloadTable(
+      buildPnlExportRows(data, {
+        section: t('pnl_export_section'),
+        metric: t('pnl_export_metric'),
+        value: t('pnl_export_value'),
+        share: t('pnl_export_share'),
+        month: t('pnl_col_month'),
+        revenue: t('pnl_col_revenue'),
+        payouts: t('pnl_col_payouts'),
+        profit: t('pnl_col_profit'),
+        tax: t('pnl_col_tax'),
+        grossRevenue: t('pnl_kpi_revenue'),
+        ownerPayouts: t('pnl_kpi_payouts'),
+        netProfit: t('pnl_kpi_profit'),
+        taxAccrued: t('pnl_kpi_tax'),
+        monthlyBreakdown: t('pnl_monthly_title'),
+        revenueBySource: t('pnl_revenue_by_source'),
+        expensesBySource: t('pnl_expenses_by_source'),
+        sourceLabel,
+      }),
+      format,
+      'profit-and-loss',
+      t('nav_pnl'),
+    );
+  };
+
+  const exportDialog = (
+    <ExportDialog
+      open={exportOpen}
+      onOpenChange={setExportOpen}
+      title={t('pnl_export_title')}
+      currentViewLabel={t('pnl_subtitle', { year, currency })}
+      counts={{ filtered: monthly.length, all: monthly.length, selected: 0 }}
+      onExport={onExport}
+      labels={{
+        scopeTitle: t('export_scope'),
+        filtered: () => t('pnl_export_scope_report'),
+        all: () => t('pnl_export_scope_report'),
+        selected: () => t('pnl_export_scope_report'),
+        formatTitle: t('export_format'),
+        footnote: t('export_footnote'),
+        cancel: t('cancel'),
+        submit: () => t('pnl_export'),
+        failed: t('export_failed'),
+      }}
+    />
+  );
+
+  if (isMobile) {
+    return (
+      <>
+        <PnlMobileView
+          t={t}
+          title={t('nav_pnl')}
+          subtitle={t('pnl_subtitle', { year, currency })}
+          sourceLabels={sources.map(sourceLabel)}
+          yearLabel={`${year} · ${t('pnl_ytd')}`}
+          tiles={tiles}
+          data={data}
+          money={money}
+          sourceLabel={sourceLabel}
+          onExport={() => setExportOpen(true)}
+          canExport
+        />
+        {exportDialog}
+      </>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      <PageHeader title={t('profit_and_loss')} description={t('profit_and_loss_desc')} />
+    <div className="flex flex-col gap-6">
+      {header}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatsCard
-          title="Gross Revenue"
-          value={fCurrency(summary.gross_revenue)}
-          subtitle="Tenant payments"
-          variant="success"
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <MetricTile
+          label={t('pnl_kpi_revenue')}
+          value={money(summary.gross_revenue)}
+          icon={Banknote}
+          caption={t('pnl_kpi_revenue_caption')}
+          captionTone="success"
         />
-        <StatsCard
-          title="Owner Payouts"
-          value={fCurrency(summary.owner_payouts)}
-          subtitle="Monthly"
+        <MetricTile
+          label={t('pnl_kpi_payouts')}
+          value={money(summary.owner_payouts)}
+          icon={Wallet}
+          caption={t('pnl_kpi_payouts_caption', {
+            pct: percentOf(summary.owner_payouts, summary.gross_revenue),
+          })}
         />
-        <StatsCard
-          title={`Net Margin (${netMargin}%)`}
-          value={fCurrency(summary.net_profit)}
-          subtitle="After payouts"
-          variant="success"
+        <MetricTile
+          label={t('pnl_kpi_profit')}
+          value={money(summary.net_profit)}
+          icon={TrendingUp}
+          caption={t('pnl_kpi_profit_caption', {
+            pct: percentOf(summary.net_profit, summary.gross_revenue),
+          })}
+          captionTone="success"
         />
-        <StatsCard
-          title="Tax (4%)"
-          value={`${Math.round(Number.parseFloat(summary.tax) || 0).toLocaleString('en-US')} UZS`}
-          subtitle="Estimated"
-          variant="warning"
+        <MetricTile
+          label={t('pnl_kpi_tax')}
+          value={formatUzs(summary.tax)}
+          icon={Landmark}
+          caption={t('pnl_kpi_tax_caption')}
         />
       </div>
 
-      <SectionLabel>Monthly Distribution</SectionLabel>
-      <div className="overflow-hidden rounded-lg border border-border bg-card">
-        <Table className="text-left">
-          <TableHeader className="border-b border-border bg-muted">
-            <TableRow>
-              <TableHead className="px-4 py-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                Month
-              </TableHead>
-              <TableHead className="px-4 py-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                Revenue
-              </TableHead>
-              <TableHead className="px-4 py-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                Payouts
-              </TableHead>
-              <TableHead className="px-4 py-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                Profit
-              </TableHead>
-              <TableHead className="px-4 py-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                Tax 4%
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {monthly.map((row) => (
-              <TableRow
-                key={row.month}
-                className="border-b border-border transition-colors last:border-0 hover:bg-muted"
-              >
-                <TableCell className="px-4 py-3 font-medium text-foreground">{row.month}</TableCell>
-                <TableCell className="px-4 py-3 text-primary">{fCurrency(row.revenue)}</TableCell>
-                <TableCell className="px-4 py-3 text-muted-foreground">
-                  {fCurrency(row.owner_payouts)}
-                </TableCell>
-                <TableCell className="px-4 py-3 font-medium text-warning">
-                  {fCurrency(row.profit)}
-                </TableCell>
-                <TableCell className="px-4 py-3 text-muted-foreground">
-                  {Math.round(Number.parseFloat(row.tax) || 0).toLocaleString('en-US')} UZS
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <ReportCard
+          title={t('pnl_monthly_title')}
+          action={
+            <span className="text-xs text-muted-foreground">
+              {t('pnl_all_figures', { currency })}
+            </span>
+          }
+          className="lg:col-span-2"
+        >
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-border">
+                  {['month', 'revenue', 'payouts', 'profit', 'tax'].map((col) => (
+                    <th
+                      key={col}
+                      className="py-2.5 pr-4 text-[11px] font-semibold tracking-[0.06em] text-muted-foreground uppercase last:pr-0"
+                    >
+                      {t(`pnl_col_${col}` as never)}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {monthly.map((row) => (
+                  <tr key={row.month} className="border-b border-border last:border-0">
+                    <td className="py-3 pr-4 font-medium text-foreground">{row.month}</td>
+                    <td className="py-3 pr-4 text-foreground tabular-nums">{money(row.revenue)}</td>
+                    <td className="py-3 pr-4 text-muted-foreground tabular-nums">
+                      {money(row.owner_payouts)}
+                    </td>
+                    <td className="py-3 pr-4 font-medium text-foreground tabular-nums">
+                      {money(row.profit)}
+                    </td>
+                    <td className="py-3 text-muted-foreground tabular-nums">
+                      {formatUzs(row.tax)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </ReportCard>
 
-      <SectionLabel>Growth</SectionLabel>
-      <GrowthChart actual={growth.actual} projected={growth.projected} />
-
-      <div className="rounded-lg border border-border bg-primary-muted p-5">
-        <div className="flex items-start gap-3">
-          <svg
-            className="mt-1 size-5 shrink-0 text-primary"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+        <div className="flex flex-col gap-4">
+          <ReportCard title={t('pnl_growth_title')}>
+            <AnalyticsChart
+              actual={growth.actual}
+              projected={growth.projected}
+              labels={{
+                actual: t('pnl_actual'),
+                projected: t('pnl_projected'),
+                projectedSuffix: t('pnl_projected_suffix'),
+              }}
             />
-          </svg>
-          <div>
-            <p className="text-sm font-semibold text-foreground">Investor Take-Home</p>
-            <p className="mt-1 text-sm text-foreground">
-              <b>{fCurrency(investor.monthly)}/mo</b> after tax · annual:{' '}
-              <b>{fCurrency(investor.annual)}</b> · based on {investor.property_count} properties.
-            </p>
-            <p className="text-xs text-muted-foreground">
-              At 50 properties: ~{fCurrency(investor.scaled_50)}/yr
+          </ReportCard>
+          <div className="rounded-[16px] bg-primary p-5 text-primary-foreground">
+            <span className="text-[11px] font-semibold tracking-[0.08em] uppercase opacity-80">
+              {t('pnl_investor_title')}
+            </span>
+            <div className="mt-3 flex items-end justify-between gap-3">
+              <div className="flex flex-col">
+                <span className="font-display text-2xl font-bold tabular-nums">
+                  {money(investor.monthly)}
+                </span>
+                <span className="text-xs opacity-80">{t('pnl_investor_monthly')}</span>
+              </div>
+              <div className="flex flex-col text-right">
+                <span className="font-display text-2xl font-bold tabular-nums">
+                  {money(investor.annual)}
+                </span>
+                <span className="text-xs opacity-80">{t('pnl_investor_annual')}</span>
+              </div>
+            </div>
+            <p className="mt-3 border-t border-primary-foreground/20 pt-3 text-xs opacity-80">
+              {t('pnl_investor_scaled', { amount: money(investor.scaled_50) })}
             </p>
           </div>
         </div>
       </div>
+
+      {breakdown ? (
+        <CategoryBreakdown
+          breakdown={breakdown}
+          revenueTitle={t('pnl_revenue_by_source')}
+          expensesTitle={t('pnl_expenses_by_source')}
+          revenueCenter={money(summary.gross_revenue)}
+          sourceLabel={sourceLabel}
+        />
+      ) : null}
+
+      {exportDialog}
     </div>
   );
 }

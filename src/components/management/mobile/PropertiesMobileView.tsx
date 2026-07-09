@@ -1,0 +1,102 @@
+'use client';
+
+import type { useTranslations } from 'next-intl';
+import type { ReactNode } from 'react';
+import { PropertyThumbnail } from '@/components/management/columns/PropertyThumbnail';
+import { propertyStatusTone, StatusPill } from '@/components/management/columns/StatusPill';
+import { formatMoney } from '@/components/management/format';
+import type { MobileChip } from '@/components/management/mobile/MobileWorkbench';
+import { MobileWorkbench } from '@/components/management/mobile/MobileWorkbench';
+import { ModuleListCard } from '@/components/management/mobile/ModuleListCard';
+import type { ManagementPropertyOutput } from '@/types/management';
+
+type Translator = ReturnType<typeof useTranslations>;
+
+/**
+ * The effective monthly rent for a property (tenant charge, falling back to ask).
+ * @param row - The property row.
+ * @returns The rent as a number, or 0 when unset.
+ */
+function rentOf(row: ManagementPropertyOutput): number {
+  const charge = Number.parseFloat(row.tenant_charge_price ?? '');
+  if (!Number.isNaN(charge) && charge > 0) {
+    return charge;
+  }
+  const ask = Number.parseFloat(row.ask_price ?? '');
+  return Number.isNaN(ask) ? 0 : ask;
+}
+
+/**
+ * The display currency symbol for a property.
+ * @param row - The property row.
+ * @returns A currency prefix.
+ */
+function currencyOf(row: ManagementPropertyOutput): string {
+  return row.ask_currency === 'UZS' ? "so'm " : '$';
+}
+
+/**
+ * The mobile Properties workbench — the list-screen archetype on mobile: a card
+ * list with status pills and rent, a floating "Add property" FAB, and a tapped
+ * row that opens the shared property record panel full-screen.
+ * @param props - Rows, chips, search, record slot, and handlers.
+ * @returns The mobile properties view.
+ */
+export function PropertiesMobileView(props: {
+  t: Translator;
+  title: string;
+  subtitle: string;
+  searchPlaceholder: string;
+  addLabel: string;
+  rows: ManagementPropertyOutput[];
+  chips: MobileChip[];
+  activeChip: string;
+  onChip: (id: string) => void;
+  search: string;
+  onSearch: (value: string) => void;
+  statusLabel: (value: string) => string;
+  onOpen: (row: ManagementPropertyOutput) => void;
+  onAdd: () => void;
+  record?: ReactNode;
+  onCloseRecord: () => void;
+  empty: ReactNode;
+}) {
+  const { t } = props;
+  return (
+    <MobileWorkbench
+      title={props.title}
+      subtitle={props.subtitle}
+      chips={props.chips}
+      activeChip={props.activeChip}
+      onChipChange={props.onChip}
+      search={{
+        value: props.search,
+        onChange: props.onSearch,
+        placeholder: props.searchPlaceholder,
+      }}
+      isEmpty={props.rows.length === 0}
+      empty={props.empty}
+      record={props.record}
+      onCloseRecord={props.onCloseRecord}
+      backLabel={t('back')}
+      fab={{ label: props.addLabel, onClick: props.onAdd }}
+    >
+      {props.rows.map((row) => (
+        <ModuleListCard
+          key={row.id}
+          leading={<PropertyThumbnail alt={row.name} />}
+          title={row.name}
+          subtitle={`${row.district_name ?? '—'} · ${row.rooms === null ? '—' : t('rooms_count', { count: row.rooms })}`}
+          meta={
+            <StatusPill
+              tone={propertyStatusTone(row.status)}
+              label={props.statusLabel(row.status)}
+            />
+          }
+          value={formatMoney(rentOf(row), currencyOf(row))}
+          onClick={() => props.onOpen(row)}
+        />
+      ))}
+    </MobileWorkbench>
+  );
+}

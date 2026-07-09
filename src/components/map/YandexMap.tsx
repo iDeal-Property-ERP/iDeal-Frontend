@@ -5,58 +5,11 @@ import { useEffect, useRef } from 'react';
 import { Env } from '@/libs/Env';
 import { formatPrice } from '@/libs/marketplace';
 import { cn } from '@/libs/utils';
+import { bboxFromBounds, loadYmaps, TASHKENT, YANDEX_LANG } from '@/libs/yandexMaps';
 import type { MapPoint } from '@/types/marketplace';
 
-const TASHKENT: [number, number] = [41.3111, 69.2797];
 const DEFAULT_ZOOM = 11;
 const SELECTED_ZOOM = 14;
-
-const YANDEX_LANG: Record<string, string> = {
-  en: 'en_US',
-  ru: 'ru_RU',
-  uz: 'ru_RU', // Yandex Maps has no Uzbek locale; fall back to Russian.
-};
-
-let loaderPromise: Promise<Ymaps> | null = null;
-
-async function loadYmaps(apiKey: string, lang: string): Promise<Ymaps> {
-  if (typeof window === 'undefined') {
-    throw new TypeError('Yandex Maps can only load in the browser');
-  }
-  if (loaderPromise) {
-    return await loaderPromise;
-  }
-  // oxlint-disable-next-line promise/avoid-new
-  loaderPromise = new Promise<Ymaps>((resolve, reject) => {
-    const onReady = () => {
-      if (window.ymaps) {
-        window.ymaps.ready(() => resolve(window.ymaps!));
-      } else {
-        reject(new Error('Yandex Maps failed to initialize'));
-      }
-    };
-    const onError = () => reject(new Error('Failed to load Yandex Maps script'));
-
-    if (window.ymaps) {
-      onReady();
-      return;
-    }
-    const existing = document.querySelector('#yandex-maps-script');
-    if (existing) {
-      existing.addEventListener('load', onReady);
-      existing.addEventListener('error', onError);
-      return;
-    }
-    const script = document.createElement('script');
-    script.id = 'yandex-maps-script';
-    script.src = `https://api-maps.yandex.ru/2.1/?apikey=${apiKey}&lang=${lang}`;
-    script.async = true;
-    script.addEventListener('load', onReady);
-    script.addEventListener('error', onError);
-    document.head.append(script);
-  });
-  return await loaderPromise;
-}
 
 function balloonHtml(point: MapPoint, locale: string, viewLabel: string): string {
   const href = `/${locale}/listings/${point.id}`;
@@ -72,23 +25,6 @@ function balloonHtml(point: MapPoint, locale: string, viewLabel: string): string
       <div style="font-weight:700;margin-bottom:8px">${price}</div>
       <a href="${href}" style="color:var(--primary);font-size:13px;font-weight:600;text-decoration:none">${viewLabel} →</a>
     </div>`;
-}
-
-function bboxFromBounds(bounds: number[][]): string | null {
-  // Yandex bounds = [[minLat, minLon], [maxLat, maxLon]] → "minLon,minLat,maxLon,maxLat".
-  if (!bounds || bounds.length < 2) {
-    return null;
-  }
-  const [sw, ne] = bounds;
-  if (!sw || !ne) {
-    return null;
-  }
-  const [minLat, minLon] = sw;
-  const [maxLat, maxLon] = ne;
-  if ([minLat, minLon, maxLat, maxLon].some((v) => v === undefined)) {
-    return null;
-  }
-  return `${minLon},${minLat},${maxLon},${maxLat}`;
 }
 
 type YandexMapProps = {

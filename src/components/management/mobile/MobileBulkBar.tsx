@@ -21,7 +21,7 @@ export function MobileBulkBar(props: {
     return null;
   }
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card px-4 pt-3 pb-[calc(env(safe-area-inset-bottom)+12px)] shadow-[0_-8px_24px_-12px_rgba(11,18,32,0.25)] lg:hidden">
+    <div className="fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-40 border-t border-b border-border bg-card px-4 py-3 shadow-[0_-8px_24px_-12px_rgba(11,18,32,0.25)] lg:hidden">
       <div className="mb-3 flex items-center justify-between">
         <span className="text-sm font-medium text-foreground tabular-nums">{props.summary}</span>
         <button

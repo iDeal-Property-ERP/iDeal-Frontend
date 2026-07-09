@@ -10,6 +10,7 @@ import { RowActions } from '@/components/management/columns/RowActions';
 import { roleTone, StatusPill, userStatusTone } from '@/components/management/columns/StatusPill';
 import { EditUserDialog, InviteUserDialog } from '@/components/management/dialogs/UserDialogs';
 import { ManagementPageHeader } from '@/components/management/ManagementPageHeader';
+import { UsersMobileView } from '@/components/management/mobile/UsersMobileView';
 import { UserRecordPanel } from '@/components/management/record-panel/UserRecordPanel';
 import { EmptyState } from '@/components/management/states/EmptyState';
 import { ErrorState } from '@/components/management/states/ErrorState';
@@ -27,6 +28,7 @@ import type { ChipFilter } from '@/components/management/workbench/WorkbenchTool
 import { Button } from '@/components/ui/button';
 import { usePaginatedResource } from '@/hooks/management/usePaginatedResource';
 import { useRowSelection } from '@/hooks/management/useRowSelection';
+import { useIsMobile } from '@/hooks/use-mobile';
 import {
   exportUsersCsv,
   getUserRoleCounts,
@@ -95,6 +97,7 @@ function boolFilterQuery(value: string | null, onValue: string): string | undefi
  */
 export default function ManagementUsersPage() {
   const t = useTranslations('Management');
+  const isMobile = useIsMobile();
 
   const resource = usePaginatedResource<UserOutput>(
     async ({ page, query }) =>
@@ -301,41 +304,43 @@ export default function ManagementUsersPage() {
     />
   );
 
-  let body: React.ReactNode;
-  if (resource.error) {
-    body = (
-      <ErrorState
-        title={t('error_title')}
-        message={t('usr_error')}
-        retryLabel={t('retry')}
-        onRetry={resource.refetch}
-      />
-    );
-  } else if (resource.isLoading) {
-    body = <WorkbenchTableSkeleton />;
-  } else if (rows.length === 0) {
-    body = hasQuery ? (
-      <FilteredEmptyState
-        title={t('no_matches')}
-        description={t('no_matches_desc')}
-        clearLabel={t('clear_filters')}
-        onClear={clearAll}
-      />
-    ) : (
-      <EmptyState
-        icon={Users}
-        title={t('usr_empty')}
-        description={t('usr_empty_desc')}
-        action={
-          <Button className="h-9 gap-2 rounded-[10px]" onClick={() => setInviteOpen(true)}>
-            <Plus className="size-4" />
-            {t('usr_invite')}
-          </Button>
-        }
-      />
-    );
-  } else {
-    body = (
+  const body = ((): React.ReactNode => {
+    if (resource.error) {
+      return (
+        <ErrorState
+          title={t('error_title')}
+          message={t('usr_error')}
+          retryLabel={t('retry')}
+          onRetry={resource.refetch}
+        />
+      );
+    }
+    if (resource.isLoading) {
+      return <WorkbenchTableSkeleton />;
+    }
+    if (rows.length === 0) {
+      return hasQuery ? (
+        <FilteredEmptyState
+          title={t('no_matches')}
+          description={t('no_matches_desc')}
+          clearLabel={t('clear_filters')}
+          onClear={clearAll}
+        />
+      ) : (
+        <EmptyState
+          icon={Users}
+          title={t('usr_empty')}
+          description={t('usr_empty_desc')}
+          action={
+            <Button className="h-9 gap-2 rounded-[10px]" onClick={() => setInviteOpen(true)}>
+              <Plus className="size-4" />
+              {t('usr_invite')}
+            </Button>
+          }
+        />
+      );
+    }
+    return (
       <WorkbenchTable
         columns={columns}
         rows={rows}
@@ -352,9 +357,72 @@ export default function ManagementUsersPage() {
         labels={{ selectAll: t('select_all'), selectRow: t('select_row') }}
       />
     );
-  }
+  })();
 
   const showPagination = !resource.isLoading && !resource.error && rows.length > 0;
+
+  const userRecord = (
+    <UserRecordPanel
+      user={selected}
+      open={Boolean(selected)}
+      onClose={() => setSelected(null)}
+      onEdit={() => selected && setEditTarget(selected)}
+      roleLabel={roleLabel}
+      statusLabel={statusLabel}
+      onToggleActive={() => {
+        setSelected((prev) => (prev ? { ...prev, is_active: !prev.is_active } : prev));
+        resource.refetch();
+      }}
+    />
+  );
+
+  const dialogs = (
+    <>
+      <InviteUserDialog
+        open={inviteOpen}
+        onOpenChange={setInviteOpen}
+        onSuccess={resource.refetch}
+      />
+      <EditUserDialog
+        key={editTarget?.id}
+        user={editTarget}
+        open={Boolean(editTarget)}
+        onOpenChange={(open) => !open && setEditTarget(null)}
+        onSuccess={resource.refetch}
+      />
+    </>
+  );
+
+  if (isMobile) {
+    return (
+      <>
+        <UsersMobileView
+          t={t}
+          title={t('usr_title')}
+          subtitle={t('usr_subtitle', { all: counts?.all ?? resource.total })}
+          searchPlaceholder={t('usr_search')}
+          rows={rows}
+          chips={savedViews.map((v) => ({ id: v.id, label: v.label, count: v.count }))}
+          activeChip={view}
+          onChip={(next) =>
+            resource.patchQuery({
+              role: next === 'all' ? undefined : next,
+              search: search || undefined,
+            })
+          }
+          search={search}
+          onSearch={(value) => resource.patchQuery({ search: value || undefined })}
+          roleLabel={roleLabel}
+          statusLabel={statusLabel}
+          onOpen={setSelected}
+          record={selected ? userRecord : undefined}
+          onCloseRecord={() => setSelected(null)}
+          empty={body}
+        />
+        {dialogs}
+      </>
+    );
+  }
 
   return (
     <>
@@ -446,20 +514,7 @@ export default function ManagementUsersPage() {
             />
           ) : undefined
         }
-        panel={
-          <UserRecordPanel
-            user={selected}
-            open={Boolean(selected)}
-            onClose={() => setSelected(null)}
-            onEdit={() => selected && setEditTarget(selected)}
-            roleLabel={roleLabel}
-            statusLabel={statusLabel}
-            onToggleActive={() => {
-              setSelected((prev) => (prev ? { ...prev, is_active: !prev.is_active } : prev));
-              resource.refetch();
-            }}
-          />
-        }
+        panel={userRecord}
         bulkBar={
           <BulkSelectionBar
             open={selection.count > 0}
@@ -483,19 +538,7 @@ export default function ManagementUsersPage() {
       >
         {body}
       </WorkbenchShell>
-
-      <InviteUserDialog
-        open={inviteOpen}
-        onOpenChange={setInviteOpen}
-        onSuccess={resource.refetch}
-      />
-      <EditUserDialog
-        key={editTarget?.id}
-        user={editTarget}
-        open={Boolean(editTarget)}
-        onOpenChange={(open) => !open && setEditTarget(null)}
-        onSuccess={resource.refetch}
-      />
+      {dialogs}
     </>
   );
 }

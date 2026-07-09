@@ -1,32 +1,77 @@
 'use client';
 
 import { CheckCircle2, Send } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useRef, useState } from 'react';
 import { cn } from '@/libs/utils';
 
-const ACTION_WIDTH = 152; // two 76px action buttons revealed on swipe-left
+const BUTTON_WIDTH = 76;
+
+export type SwipeActionTone = 'success' | 'accent' | 'warning' | 'danger' | 'info';
+
+export type SwipeAction = {
+  label: string;
+  icon: LucideIcon;
+  tone: SwipeActionTone;
+  onAction: () => void;
+};
+
+const TONE_BG: Record<SwipeActionTone, string> = {
+  success: 'bg-success',
+  accent: 'bg-accent-brand',
+  warning: 'bg-warning',
+  danger: 'bg-danger',
+  info: 'bg-info',
+};
+
+type SwipeActionRowProps = {
+  children: ReactNode;
+  className?: string;
+  /** Explicit quick-actions (revealed on swipe-left). */
+  actions?: SwipeAction[];
+  // --- Back-compat: the Payments/Maintenance/Services Paid+Remind pair ---
+  onPaid?: () => void;
+  onRemind?: () => void;
+  paidLabel?: string;
+  remindLabel?: string;
+};
 
 /**
  * A swipeable list row (Figma "Swipe left on a row → quick actions"). Dragging
- * left reveals a success "Paid" action and an accent "Remind" action behind the
- * card; releasing past a threshold snaps them open, tapping the card or an action
- * closes it. Falls back to a plain row for non-touch interaction — the same
- * actions are always reachable from selection mode + the record panel.
- * @param props - Row content, the paid/remind handlers, and their labels.
+ * left reveals up to a few tone-colored quick actions behind the card; releasing
+ * past a threshold snaps them open, tapping the card or an action closes it. The
+ * same actions are always reachable from selection mode + the record panel.
+ * Pass `actions` for arbitrary quick actions, or the legacy `onPaid`/`onRemind`
+ * pair.
+ * @param props - Row content plus either an `actions` array or the paid/remind pair.
  * @returns The swipeable row.
  */
-export function SwipeActionRow(props: {
-  children: ReactNode;
-  onPaid: () => void;
-  onRemind: () => void;
-  paidLabel: string;
-  remindLabel: string;
-  className?: string;
-}) {
+export function SwipeActionRow(props: SwipeActionRowProps) {
   const [offset, setOffset] = useState(0);
   const startX = useRef<number | null>(null);
   const dragging = useRef(false);
+
+  const fallback: SwipeAction[] = [];
+  if (props.onPaid) {
+    fallback.push({
+      label: props.paidLabel ?? '',
+      icon: CheckCircle2,
+      tone: 'success',
+      onAction: props.onPaid,
+    });
+  }
+  if (props.onRemind) {
+    fallback.push({
+      label: props.remindLabel ?? '',
+      icon: Send,
+      tone: 'accent',
+      onAction: props.onRemind,
+    });
+  }
+  const actions: SwipeAction[] = props.actions ?? fallback;
+
+  const actionsWidth = actions.length * BUTTON_WIDTH;
 
   const onTouchStart = (event: React.TouchEvent) => {
     startX.current = event.touches[0]?.clientX ?? null;
@@ -38,13 +83,12 @@ export function SwipeActionRow(props: {
       return;
     }
     const delta = (event.touches[0]?.clientX ?? 0) - startX.current;
-    // Only track leftward drags; clamp to the actions width.
-    setOffset(Math.max(-ACTION_WIDTH, Math.min(0, delta)));
+    setOffset(Math.max(-actionsWidth, Math.min(0, delta)));
   };
 
   const onTouchEnd = () => {
     dragging.current = false;
-    setOffset((current) => (current < -ACTION_WIDTH / 2 ? -ACTION_WIDTH : 0));
+    setOffset((current) => (current < -actionsWidth / 2 ? -actionsWidth : 0));
   };
 
   const close = () => setOffset(0);
@@ -52,28 +96,26 @@ export function SwipeActionRow(props: {
   return (
     <div className={cn('relative overflow-hidden rounded-[14px]', props.className)}>
       <div className="absolute inset-y-0 right-0 flex">
-        <button
-          type="button"
-          onClick={() => {
-            props.onPaid();
-            close();
-          }}
-          className="flex w-[76px] flex-col items-center justify-center gap-1 bg-success text-xs font-medium text-white"
-        >
-          <CheckCircle2 className="size-5" />
-          {props.paidLabel}
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            props.onRemind();
-            close();
-          }}
-          className="flex w-[76px] flex-col items-center justify-center gap-1 bg-accent-brand text-xs font-medium text-white"
-        >
-          <Send className="size-5" />
-          {props.remindLabel}
-        </button>
+        {actions.map((action) => {
+          const Icon = action.icon;
+          return (
+            <button
+              key={action.label}
+              type="button"
+              onClick={() => {
+                action.onAction();
+                close();
+              }}
+              className={cn(
+                'flex w-[76px] flex-col items-center justify-center gap-1 text-xs font-medium text-white',
+                TONE_BG[action.tone],
+              )}
+            >
+              <Icon className="size-5" />
+              {action.label}
+            </button>
+          );
+        })}
       </div>
       <div
         onTouchStart={onTouchStart}

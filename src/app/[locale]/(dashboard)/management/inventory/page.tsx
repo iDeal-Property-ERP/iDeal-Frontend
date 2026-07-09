@@ -13,6 +13,7 @@ import {
 } from '@/components/management/columns/StatusPill';
 import { FinalizeActDialog, NewActDialog } from '@/components/management/dialogs/InventoryDialogs';
 import { ManagementPageHeader } from '@/components/management/ManagementPageHeader';
+import { InventoryMobileView } from '@/components/management/mobile/InventoryMobileView';
 import { InventoryActRecordPanel } from '@/components/management/record-panel/InventoryActRecordPanel';
 import { EmptyState } from '@/components/management/states/EmptyState';
 import { ErrorState } from '@/components/management/states/ErrorState';
@@ -30,6 +31,7 @@ import type { ChipFilter } from '@/components/management/workbench/WorkbenchTool
 import { Button } from '@/components/ui/button';
 import { usePaginatedResource } from '@/hooks/management/usePaginatedResource';
 import { useRowSelection } from '@/hooks/management/useRowSelection';
+import { useIsMobile } from '@/hooks/use-mobile';
 import {
   ACT_TYPES,
   exportActsCsv,
@@ -91,6 +93,7 @@ function shortDate(iso: string): string {
  */
 export default function ManagementInventoryPage() {
   const t = useTranslations('Management');
+  const isMobile = useIsMobile();
 
   const resource = usePaginatedResource<InventoryActListOutput>(
     async ({ page, query }) => await listActs({ page, status: query.status as string | undefined }),
@@ -295,41 +298,43 @@ export default function ManagementInventoryPage() {
     />
   );
 
-  let body: React.ReactNode;
-  if (resource.error) {
-    body = (
-      <ErrorState
-        title={t('error_title')}
-        message={t('inv_error')}
-        retryLabel={t('retry')}
-        onRetry={resource.refetch}
-      />
-    );
-  } else if (resource.isLoading) {
-    body = <WorkbenchTableSkeleton />;
-  } else if (rows.length === 0) {
-    body = hasQuery ? (
-      <FilteredEmptyState
-        title={t('no_matches')}
-        description={t('no_matches_desc')}
-        clearLabel={t('clear_filters')}
-        onClear={clearAll}
-      />
-    ) : (
-      <EmptyState
-        icon={ClipboardList}
-        title={t('inv_empty')}
-        description={t('inv_empty_desc')}
-        action={
-          <Button className="h-9 gap-2 rounded-[10px]" onClick={() => setNewOpen(true)}>
-            <Plus className="size-4" />
-            {t('inv_new')}
-          </Button>
-        }
-      />
-    );
-  } else {
-    body = (
+  const body = ((): React.ReactNode => {
+    if (resource.error) {
+      return (
+        <ErrorState
+          title={t('error_title')}
+          message={t('inv_error')}
+          retryLabel={t('retry')}
+          onRetry={resource.refetch}
+        />
+      );
+    }
+    if (resource.isLoading) {
+      return <WorkbenchTableSkeleton />;
+    }
+    if (rows.length === 0) {
+      return hasQuery ? (
+        <FilteredEmptyState
+          title={t('no_matches')}
+          description={t('no_matches_desc')}
+          clearLabel={t('clear_filters')}
+          onClear={clearAll}
+        />
+      ) : (
+        <EmptyState
+          icon={ClipboardList}
+          title={t('inv_empty')}
+          description={t('inv_empty_desc')}
+          action={
+            <Button className="h-9 gap-2 rounded-[10px]" onClick={() => setNewOpen(true)}>
+              <Plus className="size-4" />
+              {t('inv_new')}
+            </Button>
+          }
+        />
+      );
+    }
+    return (
       <WorkbenchTable
         columns={columns}
         rows={rows}
@@ -346,9 +351,64 @@ export default function ManagementInventoryPage() {
         labels={{ selectAll: t('select_all'), selectRow: t('select_row') }}
       />
     );
-  }
+  })();
 
   const showPagination = !resource.isLoading && !resource.error && rows.length > 0;
+
+  const inventoryRecord = (
+    <InventoryActRecordPanel
+      act={selected}
+      open={Boolean(selected)}
+      onClose={() => setSelected(null)}
+      onFinalize={() => selected && setFinalizeTarget(selected)}
+      statusLabel={statusLabel}
+      typeLabel={typeLabel}
+    />
+  );
+
+  const dialogs = (
+    <>
+      <NewActDialog
+        open={newOpen}
+        onOpenChange={setNewOpen}
+        onSuccess={resource.refetch}
+        typeLabel={typeLabel}
+      />
+      <FinalizeActDialog
+        act={finalizeTarget}
+        open={Boolean(finalizeTarget)}
+        onOpenChange={(open) => !open && setFinalizeTarget(null)}
+        onSuccess={resource.refetch}
+      />
+    </>
+  );
+
+  if (isMobile) {
+    return (
+      <>
+        <InventoryMobileView
+          t={t}
+          title={t('inv_title')}
+          subtitle={t('inv_subtitle', { draft: counts?.draft ?? 0 })}
+          searchPlaceholder={t('inv_search')}
+          rows={rows}
+          chips={savedViews.map((v) => ({ id: v.id, label: v.label, count: v.count }))}
+          activeChip={view}
+          onChip={(next) => resource.setQuery(queryForView(next))}
+          search={search}
+          onSearch={setSearch}
+          statusLabel={statusLabel}
+          onOpen={setSelected}
+          onSign={(row) => setFinalizeTarget(row)}
+          onSendCopy={(row) => exportActsCsv([row], `act-${row.id}.csv`)}
+          record={selected ? inventoryRecord : undefined}
+          onCloseRecord={() => setSelected(null)}
+          empty={body}
+        />
+        {dialogs}
+      </>
+    );
+  }
 
   return (
     <>
@@ -431,16 +491,7 @@ export default function ManagementInventoryPage() {
             />
           ) : undefined
         }
-        panel={
-          <InventoryActRecordPanel
-            act={selected}
-            open={Boolean(selected)}
-            onClose={() => setSelected(null)}
-            onFinalize={() => selected && setFinalizeTarget(selected)}
-            statusLabel={statusLabel}
-            typeLabel={typeLabel}
-          />
-        }
+        panel={inventoryRecord}
         bulkBar={
           <BulkSelectionBar
             open={selection.count > 0}
@@ -464,19 +515,7 @@ export default function ManagementInventoryPage() {
       >
         {body}
       </WorkbenchShell>
-
-      <NewActDialog
-        open={newOpen}
-        onOpenChange={setNewOpen}
-        onSuccess={resource.refetch}
-        typeLabel={typeLabel}
-      />
-      <FinalizeActDialog
-        act={finalizeTarget}
-        open={Boolean(finalizeTarget)}
-        onOpenChange={(open) => !open && setFinalizeTarget(null)}
-        onSuccess={resource.refetch}
-      />
+      {dialogs}
     </>
   );
 }

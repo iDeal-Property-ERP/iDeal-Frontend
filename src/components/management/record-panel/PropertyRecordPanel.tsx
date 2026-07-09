@@ -41,6 +41,29 @@ const TARIFF_PILL: Record<string, string> = {
 };
 
 /**
+ * Parses a nullable decimal string into a number (0 when null/unparseable).
+ * @param value - The decimal string or null.
+ * @returns The parsed number, or 0.
+ */
+function parseAmount(value: string | null): number {
+  return Number.parseFloat(value ?? '') || 0;
+}
+
+/**
+ * The "address · N rooms · area m²" meta line, tolerating null draft fields.
+ * @param t - The Management translator.
+ * @param property - The property row.
+ * @returns The meta line string.
+ */
+function metaLineOf(
+  t: ReturnType<typeof useTranslations<'Management'>>,
+  property: ManagementPropertyOutput,
+): string {
+  const rooms = property.rooms === null ? '—' : t('rooms_count', { count: property.rooms });
+  return `${property.address} · ${rooms} · ${property.area_sqm ?? 0} m²`;
+}
+
+/**
  * Formats an ISO date to a short "Jun 20" label.
  * @param iso - The ISO date string (or null).
  * @returns The short date, or an empty string when unparseable.
@@ -121,18 +144,17 @@ export function PropertyRecordPanel(props: {
   }
 
   const currency = property.ask_currency === 'UZS' ? "so'm " : '$';
-  const price = (amount: string) => formatMoney(amount, currency);
+  const price = (amount: string | null) => formatMoney(amount ?? '0', currency);
   const isVacant = /vacant|available/iu.test(property.status);
 
-  const margin =
-    Number.parseFloat(property.tenant_charge_price) -
-    Number.parseFloat(property.owner_guaranteed_price);
-  const marginPct = Number.parseFloat(property.tenant_charge_price)
-    ? Math.round((margin / Number.parseFloat(property.tenant_charge_price)) * 100)
-    : 0;
+  const tenantCharge = parseAmount(property.tenant_charge_price);
+  const ownerGuaranteed = parseAmount(property.owner_guaranteed_price);
+  const margin = tenantCharge - ownerGuaranteed;
+  const marginPct = tenantCharge ? Math.round((margin / tenantCharge) * 100) : 0;
 
-  const dailyLoss = Number.parseFloat(property.tenant_charge_price) / 30;
+  const dailyLoss = tenantCharge / 30;
   const accrued = dailyLoss * property.vacant_days;
+  const metaLine = metaLineOf(t, property);
 
   const tabs = [
     { id: 'overview', label: t('tab_overview') },
@@ -177,10 +199,7 @@ export function PropertyRecordPanel(props: {
           />
         </div>
         <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-          <span className="truncate">
-            {property.address} · {t('rooms_count', { count: property.rooms })} · {property.area_sqm}{' '}
-            m²
-          </span>
+          <span className="truncate">{metaLine}</span>
           <span
             className={cn(
               'inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium',
@@ -285,7 +304,7 @@ export function PropertyRecordPanel(props: {
           },
           {
             label: t('price_tenant_charge'),
-            value: price(property.tenant_charge_price),
+            value: price(property.tenant_charge_price ?? '0'),
             caption: t('price_margin_caption', {
               amount: formatMoney(margin, currency),
               pct: marginPct,
@@ -306,8 +325,8 @@ export function PropertyRecordPanel(props: {
 
       {agreement ? (
         <OwnerAgreementCard
-          initials={initialsOf(property.owner_name)}
-          ownerLine={`${property.owner_name} ${t('owner_suffix')}`}
+          initials={initialsOf(property.owner_name ?? '—')}
+          ownerLine={`${property.owner_name ?? '—'} ${t('owner_suffix')}`}
           detailLine={t('agreement_detail', {
             number: agreement.agreement_number,
             rate: agreement.commission_rate,
@@ -317,8 +336,8 @@ export function PropertyRecordPanel(props: {
         />
       ) : (
         <OwnerAgreementCard
-          initials={initialsOf(property.owner_name)}
-          ownerLine={`${property.owner_name} ${t('owner_suffix')}`}
+          initials={initialsOf(property.owner_name ?? '—')}
+          ownerLine={`${property.owner_name ?? '—'} ${t('owner_suffix')}`}
           detailLine={t('no_agreement')}
         />
       )}

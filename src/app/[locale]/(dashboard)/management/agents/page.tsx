@@ -17,6 +17,7 @@ import { formatMoney } from '@/components/management/format';
 import { KpiCard } from '@/components/management/KpiStrip';
 import type { KpiItem } from '@/components/management/KpiStrip';
 import { ManagementPageHeader } from '@/components/management/ManagementPageHeader';
+import { AgentsMobileView } from '@/components/management/mobile/AgentsMobileView';
 import { AgentRecordPanel } from '@/components/management/record-panel/AgentRecordPanel';
 import { EmptyState } from '@/components/management/states/EmptyState';
 import { ErrorState } from '@/components/management/states/ErrorState';
@@ -34,6 +35,7 @@ import type { ChipFilter } from '@/components/management/workbench/WorkbenchTool
 import { Button } from '@/components/ui/button';
 import { usePaginatedResource } from '@/hooks/management/usePaginatedResource';
 import { useRowSelection } from '@/hooks/management/useRowSelection';
+import { useIsMobile } from '@/hooks/use-mobile';
 import {
   exportAgentsCsv,
   getAgentKpis,
@@ -170,6 +172,7 @@ function buildAgentKpis(
  */
 export default function ManagementAgentsPage() {
   const t = useTranslations('Management');
+  const isMobile = useIsMobile();
 
   const resource = usePaginatedResource<AgentOutput>(
     async ({ page, query }) =>
@@ -324,41 +327,43 @@ export default function ManagementAgentsPage() {
     />
   );
 
-  let body: React.ReactNode;
-  if (resource.error) {
-    body = (
-      <ErrorState
-        title={t('error_title')}
-        message={t('agt_error')}
-        retryLabel={t('retry')}
-        onRetry={resource.refetch}
-      />
-    );
-  } else if (resource.isLoading) {
-    body = <WorkbenchTableSkeleton />;
-  } else if (rows.length === 0) {
-    body = hasQuery ? (
-      <FilteredEmptyState
-        title={t('no_matches')}
-        description={t('no_matches_desc')}
-        clearLabel={t('clear_filters')}
-        onClear={clearAll}
-      />
-    ) : (
-      <EmptyState
-        icon={Handshake}
-        title={t('agt_empty')}
-        description={t('agt_empty_desc')}
-        action={
-          <Button className="h-9 gap-2 rounded-[10px]" onClick={() => setNewOpen(true)}>
-            <Plus className="size-4" />
-            {t('agt_new_agent')}
-          </Button>
-        }
-      />
-    );
-  } else {
-    body = (
+  const body = ((): React.ReactNode => {
+    if (resource.error) {
+      return (
+        <ErrorState
+          title={t('error_title')}
+          message={t('agt_error')}
+          retryLabel={t('retry')}
+          onRetry={resource.refetch}
+        />
+      );
+    }
+    if (resource.isLoading) {
+      return <WorkbenchTableSkeleton />;
+    }
+    if (rows.length === 0) {
+      return hasQuery ? (
+        <FilteredEmptyState
+          title={t('no_matches')}
+          description={t('no_matches_desc')}
+          clearLabel={t('clear_filters')}
+          onClear={clearAll}
+        />
+      ) : (
+        <EmptyState
+          icon={Handshake}
+          title={t('agt_empty')}
+          description={t('agt_empty_desc')}
+          action={
+            <Button className="h-9 gap-2 rounded-[10px]" onClick={() => setNewOpen(true)}>
+              <Plus className="size-4" />
+              {t('agt_new_agent')}
+            </Button>
+          }
+        />
+      );
+    }
+    return (
       <WorkbenchTable
         columns={columns}
         rows={rows}
@@ -375,9 +380,64 @@ export default function ManagementAgentsPage() {
         labels={{ selectAll: t('select_all'), selectRow: t('select_row') }}
       />
     );
-  }
+  })();
 
   const showPagination = !resource.isLoading && !resource.error && rows.length > 0;
+
+  const agentRecord = (
+    <AgentRecordPanel
+      agent={selected}
+      open={Boolean(selected)}
+      onClose={() => setSelected(null)}
+      onRecordDeal={() => selected && setRecordTarget(selected)}
+      onEdit={() => selected && setEditTarget(selected)}
+      statusLabel={statusLabel}
+      isTopAgent={isTopAgentSelected(selected, kpis)}
+    />
+  );
+
+  const dialogs = (
+    <>
+      <RecordDealDialog
+        agent={recordTarget}
+        open={Boolean(recordTarget)}
+        onOpenChange={(open) => !open && setRecordTarget(null)}
+        onSuccess={resource.refetch}
+      />
+      <NewAgentDialog open={newOpen} onOpenChange={setNewOpen} onSuccess={resource.refetch} />
+      <EditAgentDialog
+        agent={editTarget}
+        open={Boolean(editTarget)}
+        onOpenChange={(open) => !open && setEditTarget(null)}
+        onSuccess={resource.refetch}
+      />
+    </>
+  );
+
+  if (isMobile) {
+    return (
+      <>
+        <AgentsMobileView
+          t={t}
+          title={t('agents')}
+          subtitle={t('agt_subtitle', { count: counts?.all ?? resource.total })}
+          searchPlaceholder={t('agt_search')}
+          rows={rows}
+          chips={savedViews.map((v) => ({ id: v.id, label: v.label, count: v.count }))}
+          activeChip={view}
+          onChip={(next) => resource.patchQuery(queryForView(next))}
+          search={search}
+          onSearch={setSearch}
+          statusLabel={statusLabel}
+          onOpen={setSelected}
+          record={selected ? agentRecord : undefined}
+          onCloseRecord={() => setSelected(null)}
+          empty={body}
+        />
+        {dialogs}
+      </>
+    );
+  }
 
   return (
     <>
@@ -478,17 +538,7 @@ export default function ManagementAgentsPage() {
             />
           ) : undefined
         }
-        panel={
-          <AgentRecordPanel
-            agent={selected}
-            open={Boolean(selected)}
-            onClose={() => setSelected(null)}
-            onRecordDeal={() => selected && setRecordTarget(selected)}
-            onEdit={() => selected && setEditTarget(selected)}
-            statusLabel={statusLabel}
-            isTopAgent={isTopAgentSelected(selected, kpis)}
-          />
-        }
+        panel={agentRecord}
         bulkBar={
           <BulkSelectionBar
             open={selection.count > 0}
@@ -512,20 +562,7 @@ export default function ManagementAgentsPage() {
       >
         {body}
       </WorkbenchShell>
-
-      <RecordDealDialog
-        agent={recordTarget}
-        open={Boolean(recordTarget)}
-        onOpenChange={(open) => !open && setRecordTarget(null)}
-        onSuccess={resource.refetch}
-      />
-      <NewAgentDialog open={newOpen} onOpenChange={setNewOpen} onSuccess={resource.refetch} />
-      <EditAgentDialog
-        agent={editTarget}
-        open={Boolean(editTarget)}
-        onOpenChange={(open) => !open && setEditTarget(null)}
-        onSuccess={resource.refetch}
-      />
+      {dialogs}
     </>
   );
 }

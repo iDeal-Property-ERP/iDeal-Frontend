@@ -209,3 +209,113 @@ export function payoutStatusTone(status: string): PillTone {
   }
   return 'neutral';
 }
+
+/**
+ * Maps a maintenance priority to a pill tone (critical→danger, high→warning,
+ * medium→info, low→neutral). Priority is color + label, never color alone.
+ * @param priority - The backend priority (low/medium/high/critical).
+ * @returns The matching pill tone.
+ */
+export function priorityTone(priority: string): PillTone {
+  const p = priority.toLowerCase();
+  if (p === 'critical') {
+    return 'danger';
+  }
+  if (p === 'high') {
+    return 'warning';
+  }
+  if (p === 'medium') {
+    return 'info';
+  }
+  return 'neutral';
+}
+
+/**
+ * Maps a maintenance service-request status to a pill tone (open→danger,
+ * in_progress→info, resolved→success, cancelled→neutral).
+ * @param status - The backend service-request status.
+ * @returns The matching pill tone.
+ */
+export function serviceRequestStatusTone(status: string): PillTone {
+  const s = status.toLowerCase();
+  if (s === 'open') {
+    return 'danger';
+  }
+  if (s === 'in_progress') {
+    return 'info';
+  }
+  if (s === 'resolved') {
+    return 'success';
+  }
+  return 'neutral';
+}
+
+/**
+ * Maps a lead status to a pill tone. Viewing (pending→info, confirmed→success)
+ * and booking (requested→info, approved→accent, converted→success,
+ * rejected/cancelled→neutral) share one mapper.
+ * @param status - The backend viewing/booking status.
+ * @returns The matching pill tone.
+ */
+export function leadStatusTone(status: string): PillTone {
+  const s = status.toLowerCase();
+  if (s === 'confirmed' || s === 'converted') {
+    return 'success';
+  }
+  if (s === 'approved') {
+    return 'accent';
+  }
+  if (s === 'pending' || s === 'requested') {
+    return 'info';
+  }
+  if (s === 'rejected') {
+    return 'danger';
+  }
+  return 'neutral';
+}
+
+/**
+ * Maps an onboarding status to a pill tone (submitted→info,
+ * offer_accepted→accent, approved→success, rejected→danger).
+ * @param status - The backend onboarding status.
+ * @returns The matching pill tone.
+ */
+export function onboardingStatusTone(status: string): PillTone {
+  const s = status.toLowerCase();
+  if (s === 'approved') {
+    return 'success';
+  }
+  if (s === 'offer_accepted') {
+    return 'accent';
+  }
+  if (s === 'submitted') {
+    return 'info';
+  }
+  if (s === 'rejected') {
+    return 'danger';
+  }
+  return 'neutral';
+}
+
+/**
+ * Maps a VAS order status to a pill tone (requested→info "New",
+ * confirmed→accent, in_progress→warning, completed→success, cancelled→neutral).
+ * @param status - The backend VAS order status.
+ * @returns The matching pill tone.
+ */
+export function vasOrderStatusTone(status: string): PillTone {
+  const s = status.toLowerCase();
+  if (s === 'completed') {
+    return 'success';
+  }
+  if (s === 'in_progress') {
+    return 'warning';
+  }
+  if (s === 'confirmed') {
+    return 'accent';
+  }
+  if (s === 'requested') {
+    return 'info';
+  }
+  return 'neutral';
+}

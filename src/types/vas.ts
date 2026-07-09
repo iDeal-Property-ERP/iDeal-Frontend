@@ -31,8 +31,12 @@ export type ServiceOrderOutput = {
   id: number;
   catalog_item_id: number;
   catalog_item_name: string;
+  service_type: VASServiceType;
+  partner_name: string | null;
   tenant_id: number;
+  tenant_name: string;
   property_id: number;
+  property_name: string;
   lease_id: number | null;
   status: VASOrderStatus;
   cost: string;
@@ -41,6 +45,42 @@ export type ServiceOrderOutput = {
   cashback_amount: string;
   scheduled_for: string | null;
   notes: string | null;
+  cancellation_reason: string | null;
+  completed_at: string | null;
   created_at: string;
   updated_at: string;
+};
+
+export type ServiceOrderCreatePayload = {
+  catalog_item_id: number;
+  tenant_id: number;
+  property_id: number;
+  lease_id?: number;
+  cost?: string;
+  scheduled_for?: string;
+  notes?: string;
+};
+
+export type VasOrderStats = {
+  new: number;
+  revenue_30d: string;
+  commission_30d: string;
+  catalog_count: number;
+  partners_count: number;
+  counts: {
+    requested: number;
+    confirmed: number;
+    in_progress: number;
+    completed: number;
+    cancelled: number;
+    all: number;
+  };
+};
+
+export type VasPartnerRow = {
+  partner_name: string;
+  service_types: VASServiceType[];
+  services_count: number;
+  orders_total: number;
+  commission_30d: string;
 };

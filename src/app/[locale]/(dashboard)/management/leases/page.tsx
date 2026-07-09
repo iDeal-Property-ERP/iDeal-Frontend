@@ -16,6 +16,7 @@ import { formatMoney } from '@/components/management/format';
 import { KpiCard } from '@/components/management/KpiStrip';
 import type { KpiItem } from '@/components/management/KpiStrip';
 import { ManagementPageHeader } from '@/components/management/ManagementPageHeader';
+import { LeasesMobileView } from '@/components/management/mobile/LeasesMobileView';
 import {
   LeaseRecordPanel,
   TenantCell,
@@ -36,6 +37,7 @@ import type { ChipFilter } from '@/components/management/workbench/WorkbenchTool
 import { Button } from '@/components/ui/button';
 import { usePaginatedResource } from '@/hooks/management/usePaginatedResource';
 import { useRowSelection } from '@/hooks/management/useRowSelection';
+import { useIsMobile } from '@/hooks/use-mobile';
 import {
   exportLeasesCsv,
   getLeaseKpis,
@@ -45,6 +47,31 @@ import {
 } from '@/libs/management/leasesAdapter';
 import type { LeaseKpis, LeaseStatusCounts } from '@/libs/management/leasesAdapter';
 import type { ManagementLeaseOutput } from '@/types/management';
+
+type LeaseTranslator = ReturnType<typeof useTranslations<'Management'>>;
+
+/**
+ * Localizes a lease status (active/renewed/terminated/expired).
+ * @param t - The translator.
+ * @param value - The backend status.
+ * @returns The localized label.
+ */
+function leaseStatusLabelOf(t: LeaseTranslator, value: string): string {
+  const s = value.toLowerCase();
+  if (s === 'active') {
+    return t('lease_status_active');
+  }
+  if (s === 'renewed') {
+    return t('lease_status_renewed');
+  }
+  if (s === 'terminated') {
+    return t('lease_status_terminated');
+  }
+  if (s === 'expired') {
+    return t('lease_status_expired');
+  }
+  return value.replaceAll('_', ' ');
+}
 
 const SAVED_VIEW_DEFS = [
   { id: 'expiring', labelKey: 'lease_view_expiring', countKey: 'expiring' },
@@ -176,6 +203,7 @@ function filterAndSortLeases(
  */
 export default function ManagementLeasesPage() {
   const t = useTranslations('Management');
+  const isMobile = useIsMobile();
 
   const resource = usePaginatedResource<ManagementLeaseOutput>(
     async ({ page, query }) =>
@@ -225,22 +253,7 @@ export default function ManagementLeasesPage() {
     };
   }, [search]);
 
-  const statusLabel = (value: string): string => {
-    const s = value.toLowerCase();
-    if (s === 'active') {
-      return t('lease_status_active');
-    }
-    if (s === 'renewed') {
-      return t('lease_status_renewed');
-    }
-    if (s === 'terminated') {
-      return t('lease_status_terminated');
-    }
-    if (s === 'expired') {
-      return t('lease_status_expired');
-    }
-    return value.replaceAll('_', ' ');
-  };
+  const statusLabel = (value: string): string => leaseStatusLabelOf(t, value);
 
   // Client-side term filter + sort over the loaded page (server fixes ordering).
   const rows = filterAndSortLeases(resource.data, termFilter, sort);
@@ -411,41 +424,43 @@ export default function ManagementLeasesPage() {
     />
   );
 
-  let body: React.ReactNode;
-  if (resource.error) {
-    body = (
-      <ErrorState
-        title={t('error_title')}
-        message={t('lease_error')}
-        retryLabel={t('retry')}
-        onRetry={resource.refetch}
-      />
-    );
-  } else if (resource.isLoading) {
-    body = <WorkbenchTableSkeleton />;
-  } else if (rows.length === 0) {
-    body = hasQuery ? (
-      <FilteredEmptyState
-        title={t('no_matches')}
-        description={t('no_matches_desc')}
-        clearLabel={t('clear_filters')}
-        onClear={clearAll}
-      />
-    ) : (
-      <EmptyState
-        icon={FileText}
-        title={t('lease_empty')}
-        description={t('lease_empty_desc')}
-        action={
-          <Button className="h-9 gap-2 rounded-[10px]" onClick={() => setNewOpen(true)}>
-            <Plus className="size-4" />
-            {t('new_lease')}
-          </Button>
-        }
-      />
-    );
-  } else {
-    body = (
+  const body = ((): React.ReactNode => {
+    if (resource.error) {
+      return (
+        <ErrorState
+          title={t('error_title')}
+          message={t('lease_error')}
+          retryLabel={t('retry')}
+          onRetry={resource.refetch}
+        />
+      );
+    }
+    if (resource.isLoading) {
+      return <WorkbenchTableSkeleton />;
+    }
+    if (rows.length === 0) {
+      return hasQuery ? (
+        <FilteredEmptyState
+          title={t('no_matches')}
+          description={t('no_matches_desc')}
+          clearLabel={t('clear_filters')}
+          onClear={clearAll}
+        />
+      ) : (
+        <EmptyState
+          icon={FileText}
+          title={t('lease_empty')}
+          description={t('lease_empty_desc')}
+          action={
+            <Button className="h-9 gap-2 rounded-[10px]" onClick={() => setNewOpen(true)}>
+              <Plus className="size-4" />
+              {t('new_lease')}
+            </Button>
+          }
+        />
+      );
+    }
+    return (
       <WorkbenchTable
         columns={columns}
         rows={rows}
@@ -462,9 +477,66 @@ export default function ManagementLeasesPage() {
         labels={{ selectAll: t('select_all'), selectRow: t('select_row') }}
       />
     );
-  }
+  })();
 
   const showPagination = !resource.isLoading && !resource.error && rows.length > 0;
+
+  const leaseRecord = (
+    <LeaseRecordPanel
+      lease={selected}
+      open={Boolean(selected)}
+      onClose={() => setSelected(null)}
+      onRenew={() => selected && setRenewTarget(selected)}
+      onTerminate={() => selected && setTerminateTarget(selected)}
+      statusLabel={statusLabel}
+    />
+  );
+
+  const dialogs = (
+    <>
+      <NewLeaseDialog open={newOpen} onOpenChange={setNewOpen} onSuccess={resource.refetch} />
+      <RenewLeaseDialog
+        lease={renewTarget}
+        open={Boolean(renewTarget)}
+        onOpenChange={(open) => !open && setRenewTarget(null)}
+        onSuccess={resource.refetch}
+      />
+      <TerminateLeaseDialog
+        lease={terminateTarget}
+        open={Boolean(terminateTarget)}
+        onOpenChange={(open) => !open && setTerminateTarget(null)}
+        onSuccess={resource.refetch}
+      />
+    </>
+  );
+
+  if (isMobile) {
+    return (
+      <>
+        <LeasesMobileView
+          t={t}
+          title={t('leases')}
+          subtitle={t('lease_subtitle', {
+            active: counts?.active ?? resource.total,
+            expiring: counts?.expiring ?? 0,
+          })}
+          searchPlaceholder={t('lease_search')}
+          rows={rows}
+          chips={savedViews.map((v) => ({ id: v.id, label: v.label, count: v.count }))}
+          activeChip={view}
+          onChip={(next) => resource.patchQuery(queryForView(next))}
+          search={search}
+          onSearch={(value) => resource.patchQuery({ search: value || undefined })}
+          statusLabel={statusLabel}
+          onOpen={setSelected}
+          record={selected ? leaseRecord : undefined}
+          onCloseRecord={() => setSelected(null)}
+          empty={body}
+        />
+        {dialogs}
+      </>
+    );
+  }
 
   return (
     <>
@@ -573,16 +645,7 @@ export default function ManagementLeasesPage() {
             />
           ) : undefined
         }
-        panel={
-          <LeaseRecordPanel
-            lease={selected}
-            open={Boolean(selected)}
-            onClose={() => setSelected(null)}
-            onRenew={() => selected && setRenewTarget(selected)}
-            onTerminate={() => selected && setTerminateTarget(selected)}
-            statusLabel={statusLabel}
-          />
-        }
+        panel={leaseRecord}
         bulkBar={
           <BulkSelectionBar
             open={selection.count > 0}
@@ -606,20 +669,7 @@ export default function ManagementLeasesPage() {
       >
         {body}
       </WorkbenchShell>
-
-      <NewLeaseDialog open={newOpen} onOpenChange={setNewOpen} onSuccess={resource.refetch} />
-      <RenewLeaseDialog
-        lease={renewTarget}
-        open={Boolean(renewTarget)}
-        onOpenChange={(open) => !open && setRenewTarget(null)}
-        onSuccess={resource.refetch}
-      />
-      <TerminateLeaseDialog
-        lease={terminateTarget}
-        open={Boolean(terminateTarget)}
-        onOpenChange={(open) => !open && setTerminateTarget(null)}
-        onSuccess={resource.refetch}
-      />
+      {dialogs}
     </>
   );
 }
