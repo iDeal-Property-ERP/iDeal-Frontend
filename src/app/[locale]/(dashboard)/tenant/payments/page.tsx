@@ -34,7 +34,10 @@ export default function TenantPaymentsPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [amount, setAmount] = useState('');
-  const [method, setMethod] = useState<PaymentMethod>('online');
+  // Online gateways (Click/Payme/Uzum) are not wired yet — a submitted payment is
+  // recorded as pending for the manager to confirm, so we only offer the methods
+  // that reflect that reality (cash / bank transfer).
+  const [method, setMethod] = useState<PaymentMethod>('cash');
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -78,7 +81,7 @@ export default function TenantPaymentsPage() {
         method: 'POST',
         body: { amount: amount || undefined, method },
       });
-      setMessage(t('pay_rent_success'));
+      setMessage(t('payment_recorded_pending'));
       setShowForm(false);
       await fetchData(1);
       setPage(1);
@@ -90,14 +93,14 @@ export default function TenantPaymentsPage() {
   }
 
   const columns: ColumnDef<TenantPaymentOutput>[] = [
-    { accessorKey: 'amount', header: 'Amount' },
-    { accessorKey: 'currency', header: 'Currency' },
-    { accessorKey: 'payment_date', header: 'Paid On' },
-    { accessorKey: 'due_date', header: 'Due Date' },
-    { accessorKey: 'method', header: 'Method' },
+    { accessorKey: 'amount', header: t('col_amount') },
+    { accessorKey: 'currency', header: t('col_currency') },
+    { accessorKey: 'payment_date', header: t('col_paid_on') },
+    { accessorKey: 'due_date', header: t('col_due_date') },
+    { accessorKey: 'method', header: t('col_method') },
     {
       accessorKey: 'status',
-      header: 'Status',
+      header: t('col_status'),
       cell: ({ row }) => (
         <Badge variant={paymentStatusVariant(row.original.status)}>{row.original.status}</Badge>
       ),
@@ -128,57 +131,59 @@ export default function TenantPaymentsPage() {
       {message ? <p className="mb-4 text-sm text-muted-foreground">{message}</p> : null}
 
       {showForm ? (
-        <div className="mb-6 flex flex-col gap-4 rounded-lg border border-border bg-card p-4 sm:flex-row sm:items-end">
-          <div className="flex-1">
-            <div className="grid gap-1.5">
-              <Label htmlFor="pay_amount">{t('pay_rent_amount')}</Label>
-              <Input
-                id="pay_amount"
-                type="number"
-                inputMode="decimal"
-                value={amount}
-                placeholder="0.00"
-                onChange={(e) => {
-                  setAmount(e.target.value);
-                }}
-              />
+        <div className="mb-6 rounded-lg border border-border bg-card p-4">
+          <p className="mb-4 text-sm text-muted-foreground">{t('pay_rent_pending_note')}</p>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+            <div className="flex-1">
+              <div className="grid gap-1.5">
+                <Label htmlFor="pay_amount">{t('pay_rent_amount')}</Label>
+                <Input
+                  id="pay_amount"
+                  type="number"
+                  inputMode="decimal"
+                  value={amount}
+                  placeholder="0.00"
+                  onChange={(e) => {
+                    setAmount(e.target.value);
+                  }}
+                />
+              </div>
             </div>
-          </div>
-          <div className="flex-1">
-            <div className="grid gap-1.5">
-              <Label htmlFor="pay_method">{t('pay_rent_method')}</Label>
-              <Select
-                value={method}
-                onValueChange={(v) => {
-                  setMethod(v as PaymentMethod);
-                }}
-              >
-                <SelectTrigger id="pay_method">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="online">online</SelectItem>
-                  <SelectItem value="cash">cash</SelectItem>
-                  <SelectItem value="bank_transfer">bank_transfer</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="flex-1">
+              <div className="grid gap-1.5">
+                <Label htmlFor="pay_method">{t('pay_rent_method')}</Label>
+                <Select
+                  value={method}
+                  onValueChange={(v) => {
+                    setMethod(v as PaymentMethod);
+                  }}
+                >
+                  <SelectTrigger id="pay_method">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cash">{t('method_cash')}</SelectItem>
+                    <SelectItem value="bank_transfer">{t('method_bank_transfer')}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
+            <Button
+              disabled={submitting}
+              onClick={() => {
+                submitPayment().catch(() => {
+                  void 0;
+                });
+              }}
+            >
+              {submitting ? t('pay_rent_submitting') : t('pay_rent_submit')}
+            </Button>
           </div>
-          <Button
-            disabled={submitting}
-            onClick={() => {
-              submitPayment().catch(() => {
-                void 0;
-              });
-            }}
-          >
-            {submitting ? t('pay_rent_submitting') : t('pay_rent_submit')}
-          </Button>
         </div>
       ) : null}
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">Loading...</p>
+        <p className="text-sm text-muted-foreground">{t('loading')}</p>
       ) : (
         <DataTable
           columns={columns}

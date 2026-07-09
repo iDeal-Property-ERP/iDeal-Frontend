@@ -9,14 +9,46 @@ import { ApiError_ } from '@/libs/api';
  * @param fallback - Message to use when nothing better can be derived.
  * @returns A display message.
  */
+/**
+ * Generic backend envelope messages are hardcoded English strings. Prefer the
+ * caller's localized `fallback` over these so the UI stays in the active locale;
+ * a specific backend message (e.g. an invalid-transition reason) is kept.
+ */
+const GENERIC_BACKEND_MESSAGES = new Set([
+  'Validation error',
+  'Internal server error',
+  'Not found',
+  'Invalid request body',
+  'Data conflict',
+  'Cannot delete',
+  'NOT OK',
+]);
+
 export function getApiErrorMessage(error: unknown, fallback: string): string {
   if (error instanceof ApiError_) {
-    return error.body?.message ?? error.message ?? fallback;
+    const message = error.body?.message;
+    if (message && !GENERIC_BACKEND_MESSAGES.has(message)) {
+      return message;
+    }
+    return fallback;
   }
   if (error instanceof Error && error.message) {
     return error.message;
   }
   return fallback;
+}
+
+/**
+ * Field name from a Pydantic error `loc` tuple, e.g. ["parsed_body","amount"] → "amount".
+ * @param loc - The `loc` value from a Pydantic error item.
+ * @returns The last string segment, or null if not derivable.
+ */
+function fieldFromLoc(loc: unknown): string | null {
+  if (Array.isArray(loc) && loc.length > 0) {
+    const last = loc.at(-1);
+    return typeof last === 'string' ? last : null;
+  }
+  return null;
 }
 
 /**
@@ -34,9 +66,23 @@ export function applyApiError<TForm extends FieldValues>(
 ): void {
   if (error instanceof ApiError_) {
     const raw: unknown = error.body?.error;
-    if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
-      let mappedAny = false;
-      const fields = form.getValues();
+    const fields = form.getValues();
+    let mappedAny = false;
+
+    if (Array.isArray(raw)) {
+      // Pydantic validation errors: [{ loc: [...], msg, type }, ...]
+      for (const item of raw) {
+        if (item && typeof item === 'object') {
+          const { loc, msg } = item as { loc?: unknown; msg?: unknown };
+          const field = fieldFromLoc(loc);
+          if (field && field in fields) {
+            form.setError(field as Path<TForm>, { type: 'server', message: String(msg ?? '') });
+            mappedAny = true;
+          }
+        }
+      }
+    } else if (raw && typeof raw === 'object') {
+      // { field: message } shape.
       for (const [key, message] of Object.entries(raw as Record<string, unknown>)) {
         if (key in fields) {
           form.setError(key as Path<TForm>, {
@@ -46,10 +92,11 @@ export function applyApiError<TForm extends FieldValues>(
           mappedAny = true;
         }
       }
-      if (mappedAny) {
-        toast.error(getApiErrorMessage(error, fallback));
-        return;
-      }
+    }
+
+    if (mappedAny) {
+      toast.error(getApiErrorMessage(error, fallback));
+      return;
     }
   }
   toast.error(getApiErrorMessage(error, fallback));

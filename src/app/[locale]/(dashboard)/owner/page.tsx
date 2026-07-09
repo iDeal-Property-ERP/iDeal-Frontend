@@ -22,18 +22,21 @@ export default function OwnerDashboardPage() {
   const [earnings, setEarnings] = useState<OwnerEarningsOutput | null>(null);
   const [properties, setProperties] = useState<OwnerPropertyOutput[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     Promise.all([
       apiFetch<OwnerEarningsOutput>('/owner/earnings/'),
-      apiFetch<PaginatedData<OwnerPropertyOutput>>('/owner/properties/'),
+      // Must request a page: /owner/properties/ only returns the paginated
+      // { page: { object_list } } shape when a page param is present.
+      apiFetch<PaginatedData<OwnerPropertyOutput>>('/owner/properties/', { query: { page: 1 } }),
     ])
       .then(([e, p]) => {
         setEarnings(e);
         setProperties(p.page.object_list);
       })
       .catch(() => {
-        void 0;
+        setError(true);
       })
       .finally(() => {
         setLoading(false);
@@ -41,15 +44,19 @@ export default function OwnerDashboardPage() {
   }, []);
 
   const propColumns: ColumnDef<OwnerPropertyOutput>[] = [
-    { accessorKey: 'name', header: 'Property' },
-    { accessorKey: 'address', header: 'Address' },
-    { accessorKey: 'status', header: 'Status' },
-    { accessorKey: 'tariff', header: 'Tariff' },
-    { accessorKey: 'vacant_days', header: 'Vacant Days' },
+    { accessorKey: 'name', header: t('col_property') },
+    { accessorKey: 'address', header: t('col_address') },
+    { accessorKey: 'status', header: t('col_status') },
+    { accessorKey: 'tariff', header: t('col_tariff') },
+    { accessorKey: 'vacant_days', header: t('col_vacant_days') },
   ];
 
   if (loading) {
-    return <p className="text-sm text-muted-foreground">Loading...</p>;
+    return <p className="text-sm text-muted-foreground">{t('loading')}</p>;
+  }
+
+  if (error) {
+    return <p className="text-sm text-danger">{t('load_error')}</p>;
   }
 
   return (
@@ -64,29 +71,29 @@ export default function OwnerDashboardPage() {
               router.push('/owner/properties');
             }}
           >
-            All Properties
+            {t('all_properties')}
           </Button>
         }
       />
       {earnings ? (
         <div className="mb-6 grid grid-cols-3 gap-4">
           <StatsCard
-            title="Total Guaranteed"
+            title={t('total_guaranteed')}
             value={`${earnings.total_guaranteed} ${earnings.currency}`}
           />
           <StatsCard
-            title="Total Paid"
+            title={t('total_paid')}
             value={`${earnings.total_paid} ${earnings.currency}`}
             variant="success"
           />
           <StatsCard
-            title="Total Pending"
+            title={t('total_pending')}
             value={`${earnings.total_pending} ${earnings.currency}`}
             variant="warning"
           />
         </div>
       ) : null}
-      <h2 className="mb-4 text-lg font-semibold text-foreground">Your Properties</h2>
+      <h2 className="mb-4 text-lg font-semibold text-foreground">{t('your_properties')}</h2>
       <DataTable
         columns={propColumns}
         data={properties}

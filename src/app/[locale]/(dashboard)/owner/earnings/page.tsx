@@ -31,10 +31,10 @@ export default function OwnerEarningsPage() {
   }, []);
 
   if (loading) {
-    return <p className="text-sm text-muted-foreground">Loading...</p>;
+    return <p className="text-sm text-muted-foreground">{t('loading')}</p>;
   }
   if (!data) {
-    return <p className="text-sm text-danger">Failed to load earnings</p>;
+    return <p className="text-sm text-danger">{t('load_error')}</p>;
   }
 
   return (
@@ -49,26 +49,26 @@ export default function OwnerEarningsPage() {
               router.push('/owner');
             }}
           >
-            Dashboard
+            {t('owner_dashboard')}
           </Button>
         }
       />
       <div className="grid grid-cols-3 gap-4">
         <StatsCard
-          title="Total Guaranteed"
+          title={t('total_guaranteed')}
           value={`${data.total_guaranteed} ${data.currency}`}
-          subtitle="Your contractual minimum"
+          subtitle={t('guaranteed_subtitle')}
         />
         <StatsCard
-          title="Total Paid"
+          title={t('total_paid')}
           value={`${data.total_paid} ${data.currency}`}
-          subtitle="Received payouts"
+          subtitle={t('paid_subtitle')}
           variant="success"
         />
         <StatsCard
-          title="Total Pending"
+          title={t('total_pending')}
           value={`${data.total_pending} ${data.currency}`}
-          subtitle="Awaiting payout"
+          subtitle={t('pending_subtitle')}
           variant="warning"
         />
       </div>

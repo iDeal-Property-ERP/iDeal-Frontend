@@ -2,6 +2,7 @@ import type { OnboardingStatus, Role } from './enums';
 
 export type ManagementOnboardingOutput = {
   id: number;
+  number: string;
   owner_id: number;
   owner_name: string;
   property_id: number;
@@ -14,6 +15,103 @@ export type ManagementOnboardingOutput = {
   ask_price: string;
   created_at: string;
   updated_at: string;
+};
+
+export type ManagementOnboardingDetailOutput = {
+  id: number;
+  number: string;
+  owner_id: number;
+  owner_name: string;
+  owner_phone: string | null;
+  owner_properties_count: number;
+  property_id: number;
+  property_name: string;
+  property_address: string;
+  district_name: string;
+  rooms: number;
+  area_sqm: number;
+  floor: number;
+  total_floors: number | null;
+  tariff: string;
+  status: OnboardingStatus;
+  offer_version: string | null;
+  offer_terms_snapshot: string | null;
+  offer_accepted_at: string | null;
+  review_notes: string | null;
+  generated_agreement_id: number | null;
+  ask_price: string;
+  ask_currency: string;
+  market_min: string | null;
+  market_max: string | null;
+  market_median: string | null;
+  suggested_price: string | null;
+  photos: string[];
+  created_at: string;
+  updated_at: string;
+};
+
+export type OnboardingsStats = {
+  counts: {
+    submitted: number;
+    offer_accepted: number;
+    approved: number;
+    rejected: number;
+    all: number;
+  };
+  open: number;
+};
+
+/** A unified lead row: a viewing request or a booking merged into one shape. */
+export type ManagementLeadOutput = {
+  id: string;
+  type: 'viewing' | 'booking';
+  source_id: number;
+  status: string;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  listing_id: number | null;
+  property_id: number | null;
+  property_name: string;
+  property_address: string | null;
+  property_status: string | null;
+  property_rooms: number | null;
+  property_area_sqm: number | null;
+  property_floor: number | null;
+  property_photo_url: string | null;
+  listing_price: string | null;
+  currency: string | null;
+  preferred_date: string | null;
+  preferred_time: string | null;
+  requested_start_date: string | null;
+  requested_end_date: string | null;
+  monthly_rent_offer: string | null;
+  message: string | null;
+  reviewed_by_name: string | null;
+  converted_lease_id: number | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type LeadsStats = {
+  counts: {
+    new: number;
+    scheduled: number;
+    awaiting: number;
+    closed: number;
+    all: number;
+  };
+  by_type: { viewing: number; booking: number };
+  open: number;
+};
+
+/** Sidebar queue-badge counts (open work per module). */
+export type QueueCounts = {
+  leads: number;
+  onboardings: number;
+  maintenance: number;
+  payments: number;
+  payouts: number;
 };
 
 export type ManagementOnboardingApprovePayload = {
@@ -45,6 +143,10 @@ export type UserOutput = {
 };
 
 export type UserUpdatePayload = {
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phone?: string;
   is_active?: boolean;
   is_verified?: boolean;
   role?: Role;
@@ -54,26 +156,39 @@ export type ManagementPropertyOutput = {
   id: number;
   name: string;
   address: string;
-  district_id: number;
-  district_name: string;
-  rooms: number;
-  area_sqm: number;
-  floor: number;
-  total_floors: number;
-  owner_id: number;
-  owner_name: string;
+  // Nullable: draft properties are saved partially until published (Phase 7).
+  district_id: number | null;
+  district_name: string | null;
+  rooms: number | null;
+  area_sqm: number | null;
+  floor: number | null;
+  total_floors: number | null;
+  owner_id: number | null;
+  owner_name: string | null;
   status: string;
   tariff: string;
-  ask_price: string;
+  ask_price: string | null;
   ask_currency: string;
-  owner_guaranteed_price: string;
-  tenant_charge_price: string;
+  owner_guaranteed_price: string | null;
+  tenant_charge_price: string | null;
   vacant_since: string | null;
   vacant_days: number;
+  map_lat: string | null;
+  map_lon: string | null;
   description: string | null;
   score: string;
   created_at: string;
   updated_at: string;
+};
+
+/**
+ * A portfolio-map row — the full property output plus the map popup enrichment
+ * (active tenant + lease end). A superset of `ManagementPropertyOutput`, so a
+ * marker's row drives the property record panel directly.
+ */
+export type ManagementPropertyMapRow = ManagementPropertyOutput & {
+  tenant_name: string | null;
+  lease_end_date: string | null;
 };
 
 export type ManagementLeaseOutput = {
@@ -201,8 +316,48 @@ export type ManagementServiceRequestOutput = {
   assigned_to_id: number | null;
   assigned_to_name: string | null;
   cost: string | null;
+  cost_bearer: string | null;
+  resolution_notes: string | null;
+  resolved_at: string | null;
+  photos_count: number;
+  photo_urls: string[];
   created_at: string;
   updated_at: string;
+};
+
+export type MaintenanceStats = {
+  open: number;
+  open_unassigned: number;
+  in_progress: number;
+  in_progress_avg_age_days: number;
+  resolved_30d: number;
+  resolved_30d_avg_days: number;
+  cost_30d_total: string;
+  cost_30d_owner: string;
+  cost_30d_platform: string;
+  counts: { open: number; in_progress: number; resolved: number; all: number };
+};
+
+export type ServiceRequestComment = {
+  id: number;
+  author_id: number | null;
+  author_name: string | null;
+  body: string;
+  created_at: string;
+};
+
+export type ServiceRequestCreatePayload = {
+  property_id: number;
+  tenant_id: number;
+  title: string;
+  description: string;
+  priority: string;
+};
+
+export type ServiceRequestResolvePayload = {
+  cost: string;
+  resolution_notes: string;
+  cost_bearer?: string;
 };
 
 export type DashboardKpi = {
@@ -274,6 +429,23 @@ export type PnlBarItem = {
   revenue: string;
 };
 
+export type PnlBreakdownRow = {
+  source: string;
+  amount: string;
+  share: string;
+};
+
+export type PnlServiceTypeRow = {
+  service_type: string;
+  amount: string;
+};
+
+export type PnlBreakdown = {
+  revenue: PnlBreakdownRow[];
+  expenses: PnlBreakdownRow[];
+  vas_by_service_type: PnlServiceTypeRow[];
+};
+
 export type PnlOutput = {
   summary: {
     gross_revenue: string;
@@ -292,6 +464,11 @@ export type PnlOutput = {
     property_count: number;
     scaled_50: string;
   };
+  // Phase 6 — additive; present on the current backend, optional for safety.
+  year?: number;
+  currency?: string;
+  sources?: string[];
+  breakdown?: PnlBreakdown;
 };
 
 export type PortfolioMapProperties = {

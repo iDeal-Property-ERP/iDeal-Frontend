@@ -45,6 +45,7 @@ export function InviteUserDialog(props: {
   const [phone, setPhone] = useState('');
   const [role, setRole] = useState<Role>('tenant');
   const [busy, setBusy] = useState(false);
+  const [tempPassword, setTempPassword] = useState<string | null>(null);
 
   const roleLabel = (value: string): string => t(`usr_role_${value}` as 'usr_role_mgmt');
 
@@ -55,7 +56,7 @@ export function InviteUserDialog(props: {
     }
     setBusy(true);
     try {
-      await inviteUser({
+      const result = await inviteUser({
         first_name: firstName,
         last_name: lastName || undefined,
         email,
@@ -64,13 +65,47 @@ export function InviteUserDialog(props: {
       });
       toast.success(t('usr_invited'));
       props.onSuccess();
-      props.onOpenChange(false);
+      // Show the one-time temporary password for the manager to relay; the user
+      // must change it on first login.
+      setTempPassword(result.temporary_password);
     } catch {
       toast.error(t('usr_invite_failed'));
     } finally {
       setBusy(false);
     }
   };
+
+  const close = () => {
+    setTempPassword(null);
+    setFirstName('');
+    setLastName('');
+    setEmail('');
+    setPhone('');
+    setRole('tenant');
+    props.onOpenChange(false);
+  };
+
+  if (tempPassword) {
+    return (
+      <Dialog open={props.open} onOpenChange={close}>
+        <DialogContent className="sm:max-w-[460px]">
+          <DialogHeader>
+            <DialogTitle>{t('usr_invited')}</DialogTitle>
+            <DialogDescription>{t('usr_temp_password_desc')}</DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-2">
+            <Label>{t('usr_temp_password')}</Label>
+            <code className="rounded-md border border-border bg-muted px-3 py-2 font-mono text-sm text-foreground select-all">
+              {tempPassword}
+            </code>
+          </div>
+          <DialogFooter>
+            <Button onClick={close}>{t('usr_done')}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={props.open} onOpenChange={props.onOpenChange}>
@@ -159,6 +194,10 @@ export function EditUserDialog(props: {
 }) {
   const t = useTranslations('Management');
   const { user } = props;
+  const [firstName, setFirstName] = useState(user?.first_name ?? '');
+  const [lastName, setLastName] = useState(user?.last_name ?? '');
+  const [email, setEmail] = useState(user?.email ?? '');
+  const [phone, setPhone] = useState(user?.phone ?? '');
   const [role, setRole] = useState<Role>(user?.role ?? 'tenant');
   const [isVerified, setIsVerified] = useState(user?.is_verified ?? false);
   const [isActive, setIsActive] = useState(user?.is_active ?? true);
@@ -171,9 +210,21 @@ export function EditUserDialog(props: {
   const roleLabel = (value: string): string => t(`usr_role_${value}` as 'usr_role_mgmt');
 
   const submit = async () => {
+    if (!firstName || !email) {
+      toast.error(t('dialog_fill_required'));
+      return;
+    }
     setBusy(true);
     try {
-      await updateUser(user.id, { role, is_verified: isVerified, is_active: isActive });
+      await updateUser(user.id, {
+        first_name: firstName,
+        last_name: lastName || undefined,
+        email,
+        phone: phone || undefined,
+        role,
+        is_verified: isVerified,
+        is_active: isActive,
+      });
       toast.success(t('usr_updated'));
       props.onSuccess();
       props.onOpenChange(false);
@@ -194,6 +245,42 @@ export function EditUserDialog(props: {
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="edit-user-first">{t('usr_field_first_name')} *</Label>
+              <Input
+                id="edit-user-first"
+                value={firstName}
+                onChange={(event) => setFirstName(event.target.value)}
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="edit-user-last">{t('usr_field_last_name')}</Label>
+              <Input
+                id="edit-user-last"
+                value={lastName}
+                onChange={(event) => setLastName(event.target.value)}
+              />
+            </div>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="edit-user-email">{t('usr_field_email')} *</Label>
+            <Input
+              id="edit-user-email"
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="edit-user-phone">{t('usr_field_phone')}</Label>
+            <Input
+              id="edit-user-phone"
+              inputMode="tel"
+              value={phone}
+              onChange={(event) => setPhone(event.target.value)}
+            />
+          </div>
           <div className="flex flex-col gap-1.5">
             <Label>{t('usr_field_role')}</Label>
             <Select value={role} onValueChange={(value) => setRole(value as Role)}>

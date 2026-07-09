@@ -95,8 +95,10 @@ export async function getUserRoleCounts(search?: string): Promise<UserRoleCounts
  * @param payload - The invite fields (name, email, role, …).
  * @returns The created user id.
  */
-export async function inviteUser(payload: UserInvitePayload): Promise<{ id: number }> {
-  return await apiFetch<{ id: number }>('/management/users/invite/', {
+export async function inviteUser(
+  payload: UserInvitePayload,
+): Promise<{ id: number; temporary_password: string }> {
+  return await apiFetch<{ id: number; temporary_password: string }>('/management/users/invite/', {
     method: 'POST',
     body: payload,
   });

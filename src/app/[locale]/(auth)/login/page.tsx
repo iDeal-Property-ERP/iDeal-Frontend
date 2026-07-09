@@ -10,6 +10,7 @@ import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { TextField } from '@/components/ui/form-fields';
+import { ApiError_ } from '@/libs/api';
 import { useAuth, roleDashboardMap } from '@/libs/auth';
 import { useRouter } from '@/libs/I18nNavigation';
 
@@ -35,7 +36,8 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      router.push(roleDashboardMap[user.role]);
+      // Invited users on a temporary password must set their own first.
+      router.push(user.must_change_password ? '/set-password' : roleDashboardMap[user.role]);
     }
   }, [isAuthenticated, user, router]);
 
@@ -44,7 +46,11 @@ export default function LoginPage() {
     try {
       await login(data);
     } catch (error) {
-      const message = error instanceof Error ? error.message : t('unknown_error');
+      // Show a localized message instead of the backend's English string.
+      const message =
+        error instanceof ApiError_ && error.status === 401
+          ? t('invalid_credentials')
+          : t('unknown_error');
       setServerError(message);
     }
   });
@@ -83,10 +89,6 @@ export default function LoginPage() {
           </Button>
         </form>
       </Form>
-
-      <p className="mt-4 text-center">
-        <span className="text-sm text-muted-foreground">{t('forgot_password')}</span>
-      </p>
     </div>
   );
 }

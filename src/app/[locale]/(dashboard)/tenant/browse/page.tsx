@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { apiFetch } from '@/libs/api';
+import type { PaginatedData } from '@/types/api';
 import type { ListingOutput } from '@/types/marketplace';
 
 /**
@@ -21,14 +22,20 @@ export default function BrowseHomesPage() {
   const [start, setStart] = useState('');
   const [end, setEnd] = useState('');
   const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
+    setError(false);
     try {
-      const data = await apiFetch<ListingOutput[]>('/marketplace/listings/');
-      setListings(data);
+      // /marketplace/listings/ always returns the paginated shape; it is never
+      // a bare array. Read the object_list off the page.
+      const data = await apiFetch<PaginatedData<ListingOutput>>('/marketplace/listings/', {
+        query: { page: 1 },
+      });
+      setListings(data.page.object_list);
     } catch {
-      void 0;
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -69,17 +76,17 @@ export default function BrowseHomesPage() {
       />
       {message ? <p className="mb-4 text-sm text-muted-foreground">{message}</p> : null}
 
-      {loading ? (
-        <p className="text-sm text-muted-foreground">Loading...</p>
-      ) : (
+      {loading ? <p className="text-sm text-muted-foreground">{t('loading')}</p> : null}
+      {!loading && error ? <p className="text-sm text-danger">{t('load_error')}</p> : null}
+      {!loading && !error ? (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {listings.map((listing) => (
             <div key={listing.id} className="rounded-xl border border-border bg-card p-6 shadow-sm">
               <h2 className="text-lg font-semibold text-foreground">{listing.property.name}</h2>
               <p className="text-sm text-muted-foreground">{listing.property.address}</p>
               <div className="mt-3 flex gap-4 text-sm text-muted-foreground">
-                <span>{listing.property.rooms} rooms</span>
-                <span>{listing.property.area_sqm} m²</span>
+                <span>{t('rooms_count', { count: listing.property.rooms })}</span>
+                <span>{t('area_sqm', { value: listing.property.area_sqm })}</span>
               </div>
               <p className="mt-3 text-lg font-bold text-foreground">
                 {listing.listed_price} {listing.property.ask_currency}
@@ -148,7 +155,7 @@ export default function BrowseHomesPage() {
             <p className="text-sm text-muted-foreground">{t('browse_no_listings')}</p>
           ) : null}
         </div>
-      )}
+      ) : null}
     </>
   );
 }

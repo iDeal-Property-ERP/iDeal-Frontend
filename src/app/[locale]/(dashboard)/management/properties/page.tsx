@@ -13,6 +13,7 @@ import { formatMoney } from '@/components/management/format';
 import { KpiCard } from '@/components/management/KpiStrip';
 import type { KpiItem } from '@/components/management/KpiStrip';
 import { ManagementPageHeader } from '@/components/management/ManagementPageHeader';
+import { PropertiesMobileView } from '@/components/management/mobile/PropertiesMobileView';
 import { PropertyRecordPanel } from '@/components/management/record-panel/PropertyRecordPanel';
 import { EmptyState } from '@/components/management/states/EmptyState';
 import { ErrorState } from '@/components/management/states/ErrorState';
@@ -27,6 +28,16 @@ import type { WorkbenchColumn } from '@/components/management/workbench/Workbenc
 import { WorkbenchTableSkeleton } from '@/components/management/workbench/WorkbenchTableSkeleton';
 import { WorkbenchToolbar } from '@/components/management/workbench/WorkbenchToolbar';
 import type { ChipFilter } from '@/components/management/workbench/WorkbenchToolbar';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -36,10 +47,13 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { usePaginatedResource } from '@/hooks/management/usePaginatedResource';
 import { useRowSelection } from '@/hooks/management/useRowSelection';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { useUndoableAction } from '@/hooks/useUndoableAction';
-import { Link } from '@/libs/I18nNavigation';
+import { getApiErrorMessage } from '@/libs/forms';
+import { Link, useRouter } from '@/libs/I18nNavigation';
 import {
   bulkChangeStatus,
+  deleteProperty,
   exportPropertiesCsv,
   getDistricts,
   getStatusCounts,
@@ -71,6 +85,7 @@ const SAVED_VIEW_DEFS = [
   { id: 'vacant', labelKey: 'view_vacant', countKey: 'vacant' },
   { id: 'maintenance', labelKey: 'view_maintenance', countKey: 'maintenance' },
   { id: 'pending', labelKey: 'view_pending', countKey: 'pending_review' },
+  { id: 'draft', labelKey: 'view_draft', countKey: 'draft' },
 ] as const satisfies { id: string; labelKey: string; countKey: keyof StatusCounts }[];
 
 /**
@@ -103,11 +118,11 @@ function viewFromStatus(status: string | undefined): string {
  * @returns The rent as a number, or 0 when unset.
  */
 function rentOf(row: ManagementPropertyOutput): number {
-  const charge = Number.parseFloat(row.tenant_charge_price);
+  const charge = Number.parseFloat(row.tenant_charge_price ?? '');
   if (!Number.isNaN(charge) && charge > 0) {
     return charge;
   }
-  const ask = Number.parseFloat(row.ask_price);
+  const ask = Number.parseFloat(row.ask_price ?? '');
   return Number.isNaN(ask) ? 0 : ask;
 }
 
@@ -229,6 +244,8 @@ function buildKpiItems(
  */
 export default function ManagementPropertiesPage() {
   const t = useTranslations('Management');
+  const isMobile = useIsMobile();
+  const router = useRouter();
 
   const resource = usePaginatedResource<ManagementPropertyOutput>(async ({ page, query }) => {
     const result = await listProperties({
@@ -302,6 +319,9 @@ export default function ManagementPropertiesPage() {
 
   const statusLabel = (value: string): string => {
     const normalized = value.toLowerCase();
+    if (normalized === 'draft') {
+      return t('status_draft');
+    }
     if (/rent|active|occupied/u.test(normalized)) {
       return t('status_rented');
     }
@@ -346,6 +366,27 @@ export default function ManagementPropertiesPage() {
 
   const openRecord = (row: ManagementPropertyOutput) => setSelected(row);
   const closeRecord = () => setSelected(null);
+
+  const [archiveTarget, setArchiveTarget] = useState<ManagementPropertyOutput | null>(null);
+  const [archiving, setArchiving] = useState(false);
+
+  const confirmArchive = async () => {
+    if (!archiveTarget) {
+      return;
+    }
+    setArchiving(true);
+    try {
+      await deleteProperty(archiveTarget.id);
+      toast.success(t('archive_success'));
+      setArchiveTarget(null);
+      resource.refetch();
+    } catch (error) {
+      // e.g. a 409 when the property is still referenced by an agreement/lease.
+      toast.error(getApiErrorMessage(error, t('archive_failed')));
+    } finally {
+      setArchiving(false);
+    }
+  };
 
   const changeStatus = (ids: number[], nextStatus: string) => {
     undo.run({
@@ -444,7 +485,9 @@ export default function ManagementPropertiesPage() {
       width: 96,
       secondary: true,
       cell: (row) => (
-        <span className="text-muted-foreground">{t('rooms_count', { count: row.rooms })}</span>
+        <span className="text-muted-foreground">
+          {row.rooms === null ? '—' : t('rooms_count', { count: row.rooms })}
+        </span>
       ),
     },
     {
@@ -494,7 +537,7 @@ export default function ManagementPropertiesPage() {
             {t('export')}
           </Button>
           <Button asChild className="h-10 gap-2 rounded-[10px] px-4 text-[15px] shadow-sm">
-            <Link href="/properties/new">
+            <Link href="/management/properties/new">
               <Plus className="size-[17px]" />
               {t('add_property')}
             </Link>
@@ -567,6 +610,7 @@ export default function ManagementPropertiesPage() {
   const rowActions = (row: ManagementPropertyOutput) => (
     <RowActions
       onOpen={() => openRecord(row)}
+      onEdit={() => router.push(`/management/properties/${row.id}/edit`)}
       quickClassName="opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
       labels={{ open: t('row_open'), edit: t('row_edit'), more: t('row_more') }}
       menuItems={[
@@ -576,6 +620,12 @@ export default function ManagementPropertiesPage() {
           label: t('row_set_status', { status: statusLabel(value) }),
           onSelect: () => changeStatus([row.id], value),
         })),
+        {
+          id: 'archive',
+          label: t('row_archive'),
+          variant: 'destructive' as const,
+          onSelect: () => setArchiveTarget(row),
+        },
       ]}
     />
   );
@@ -594,7 +644,7 @@ export default function ManagementPropertiesPage() {
       description={t('empty_properties_desc')}
       action={
         <Button asChild className="h-9 gap-2 rounded-[10px]">
-          <Link href="/properties/new">
+          <Link href="/management/properties/new">
             <Plus className="size-4" />
             {t('add_first_property')}
           </Link>
@@ -603,22 +653,24 @@ export default function ManagementPropertiesPage() {
     />
   );
 
-  let body: React.ReactNode;
-  if (resource.error) {
-    body = (
-      <ErrorState
-        title={t('error_title')}
-        message={t('error_properties')}
-        retryLabel={t('retry')}
-        onRetry={resource.refetch}
-      />
-    );
-  } else if (resource.isLoading) {
-    body = <WorkbenchTableSkeleton />;
-  } else if (rows.length === 0) {
-    body = emptyBody;
-  } else {
-    body = (
+  const body = ((): React.ReactNode => {
+    if (resource.error) {
+      return (
+        <ErrorState
+          title={t('error_title')}
+          message={t('error_properties')}
+          retryLabel={t('retry')}
+          onRetry={resource.refetch}
+        />
+      );
+    }
+    if (resource.isLoading) {
+      return <WorkbenchTableSkeleton />;
+    }
+    if (rows.length === 0) {
+      return emptyBody;
+    }
+    return (
       <WorkbenchTable
         columns={columns}
         rows={rows}
@@ -635,7 +687,7 @@ export default function ManagementPropertiesPage() {
         labels={{ selectAll: t('select_all'), selectRow: t('select_row') }}
       />
     );
-  }
+  })();
 
   const showPagination = !resource.isLoading && !resource.error && rows.length > 0;
   const pagination = showPagination ? (
@@ -695,30 +747,96 @@ export default function ManagementPropertiesPage() {
     />
   );
 
-  return (
-    <WorkbenchShell
-      header={header}
-      kpi={kpi}
-      tabs={tabs}
-      toolbar={toolbar}
-      pagination={pagination}
-      panel={
-        <PropertyRecordPanel
-          property={selected}
-          open={Boolean(selected)}
-          onClose={closeRecord}
-          onChangeStatus={(next) => {
-            if (selected) {
-              changeStatus([selected.id], next);
-            }
-          }}
-          statusLabel={statusLabel}
-          tariffLabel={tariffLabel}
-        />
-      }
-      bulkBar={bulkBar}
+  const propertyRecord = (
+    <PropertyRecordPanel
+      property={selected}
+      open={Boolean(selected)}
+      onClose={closeRecord}
+      onChangeStatus={(next) => {
+        if (selected) {
+          changeStatus([selected.id], next);
+        }
+      }}
+      statusLabel={statusLabel}
+      tariffLabel={tariffLabel}
+    />
+  );
+
+  const archiveDialog = (
+    <AlertDialog
+      open={archiveTarget !== null}
+      onOpenChange={(open) => {
+        if (!open) {
+          setArchiveTarget(null);
+        }
+      }}
     >
-      {body}
-    </WorkbenchShell>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{t('archive_title')}</AlertDialogTitle>
+          <AlertDialogDescription>
+            {t('archive_desc', { name: archiveTarget?.name ?? '' })}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={archiving}>{t('cancel')}</AlertDialogCancel>
+          <AlertDialogAction
+            disabled={archiving}
+            onClick={(event) => {
+              event.preventDefault();
+              confirmArchive().catch(() => {
+                // handled via toast in confirmArchive
+              });
+            }}
+          >
+            {t('row_archive')}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+
+  if (isMobile) {
+    return (
+      <>
+        <PropertiesMobileView
+          t={t}
+          title={t('properties')}
+          subtitle={t('properties_subtitle', { count: resource.total })}
+          searchPlaceholder={t('search_properties')}
+          addLabel={t('add_property')}
+          rows={rows}
+          chips={savedViews.map((v) => ({ id: v.id, label: v.label, count: v.count }))}
+          activeChip={view}
+          onChip={(next) => resource.patchQuery({ status: statusForView(next) })}
+          search={search}
+          onSearch={(value) => resource.patchQuery({ search: value || undefined })}
+          statusLabel={statusLabel}
+          onOpen={openRecord}
+          onAdd={() => router.push('/management/properties/new')}
+          record={selected ? propertyRecord : undefined}
+          onCloseRecord={closeRecord}
+          empty={body}
+        />
+        {archiveDialog}
+      </>
+    );
+  }
+
+  return (
+    <>
+      <WorkbenchShell
+        header={header}
+        kpi={kpi}
+        tabs={tabs}
+        toolbar={toolbar}
+        pagination={pagination}
+        panel={propertyRecord}
+        bulkBar={bulkBar}
+      >
+        {body}
+      </WorkbenchShell>
+      {archiveDialog}
+    </>
   );
 }

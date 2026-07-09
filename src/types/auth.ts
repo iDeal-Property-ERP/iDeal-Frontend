@@ -29,6 +29,7 @@ export type AuthUser = {
   role: Role;
   is_active: boolean;
   is_verified: boolean;
+  must_change_password: boolean;
   nationality: string | null;
   is_staff: boolean;
   is_superuser: boolean;

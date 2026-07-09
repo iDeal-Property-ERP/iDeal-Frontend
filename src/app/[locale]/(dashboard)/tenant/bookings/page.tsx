@@ -55,12 +55,12 @@ export default function TenantBookingsPage() {
   }
 
   const columns: ColumnDef<TenantBookingOutput>[] = [
-    { accessorKey: 'property_name', header: 'Property' },
-    { accessorKey: 'requested_start_date', header: 'From' },
-    { accessorKey: 'requested_end_date', header: 'To' },
+    { accessorKey: 'property_name', header: t('col_property') },
+    { accessorKey: 'requested_start_date', header: t('col_from') },
+    { accessorKey: 'requested_end_date', header: t('col_to') },
     {
       accessorKey: 'status',
-      header: 'Status',
+      header: t('col_status'),
       cell: ({ row }) => <Badge>{row.original.status}</Badge>,
     },
     {
@@ -100,7 +100,7 @@ export default function TenantBookingsPage() {
         }
       />
       {loading ? (
-        <p className="text-sm text-muted-foreground">Loading...</p>
+        <p className="text-sm text-muted-foreground">{t('loading')}</p>
       ) : (
         <DataTable
           columns={columns}

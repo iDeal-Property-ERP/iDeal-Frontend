@@ -31,10 +31,10 @@ export default function TenantHomePage() {
   }, []);
 
   if (loading) {
-    return <p className="text-sm text-muted-foreground">Loading...</p>;
+    return <p className="text-sm text-muted-foreground">{t('loading')}</p>;
   }
   if (!data) {
-    return <p className="text-sm text-danger">Failed to load</p>;
+    return <p className="text-sm text-danger">{t('load_error')}</p>;
   }
 
   return (
@@ -43,47 +43,47 @@ export default function TenantHomePage() {
       <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
         {data.property_name ? (
           <div className="rounded-lg border border-border bg-card p-6">
-            <h3 className="text-sm font-medium text-muted-foreground">Active Lease</h3>
+            <h3 className="text-sm font-medium text-muted-foreground">{t('active_lease')}</h3>
             <p className="mt-2 text-lg font-semibold">{data.property_name}</p>
             <p className="text-sm text-muted-foreground">{data.property_address}</p>
             <div className="mt-4 space-y-1 text-sm">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Status</span>
+                <span className="text-muted-foreground">{t('col_status')}</span>
                 <span className="font-medium">{data.status}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Start</span>
+                <span className="text-muted-foreground">{t('lease_start')}</span>
                 <span>{data.start_date}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">End</span>
+                <span className="text-muted-foreground">{t('lease_end')}</span>
                 <span>{data.end_date}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Rent</span>
+                <span className="text-muted-foreground">{t('lease_rent')}</span>
                 <span className="font-semibold">{data.monthly_rent}</span>
               </div>
             </div>
           </div>
         ) : (
           <div className="rounded-lg border border-border bg-card p-6">
-            <h3 className="text-sm font-medium text-muted-foreground">Lease</h3>
-            <p className="mt-2 text-muted-foreground">No active lease</p>
+            <h3 className="text-sm font-medium text-muted-foreground">{t('lease')}</h3>
+            <p className="mt-2 text-muted-foreground">{t('no_active_lease')}</p>
           </div>
         )}
         {data.next_payment_due ? (
           <Alert variant="warning" className="p-6">
             <AlertTitle className="text-sm font-medium text-muted-foreground">
-              Next Payment
+              {t('next_payment')}
             </AlertTitle>
             <p className="mt-2 text-2xl font-bold">{data.rent_due}</p>
             <AlertDescription className="text-muted-foreground">
-              Due: {data.next_payment_due}
+              {t('due_on', { date: data.next_payment_due })}
             </AlertDescription>
           </Alert>
         ) : null}
         <div className="rounded-lg border border-border bg-card p-6">
-          <h3 className="text-sm font-medium text-muted-foreground">Quick Actions</h3>
+          <h3 className="text-sm font-medium text-muted-foreground">{t('quick_actions')}</h3>
           <div className="mt-4 flex flex-col gap-2">
             <Button
               variant="outline"
@@ -92,7 +92,7 @@ export default function TenantHomePage() {
               }}
               className="justify-start"
             >
-              Payment History
+              {t('payment_history')}
             </Button>
             <Button
               variant="outline"
@@ -101,7 +101,7 @@ export default function TenantHomePage() {
               }}
               className="justify-start"
             >
-              Service Requests
+              {t('service_requests')}
             </Button>
           </div>
         </div>

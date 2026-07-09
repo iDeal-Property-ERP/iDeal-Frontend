@@ -1,6 +1,7 @@
-import { apiFetch } from '@/libs/api';
+import { apiFetch, apiUpload } from '@/libs/api';
 import type { PaginatedData } from '@/types/api';
 import type { ManagementDashboardOutput, ManagementPropertyOutput } from '@/types/management';
+import type { PropertyDetail } from '@/types/property';
 
 /**
  * Properties data adapter — the single isolation point between the Properties
@@ -11,6 +12,160 @@ import type { ManagementDashboardOutput, ManagementPropertyOutput } from '@/type
 
 export const PROPERTY_STATUSES = ['rented', 'vacant', 'maintenance', 'pending_review'] as const;
 export type PropertyStatus = (typeof PROPERTY_STATUSES)[number];
+
+export type PropertyDraftPayload = Record<string, string | number | undefined>;
+
+/**
+ * Fetches the full management property detail (nullable fields + photos +
+ * verification). Backs both the Edit page load and the draft autosave lifecycle.
+ * @param id - Property id.
+ * @returns The property detail record.
+ */
+export async function fetchPropertyDetail(id: number | string): Promise<PropertyDetail> {
+  return await apiFetch<PropertyDetail>(`/properties/${id}/`);
+}
+
+/**
+ * Creates a DRAFT property from any subset of touched fields. Wraps
+ * `POST /properties/drafts/`.
+ * @param payload - The partial field values.
+ * @returns The created draft.
+ */
+export async function createPropertyDraft(payload: PropertyDraftPayload): Promise<PropertyDetail> {
+  return await apiFetch<PropertyDetail>('/properties/drafts/', { method: 'POST', body: payload });
+}
+
+/**
+ * Patches a property (used for autosave and edit saves). Wraps
+ * `PATCH /properties/{id}/`.
+ * @param id - Property id.
+ * @param payload - The changed fields.
+ * @returns The updated property.
+ */
+export async function updateProperty(
+  id: number | string,
+  payload: PropertyDraftPayload,
+): Promise<PropertyDetail> {
+  return await apiFetch<PropertyDetail>(`/properties/${id}/`, { method: 'PATCH', body: payload });
+}
+
+export type PublishResult =
+  | { ok: true; property: PropertyDetail }
+  | { ok: false; missing: string[] };
+
+/**
+ * Publishes a draft (DRAFT → VACANT) with an optional verification visit. On an
+ * incomplete draft the backend returns a 422 with machine-readable `missing`
+ * field codes, surfaced here so the checklist can light the matching rows.
+ * @param id - Property id.
+ * @param scheduleVerificationAt - Optional ISO datetime for the verification visit.
+ * @returns Success with the published property, or the missing-field codes.
+ */
+export async function publishProperty(
+  id: number | string,
+  scheduleVerificationAt?: string,
+): Promise<PublishResult> {
+  try {
+    const property = await apiFetch<PropertyDetail>(`/properties/${id}/publish/`, {
+      method: 'POST',
+      body: scheduleVerificationAt ? { schedule_verification_at: scheduleVerificationAt } : {},
+    });
+    return { ok: true, property };
+  } catch (error) {
+    const { ApiError_ } = await import('@/libs/api');
+    if (error instanceof ApiError_) {
+      const raw = error.body?.error as { code?: string; missing?: string[] } | undefined;
+      if (raw && raw.code === 'incomplete' && Array.isArray(raw.missing)) {
+        return { ok: false, missing: raw.missing };
+      }
+    }
+    throw error;
+  }
+}
+
+/**
+ * Uploads one or more photos (multipart). Wraps `POST /properties/{id}/photos/`.
+ * @param id - Property id.
+ * @param files - The image files.
+ * @returns The updated property (with the new photo list).
+ */
+export async function uploadPropertyPhotos(
+  id: number | string,
+  files: File[],
+): Promise<PropertyDetail> {
+  const formData = new FormData();
+  for (const file of files) {
+    formData.append('images', file);
+  }
+  return await apiUpload<PropertyDetail>(`/properties/${id}/photos/`, formData);
+}
+
+/**
+ * Deletes a property photo. Wraps `DELETE /properties/{id}/photos/{photoId}/`.
+ * @param id - Property id.
+ * @param photoId - The photo id.
+ * @returns The updated property.
+ */
+export async function deletePropertyPhoto(
+  id: number | string,
+  photoId: number,
+): Promise<PropertyDetail> {
+  return await apiFetch<PropertyDetail>(`/properties/${id}/photos/${photoId}/`, {
+    method: 'DELETE',
+  });
+}
+
+export type PhotoReorderItem = {
+  id: number;
+  sort_order: number;
+  is_primary: boolean;
+  caption?: string;
+};
+
+/**
+ * Reorders photos / sets the cover. Wraps `PATCH /properties/{id}/photos/reorder/`.
+ * @param id - Property id.
+ * @param items - The ordered photo descriptors.
+ * @returns The updated property.
+ */
+export async function reorderPropertyPhotos(
+  id: number | string,
+  items: PhotoReorderItem[],
+): Promise<PropertyDetail> {
+  return await apiFetch<PropertyDetail>(`/properties/${id}/photos/reorder/`, {
+    method: 'PATCH',
+    body: { items },
+  });
+}
+
+/**
+ * Schedules a verification visit outside the publish flow (e.g. from an already
+ * published but unverified property). Wraps
+ * `POST /properties/{id}/verification-visits/`.
+ * @param id - Property id.
+ * @param scheduledFor - ISO datetime.
+ * @param notes - Optional notes.
+ */
+export async function scheduleVerification(
+  id: number | string,
+  scheduledFor: string,
+  notes = '',
+): Promise<void> {
+  await apiFetch(`/properties/${id}/verification-visits/`, {
+    method: 'POST',
+    body: { scheduled_for: scheduledFor, notes },
+  });
+}
+
+/**
+ * Archives (soft-deletes) a property via `DELETE /properties/{id}/`. The backend
+ * keeps the row (soft delete) and returns a clean 409 if the property is still
+ * referenced by an agreement/lease, which the caller surfaces as an error.
+ * @param id - The property id.
+ */
+export async function deleteProperty(id: number | string): Promise<void> {
+  await apiFetch(`/properties/${id}/`, { method: 'DELETE' });
+}
 
 export const PROPERTY_TARIFFS = ['standard', 'comfort', 'premium'] as const;
 export type PropertyTariff = (typeof PROPERTY_TARIFFS)[number];
@@ -66,6 +221,7 @@ export type StatusCounts = {
   vacant: number;
   maintenance: number;
   pending_review: number;
+  draft: number;
 };
 
 /**
@@ -95,14 +251,15 @@ export async function getStatusCounts(search?: string): Promise<StatusCounts> {
     }
   };
 
-  const [all, rented, vacant, maintenance, pendingReview] = await Promise.all([
+  const [all, rented, vacant, maintenance, pendingReview, draft] = await Promise.all([
     countOf(),
     countOf('rented'),
     countOf('vacant'),
     countOf('maintenance'),
     countOf('pending_review'),
+    countOf('draft'),
   ]);
-  return { all, rented, vacant, maintenance, pending_review: pendingReview };
+  return { all, rented, vacant, maintenance, pending_review: pendingReview, draft };
 }
 
 export type WorkbenchKpis = {
@@ -132,7 +289,7 @@ export async function getWorkbenchKpis(counts: StatusCounts): Promise<WorkbenchK
   ]);
 
   const rents = sample.items
-    .map((row) => Number.parseFloat(row.tenant_charge_price || row.ask_price))
+    .map((row) => Number.parseFloat(row.tenant_charge_price ?? row.ask_price ?? ''))
     .filter((value) => !Number.isNaN(value) && value > 0);
   const avgRent = rents.length
     ? Math.round(rents.reduce((sum, value) => sum + value, 0) / rents.length)
@@ -165,7 +322,9 @@ export async function getDistricts(): Promise<DistrictOption[]> {
   }
   const map = new Map<number, string>();
   for (const row of res.page.object_list) {
-    map.set(row.district_id, row.district_name);
+    if (row.district_id !== null && row.district_name !== null) {
+      map.set(row.district_id, row.district_name);
+    }
   }
   return [...map.entries()]
     .map(([id, name]) => ({ id, name }))
@@ -239,12 +398,12 @@ export function exportPropertiesCsv(rows: ManagementPropertyOutput[], filename: 
       row.id,
       row.name,
       row.address,
-      row.district_name,
-      row.rooms,
-      row.area_sqm,
+      row.district_name ?? '',
+      row.rooms ?? '',
+      row.area_sqm ?? '',
       row.status,
       row.tariff,
-      row.ask_price,
+      row.ask_price ?? '',
       row.ask_currency,
     ]
       .map(csvCell)

@@ -51,11 +51,11 @@ export default function InventoryActDetailPage() {
         await load();
       } catch (error) {
         setLoadError(true);
-        toast.error(getApiErrorMessage(error, 'Failed to load inventory act'));
+        toast.error(getApiErrorMessage(error, t('inv_load_failed')));
       }
     };
     void run();
-  }, [load]);
+  }, [load, t]);
 
   const isDraft = act?.status === 'draft';
 
@@ -67,9 +67,9 @@ export default function InventoryActDetailPage() {
         body: { items: items.filter((i) => i.area.trim()) },
       });
       await load();
-      toast.success('Items saved');
+      toast.success(t('inv_items_saved'));
     } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Failed to save items'));
+      toast.error(getApiErrorMessage(error, t('inv_items_failed')));
     }
     setBusy(false);
   }
@@ -86,9 +86,9 @@ export default function InventoryActDetailPage() {
       }
       await apiUpload(`/inventory/acts/${params.id}/photos/`, fd);
       await load();
-      toast.success('Photos uploaded');
+      toast.success(t('inv_photos_uploaded'));
     } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Failed to upload photos'));
+      toast.error(getApiErrorMessage(error, t('inv_photos_failed')));
     }
     setBusy(false);
   }
@@ -101,15 +101,15 @@ export default function InventoryActDetailPage() {
         body: { acknowledged_by_name: ackName || undefined },
       });
       await load();
-      toast.success('Inventory act finalized');
+      toast.success(t('inv_finalized'));
     } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Failed to finalize act'));
+      toast.error(getApiErrorMessage(error, t('inv_finalize_failed')));
     }
     setBusy(false);
   }
 
   if (loadError) {
-    return <DetailError message="Failed to load inventory act." />;
+    return <DetailError message={t('inv_load_failed')} />;
   }
 
   if (!act) {

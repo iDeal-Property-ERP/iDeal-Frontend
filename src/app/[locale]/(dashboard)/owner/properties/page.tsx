@@ -45,14 +45,14 @@ export default function OwnerPropertiesPage() {
   }, [page, fetchData]);
 
   const columns: ColumnDef<OwnerPropertyOutput>[] = [
-    { accessorKey: 'name', header: 'Name' },
-    { accessorKey: 'address', header: 'Address' },
-    { accessorKey: 'rooms', header: 'Rooms' },
-    { accessorKey: 'area_sqm', header: 'Area (m²)' },
-    { accessorKey: 'status', header: 'Status' },
-    { accessorKey: 'tariff', header: 'Tariff' },
-    { accessorKey: 'ask_price', header: 'Ask Price' },
-    { accessorKey: 'vacant_days', header: 'Vacant Days' },
+    { accessorKey: 'name', header: t('col_name') },
+    { accessorKey: 'address', header: t('col_address') },
+    { accessorKey: 'rooms', header: t('col_rooms') },
+    { accessorKey: 'area_sqm', header: t('col_area') },
+    { accessorKey: 'status', header: t('col_status') },
+    { accessorKey: 'tariff', header: t('col_tariff') },
+    { accessorKey: 'ask_price', header: t('col_ask_price') },
+    { accessorKey: 'vacant_days', header: t('col_vacant_days') },
   ];
 
   return (
@@ -67,12 +67,12 @@ export default function OwnerPropertiesPage() {
               router.push('/owner');
             }}
           >
-            Dashboard
+            {t('owner_dashboard')}
           </Button>
         }
       />
       {loading ? (
-        <p className="text-sm text-muted-foreground">Loading...</p>
+        <p className="text-sm text-muted-foreground">{t('loading')}</p>
       ) : (
         <DataTable
           columns={columns}
