@@ -34,8 +34,32 @@ function mediaRemotePatterns(): NonNullable<NextConfig['images']>['remotePattern
 // (Turbopack + Fast Refresh, no optimized standalone bundle).
 const isProd = process.env.NODE_ENV === 'production';
 
+// The backend origin the /api/v1 rewrite proxies to (server-side only). Keeps
+// the browser same-origin so httpOnly auth cookies flow and the middleware can
+// read them. Falls back to the public API URL's origin, then localhost.
+function backendOrigin(): string {
+  if (process.env.BACKEND_ORIGIN) {
+    return process.env.BACKEND_ORIGIN.replace(/\/$/u, '');
+  }
+  try {
+    return new URL(process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000').origin;
+  } catch {
+    return 'http://localhost:8000';
+  }
+}
+
 const baseConfig: NextConfig = {
   output: isProd ? 'standalone' : undefined,
+  // The Django API requires trailing slashes (and POST can't follow an
+  // APPEND_SLASH redirect). Don't let Next strip the slash before the rewrite.
+  skipTrailingSlashRedirect: true,
+  async rewrites() {
+    const backend = await Promise.resolve(backendOrigin());
+    return [
+      { source: '/api/v1/:path*/', destination: `${backend}/api/v1/:path*/` },
+      { source: '/api/v1/:path*', destination: `${backend}/api/v1/:path*` },
+    ];
+  },
   devIndicators: {
     position: 'bottom-right',
   },

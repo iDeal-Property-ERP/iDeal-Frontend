@@ -3,10 +3,15 @@
 import { useRouter } from 'next/navigation';
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import { apiFetch, clearTokens, storeTokens } from '@/libs/api';
+import { apiFetch } from '@/libs/api';
 import { logger } from '@/libs/Logger';
-import type { AuthUser, LoginPayload, TokenResponse } from '@/types/auth';
+// Re-exported from the framework-agnostic module so the Edge middleware can share
+// the same maps (a 'use client' module can't be imported there).
+import { roleDashboardMap, roleRouteMap } from '@/libs/roles';
+import type { AuthUser, LoginPayload } from '@/types/auth';
 import type { Role } from '@/types/enums';
+
+export { roleDashboardMap, roleRouteMap };
 
 type AuthContextValue = {
   user: AuthUser | null;
@@ -14,29 +19,10 @@ type AuthContextValue = {
   isAuthenticated: boolean;
   login: (payload: LoginPayload) => Promise<void>;
   logout: () => void;
+  refreshUser: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
-
-export const roleDashboardMap: Record<Role, string> = {
-  mgmt: '/management',
-  owner: '/owner',
-  tenant: '/tenant',
-  agent: '/agents',
-  listings: '/marketplace',
-};
-
-export const roleRouteMap: { path: string; roles: Role[] }[] = [
-  { path: '/management', roles: ['mgmt'] },
-  { path: '/owner', roles: ['owner'] },
-  { path: '/tenant', roles: ['tenant'] },
-  { path: '/agents', roles: ['agent', 'mgmt'] },
-  { path: '/marketplace', roles: ['listings'] },
-  { path: '/properties', roles: ['mgmt', 'owner'] },
-  { path: '/contracts', roles: ['mgmt'] },
-  { path: '/finance', roles: ['mgmt'] },
-  { path: '/maintenance', roles: ['mgmt', 'tenant'] },
-];
 
 export function AuthProvider(props: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -60,11 +46,9 @@ export function AuthProvider(props: { children: ReactNode }) {
 
   const login = useCallback(
     async (payload: LoginPayload) => {
-      const data = await apiFetch<TokenResponse>('/auth/login/', {
-        method: 'POST',
-        body: payload,
-      });
-      storeTokens(data.access_token, data.refresh_token);
+      // The backend sets httpOnly auth cookies on this response; nothing to store
+      // client-side.
+      await apiFetch('/auth/login/', { method: 'POST', body: payload });
       await fetchUser();
       logger.info('User logged in');
     },
@@ -72,7 +56,10 @@ export function AuthProvider(props: { children: ReactNode }) {
   );
 
   const logout = useCallback(() => {
-    clearTokens();
+    // Server-side revocation clears the httpOnly cookies + blacklists the tokens.
+    apiFetch('/auth/logout/', { method: 'POST', body: {} }).catch(() => {
+      // Ignore network/expiry errors — local logout still proceeds.
+    });
     setUser(null);
     router.push('/login');
   }, [router]);
@@ -85,6 +72,7 @@ export function AuthProvider(props: { children: ReactNode }) {
         isAuthenticated: user !== null,
         login,
         logout,
+        refreshUser: fetchUser,
       }}
     >
       {props.children}
