@@ -30,6 +30,15 @@ export function ListingCard(props: ListingCardProps) {
   const { property } = listing;
   const price = listing.monthly_price ?? listing.listed_price;
   const favorite = isFavorite(listing.id);
+  // Mobile compact card (Figma 85:138) folds district + specs into one dot-joined line.
+  const metaLine = [
+    property.district_name ?? property.address,
+    t('rooms_count', { count: property.rooms }),
+    t('area_sqm', { area: property.area_sqm }),
+    t('floor_of', { floor: property.floor, total: property.total_floors ?? '—' }),
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
   return (
     <Link
@@ -59,7 +68,7 @@ export function ListingCard(props: ListingCardProps) {
 
         <button
           aria-label={t('save')}
-          className="absolute top-3 right-3 inline-flex size-10 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-[0_1px_3px_0_rgba(10,13,31,0.12)] transition"
+          className="absolute top-3 right-3 inline-flex size-11 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-[0_1px_3px_0_rgba(10,13,31,0.12)] transition md:size-10"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -73,7 +82,35 @@ export function ListingCard(props: ListingCardProps) {
         </button>
       </div>
 
-      <div className="flex flex-1 flex-col gap-2.5 p-4">
+      {/* Mobile compact info (Figma 85:138): price-led, name + rating, single dot-joined meta line. */}
+      <div className="flex flex-col gap-1 p-3 md:hidden">
+        <div className="flex items-center justify-between gap-2">
+          <p className="flex items-baseline gap-1">
+            <span className="font-display text-[20px] font-bold tracking-[-0.01em] text-foreground">
+              {formatPrice(price, property.ask_currency)}
+            </span>
+            <span className="text-sm text-muted-foreground">{t('per_month')}</span>
+          </p>
+          <span className="shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground capitalize">
+            {property.tariff}
+          </span>
+        </div>
+
+        <div className="flex items-center justify-between gap-2">
+          <p className="truncate text-base font-semibold text-foreground">{property.name}</p>
+          {Number(property.score) > 0 && (
+            <span className="inline-flex shrink-0 items-center gap-1 text-sm font-medium text-foreground">
+              <Star className="size-3.5 fill-warning text-warning" />
+              {property.score}
+            </span>
+          )}
+        </div>
+
+        <p className="text-sm text-muted-foreground">{metaLine}</p>
+      </div>
+
+      {/* Desktop info — unchanged from the approved desktop card. */}
+      <div className="hidden flex-1 flex-col gap-2.5 p-4 md:flex">
         <div className="flex items-center justify-between gap-2">
           <p className="truncate font-semibold text-foreground transition-colors group-hover:text-primary">
             {property.name}

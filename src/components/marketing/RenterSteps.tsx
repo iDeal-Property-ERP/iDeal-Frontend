@@ -14,7 +14,7 @@ const STEPS = [
 export function RenterSteps() {
   const t = useTranslations('Landing');
   return (
-    <section className="bg-muted pt-10 pb-11 sm:py-14">
+    <section className="bg-muted py-7 sm:py-14">
       <div className="container-page">
         <div className="flex flex-col items-start gap-1.5 sm:items-center sm:gap-2 sm:text-center">
           <h2 className="text-[26px] leading-[32px] font-bold tracking-[-0.02em] text-foreground sm:text-[32px] sm:leading-[38px]">
@@ -24,11 +24,11 @@ export function RenterSteps() {
             {t('hiw_subtitle')}
           </p>
         </div>
-        <div className="mt-5 flex flex-col gap-5 sm:mt-8 sm:grid sm:grid-cols-3 sm:gap-6">
+        <div className="mt-3 flex flex-col gap-3 sm:mt-8 sm:grid sm:grid-cols-3 sm:gap-6">
           {STEPS.map(({ icon: Icon, key }, i) => (
             <div
               key={key}
-              className="flex items-start gap-3.5 rounded-[16px] border border-border bg-card p-[18px] shadow-sm sm:flex-col sm:items-stretch sm:rounded-[20px] sm:px-[26px] sm:py-7"
+              className="flex items-start gap-3.5 rounded-[16px] border border-border bg-card px-3.5 py-3 shadow-sm sm:flex-col sm:items-stretch sm:rounded-[20px] sm:px-[26px] sm:py-7"
             >
               <div className="flex shrink-0 items-center gap-3">
                 <span className="grid size-9 place-items-center rounded-[18px] bg-primary text-base font-bold text-primary-foreground">

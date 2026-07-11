@@ -227,7 +227,7 @@ function DetailsStep(props: {
 }) {
   const { details, setDetails, districts, amenityOptions, toggleAmenity, t } = props;
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 lg:space-y-6">
       <StepHeading subtitle={t('details_subtitle')} title={t('details_title')} />
       <WizField label={t('property_type')}>
         <FilledSelect
@@ -261,7 +261,7 @@ function DetailsStep(props: {
           ))}
         </FilledSelect>
       </WizField>
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-3 lg:gap-4">
         <WizField label={t('bedrooms')}>
           <FilledSelect
             onChange={(v) => setDetails((d) => ({ ...d, rooms: v }))}
@@ -354,7 +354,7 @@ function PhotosStep(props: {
     return <p className="text-muted-foreground">{t('save_details_first')}</p>;
   }
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 lg:space-y-6">
       <StepHeading subtitle={t('photos_subtitle')} title={t('photos_title')} />
       <input
         accept="image/*"
@@ -433,7 +433,7 @@ function PricingStep(props: {
 }) {
   const { pricing, setPricing, togglePriceInclude, t } = props;
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 lg:space-y-6">
       <StepHeading subtitle={t('pricing_subtitle')} title={t('pricing_title')} />
       <WizField label={t('monthly_rent')}>
         <input
@@ -443,7 +443,7 @@ function PricingStep(props: {
           value={pricing.monthly_price}
         />
       </WizField>
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 lg:gap-4">
         <WizField label={t('currency')}>
           <FilledSelect
             onChange={(v) => setPricing((p) => ({ ...p, currency: v }))}
@@ -536,7 +536,7 @@ function ReviewStep(props: {
   });
   const stayLabel = draft.minimum_stay ? t(`stay_${draft.minimum_stay}`) : '—';
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 lg:space-y-6">
       <StepHeading subtitle={t('review_subtitle')} title={t('review_title')} />
       <div className={cn(CARD, 'px-5 py-1')}>
         <ReviewRow editLabel={t('edit')} label={t('review_property')} onEdit={() => goTo(0)}>
@@ -637,9 +637,15 @@ function ChecklistCard({
     { key: 'price', done: draft?.completeness.has_price ?? false },
   ];
   return (
-    <div className={cn('rounded-[16px] p-[18px]', mobile ? 'bg-primary-subtle' : cn(CARD))}>
-      <p className="mb-3 text-[15px] font-semibold text-foreground">{t('checklist_title')}</p>
-      <ul className="space-y-3">
+    <div
+      className={cn(
+        mobile ? 'rounded-[14px] bg-primary-subtle p-3' : cn('rounded-[16px] p-[18px]', CARD),
+      )}
+    >
+      <p className={cn('text-[15px] font-semibold text-foreground', mobile ? 'mb-2' : 'mb-3')}>
+        {t('checklist_title')}
+      </p>
+      <ul className={mobile ? 'space-y-2' : 'space-y-3'}>
         {items.map((item) => (
           <li className="flex items-center gap-2.5 text-[14px]" key={item.key}>
             <span
@@ -984,18 +990,20 @@ export function ListPropertyWizard() {
   );
 
   return (
-    <div className="mx-auto w-full max-w-[1280px] px-5 py-8 lg:px-8 lg:py-12">
-      <header className="space-y-2">
+    <div className="mx-auto w-full max-w-[1280px] px-4 py-5 lg:px-8 lg:py-12">
+      <header className="space-y-1 lg:space-y-2">
         <p className="text-[12px] font-medium tracking-[1.5px] text-primary uppercase">
           {t('eyebrow')}
         </p>
-        <h1 className="font-display text-[32px] font-bold tracking-[-0.02em] text-foreground sm:text-[36px]">
+        <h1 className="font-display text-[20px] font-bold tracking-[-0.02em] text-foreground lg:text-[36px]">
           {t('title')}
         </h1>
-        <p className="max-w-[640px] text-[16px] text-muted-foreground">{t('subtitle')}</p>
+        <p className="max-w-[640px] text-[13px] text-muted-foreground lg:text-[16px]">
+          {t('subtitle')}
+        </p>
       </header>
 
-      <div className="mt-8">
+      <div className="mt-4 lg:mt-8">
         <Stepper step={step} t={t} />
         <MobileProgress step={step} t={t} />
       </div>
@@ -1010,9 +1018,9 @@ export function ListPropertyWizard() {
           </Link>
         </CenteredCard>
       ) : (
-        <div className="mt-6 lg:flex lg:items-start lg:gap-8">
-          <div className="min-w-0 flex-1 space-y-5">
-            <div className={cn(CARD, 'px-5 pt-7 pb-6 sm:px-8')}>
+        <div className="mt-4 lg:mt-6 lg:flex lg:items-start lg:gap-8">
+          <div className="min-w-0 flex-1 space-y-3 lg:space-y-5">
+            <div className={cn(CARD, 'px-4 py-3.5 lg:px-8 lg:pt-7 lg:pb-6')}>
               <StepContent
                 acceptOffer={acceptOffer}
                 amenityOptions={amenityOptions}
@@ -1048,15 +1056,27 @@ export function ListPropertyWizard() {
             <div className="lg:hidden">
               <ChecklistCard draft={draft} mobile t={t} />
             </div>
-            <div className="flex flex-col gap-3 lg:hidden">
-              <Button className="w-full" disabled={busy} onClick={actions?.primary}>
+            <div className="flex flex-col gap-2 lg:hidden">
+              <Button className="h-11 w-full" disabled={busy} onClick={actions?.primary}>
                 {busy && <Loader2 className="size-4 animate-spin" />}
                 {actions?.primaryLabel}
               </Button>
-              <div className="grid grid-cols-2 gap-3">
-                {backBtn}
+              <div className="grid grid-cols-2 gap-2.5">
+                <Button
+                  className="h-11"
+                  disabled={step === 0 || busy}
+                  onClick={() => setStep((s) => Math.max(0, s - 1))}
+                  variant="ghost"
+                >
+                  {t('back')}
+                </Button>
                 {actions?.saveDraft ? (
-                  <Button disabled={busy} onClick={actions.saveDraft} variant="outline">
+                  <Button
+                    className="h-11"
+                    disabled={busy}
+                    onClick={actions.saveDraft}
+                    variant="outline"
+                  >
                     {t('save_draft')}
                   </Button>
                 ) : (

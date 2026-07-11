@@ -16,13 +16,15 @@ export async function FeaturedHomes(props: { locale: string }) {
     return null;
   }
   return (
-    <section className="py-12">
-      <div className="mb-4 sm:mb-6 sm:flex sm:items-end sm:justify-between sm:gap-4">
+    <section className="pt-2 pb-8 sm:py-12">
+      <div className="mb-3 sm:mb-6 sm:flex sm:items-end sm:justify-between sm:gap-4">
         <div>
           <h2 className="text-[26px] leading-[32px] font-bold tracking-[-0.018em] text-foreground sm:text-[28px] sm:leading-[34px]">
             {t('featured_title')}
           </h2>
-          <p className="mt-1.5 text-[15px] text-muted-foreground">{t('featured_subtitle')}</p>
+          <p className="mt-1 text-[14px] text-muted-foreground sm:mt-1.5 sm:text-[15px]">
+            {t('featured_subtitle')}
+          </p>
         </div>
         <Link
           href="/listings"

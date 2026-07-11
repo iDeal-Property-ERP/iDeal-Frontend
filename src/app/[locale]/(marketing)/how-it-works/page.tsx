@@ -33,19 +33,30 @@ export default async function HowItWorksPage(props: { params: Promise<{ locale: 
   return (
     <div className="container-page">
       {/* Hero */}
-      <section className="flex flex-col items-start gap-5 pt-14 pb-12 md:pt-20">
+      <section className="flex flex-col items-start gap-2.5 pt-6 pb-6 sm:gap-5 sm:pt-14 sm:pb-12 md:pt-20">
         <p className="text-xs font-medium tracking-[0.12em] text-primary uppercase">
           {t('hero_eyebrow')}
         </p>
-        <h1 className="max-w-3xl font-display text-4xl font-bold tracking-[-0.03em] text-foreground sm:text-[46px] sm:leading-[1.1]">
+        <h1 className="max-w-3xl font-display text-[26px] leading-9 font-bold tracking-[-0.03em] text-foreground sm:text-[46px] sm:leading-[1.1]">
           {t('hero_title')}
         </h1>
-        <p className="max-w-xl text-lg text-muted-foreground">{t('hero_subtitle')}</p>
-        <div className="flex flex-wrap gap-3 pt-2">
-          <Link href="/listings" className={cn(buttonVariants())}>
+        <p className="max-w-xl text-[15px] text-muted-foreground sm:text-lg">
+          {t('hero_subtitle')}
+        </p>
+        <div className="flex w-full flex-wrap gap-2.5 pt-1 sm:w-auto sm:gap-3 sm:pt-2">
+          <Link
+            className={cn(buttonVariants(), 'h-12 flex-1 sm:h-10 sm:flex-none')}
+            href="/listings"
+          >
             {t('cta_browse')}
           </Link>
-          <Link href="/list-your-property" className={cn(buttonVariants({ variant: 'outline' }))}>
+          <Link
+            className={cn(
+              buttonVariants({ variant: 'outline' }),
+              'h-12 flex-1 sm:h-10 sm:flex-none',
+            )}
+            href="/list-your-property"
+          >
             {t('cta_list')}
           </Link>
         </div>
@@ -54,18 +65,23 @@ export default async function HowItWorksPage(props: { params: Promise<{ locale: 
       {/* Audience toggle + steps */}
       <AudienceSteps />
 
-      {/* Trust band */}
-      <section className="pb-10">
-        <div className="grid gap-5 rounded-[20px] bg-primary-subtle p-7 md:grid-cols-3">
+      {/* Trust band — horizontal scroll on phones, one grid card on desktop */}
+      <section className="pb-6 sm:pb-10">
+        <div className="-mx-4 flex [scrollbar-width:none] gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-3 sm:gap-5 sm:overflow-visible sm:rounded-[20px] sm:bg-primary-subtle sm:px-7 sm:py-7 [&::-webkit-scrollbar]:hidden">
           {TRUST.map(({ icon: Icon, key }) => (
-            <div key={key} className="flex flex-col gap-2">
-              <span className="grid size-9 place-items-center rounded-[10px] bg-primary text-primary-foreground">
+            <div
+              className="flex w-[266px] shrink-0 items-start gap-3 rounded-[14px] bg-primary-subtle p-4 sm:w-auto sm:flex-col sm:gap-2 sm:rounded-none sm:bg-transparent sm:p-0"
+              key={key}
+            >
+              <span className="grid size-9 shrink-0 place-items-center rounded-[10px] bg-primary text-primary-foreground">
                 <Icon className="size-5" />
               </span>
-              <h3 className="font-sans text-base font-semibold text-primary-subtle-foreground">
-                {t(`${key}_title`)}
-              </h3>
-              <p className="text-sm text-muted-foreground">{t(`${key}_desc`)}</p>
+              <div className="flex min-w-0 flex-col gap-1 sm:gap-2">
+                <h3 className="font-sans text-[15px] font-semibold text-primary-subtle-foreground sm:text-base">
+                  {t(`${key}_title`)}
+                </h3>
+                <p className="text-[13px] text-muted-foreground sm:text-sm">{t(`${key}_desc`)}</p>
+              </div>
             </div>
           ))}
         </div>
@@ -73,27 +89,39 @@ export default async function HowItWorksPage(props: { params: Promise<{ locale: 
 
       {/* FAQ */}
       {faqs.length > 0 && (
-        <section className="py-6">
-          <h2 className="text-3xl font-bold tracking-[-0.02em] text-foreground">
+        <section className="py-4 sm:py-6">
+          <h2 className="text-[20px] font-bold tracking-[-0.02em] text-foreground sm:text-3xl">
             {t('faq_title')}
           </h2>
-          <p className="mt-1 mb-6 text-muted-foreground">{t('faq_subtitle')}</p>
-          <FaqAccordion items={faqs} />
+          <p className="mt-1 mb-4 hidden text-muted-foreground sm:mb-6 sm:block">
+            {t('faq_subtitle')}
+          </p>
+          <div className="mt-3 sm:mt-0">
+            <FaqAccordion items={faqs} />
+          </div>
         </section>
       )}
 
       {/* CTA band */}
-      <section className="py-12">
-        <div className="flex flex-col items-center gap-[18px] rounded-3xl bg-primary-subtle px-6 py-14 text-center md:px-10">
-          <h2 className="font-display text-3xl font-bold tracking-[-0.02em] text-primary-subtle-foreground">
+      <section className="py-6 sm:py-12">
+        <div className="flex flex-col items-center gap-2.5 rounded-[20px] bg-primary-subtle p-5 text-center sm:gap-[18px] sm:rounded-3xl sm:px-6 sm:py-14 md:px-10">
+          <h2 className="font-display text-2xl font-bold tracking-[-0.02em] text-primary-subtle-foreground sm:text-3xl">
             {t('cta_band_title')}
           </h2>
-          <p className="max-w-xl text-[17px] text-muted-foreground">{t('cta_band_desc')}</p>
-          <div className="flex flex-wrap justify-center gap-3 pt-2">
-            <Link href="/listings" className={cn(buttonVariants())}>
+          <p className="max-w-xl text-sm text-muted-foreground sm:text-[17px]">
+            {t('cta_band_desc')}
+          </p>
+          <div className="flex w-full flex-col justify-center gap-2.5 pt-1 sm:w-auto sm:flex-row sm:flex-wrap sm:gap-3 sm:pt-2">
+            <Link
+              className={cn(buttonVariants(), 'h-12 w-full sm:h-10 sm:w-auto')}
+              href="/listings"
+            >
               {t('cta_browse')}
             </Link>
-            <Link href="/list-your-property" className={cn(buttonVariants({ variant: 'outline' }))}>
+            <Link
+              className={cn(buttonVariants({ variant: 'outline' }), 'hidden sm:inline-flex')}
+              href="/list-your-property"
+            >
               {t('cta_list')}
             </Link>
           </div>

@@ -7,24 +7,28 @@ import { cn } from '@/libs/utils';
 const OWNER_STEPS = ['step_1', 'step_2', 'step_3', 'step_4'] as const;
 const RENTER_STEPS = ['search', 'book', 'movein'] as const;
 
-const PILL = 'rounded-[9px] px-[18px] py-[9px] text-sm font-medium transition';
+const PILL =
+  'flex-1 rounded-[8px] px-[18px] py-[9px] text-center text-sm font-medium transition sm:flex-none';
 const PILL_ACTIVE = 'bg-card text-foreground shadow-sm';
 const PILL_INACTIVE = 'text-muted-foreground hover:text-foreground';
 
 /**
- * A single numbered step card shared by the owner and renter audiences.
+ * A single numbered step card shared by the owner and renter audiences. On phones it becomes
+ * a compact badge-left row (Figma 88:241 density redesign); desktop keeps the badge-top card.
  * @param props - The 0-based card index, title, and description.
  * @returns The step card.
  */
 function StepCard(props: { desc: string; index: number; title: string }) {
   const { desc, index, title } = props;
   return (
-    <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card px-6 py-7">
-      <span className="grid size-11 place-items-center rounded-full bg-primary-subtle font-display text-lg font-bold text-primary-subtle-foreground">
+    <div className="flex items-start gap-3.5 rounded-[14px] border border-border bg-card px-4 py-3 sm:flex-col sm:gap-4 sm:rounded-2xl sm:px-6 sm:py-7">
+      <span className="grid size-10 shrink-0 place-items-center rounded-full bg-primary-subtle font-display text-[17px] font-bold text-primary-subtle-foreground sm:size-11 sm:text-lg">
         {index + 1}
       </span>
-      <h3 className="font-sans text-lg font-semibold text-foreground">{title}</h3>
-      <p className="text-sm text-muted-foreground">{desc}</p>
+      <div className="flex min-w-0 flex-col gap-1 sm:gap-4">
+        <h3 className="font-sans text-base font-semibold text-foreground sm:text-lg">{title}</h3>
+        <p className="text-[13px] text-muted-foreground sm:text-sm">{desc}</p>
+      </div>
     </div>
   );
 }
@@ -43,7 +47,7 @@ export function AudienceSteps() {
 
   return (
     <>
-      <div className="inline-flex items-center gap-1 rounded-xl bg-muted p-1">
+      <div className="flex w-full items-center gap-1 rounded-[10px] bg-muted p-1 sm:inline-flex sm:w-auto">
         <button
           aria-pressed={!isOwners}
           className={cn(PILL, isOwners ? PILL_INACTIVE : PILL_ACTIVE)}
@@ -64,7 +68,7 @@ export function AudienceSteps() {
 
       <section
         className={cn(
-          'mt-8 grid gap-5 pb-10 sm:grid-cols-2',
+          'mt-3 grid gap-2 pb-6 sm:mt-8 sm:grid-cols-2 sm:gap-5 sm:pb-10',
           isOwners ? 'lg:grid-cols-4' : 'lg:grid-cols-3',
         )}
       >

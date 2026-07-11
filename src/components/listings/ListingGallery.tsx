@@ -108,9 +108,9 @@ export function ListingGallery(props: {
         </div>
       </div>
 
-      {/* Mobile + small tablet: full-width hero + thumbnail strip */}
+      {/* Mobile + small tablet: full-bleed hero + thumbnail strip (Figma 116:2) */}
       <div className="md:hidden">
-        <div className="relative aspect-[3/2] overflow-hidden rounded-2xl bg-muted">
+        <div className="relative aspect-[13/10] overflow-hidden bg-muted">
           {hero && (
             <Image
               alt={name}
@@ -157,15 +157,15 @@ export function ListingGallery(props: {
             1 / {photos.length}
           </span>
         </div>
-        <div className="mt-3 flex [scrollbar-width:none] gap-2 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden">
+        <div className="mt-3 flex [scrollbar-width:none] gap-2 overflow-x-auto px-4 pb-1 sm:px-6 [&::-webkit-scrollbar]:hidden">
           {tiles.map((p, i) => (
             <button
-              className="relative aspect-[4/3] w-24 shrink-0 overflow-hidden rounded-xl bg-muted"
+              className="relative h-[60px] w-[84px] shrink-0 overflow-hidden rounded-[10px] bg-muted"
               key={p.id}
               onClick={() => openAt(i + 1)}
               type="button"
             >
-              <Image alt={name} className="object-cover" fill sizes="96px" src={p.image_url} />
+              <Image alt={name} className="object-cover" fill sizes="84px" src={p.image_url} />
               {i === 3 && showMore && (
                 <span className={cn(MORE_OVERLAY, 'text-sm')}>+{moreCount}</span>
               )}

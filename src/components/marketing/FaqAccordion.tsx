@@ -22,11 +22,13 @@ export function FaqAccordion(props: { items: FaqItem[] }) {
           <div key={item.id} className="overflow-hidden rounded-xl border border-border bg-card">
             <button
               aria-expanded={isOpen}
-              className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left"
+              className="flex w-full items-center justify-between gap-3 px-3.5 py-3.5 text-left sm:gap-4 sm:px-5 sm:py-4"
               onClick={() => setOpen(isOpen ? null : item.id)}
               type="button"
             >
-              <span className="font-semibold text-foreground">{item.question}</span>
+              <span className="text-[15px] font-semibold text-foreground sm:text-base">
+                {item.question}
+              </span>
               <span className="grid size-7 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground">
                 {isOpen ? <Minus className="size-4" /> : <Plus className="size-4" />}
               </span>
@@ -38,7 +40,7 @@ export function FaqAccordion(props: { items: FaqItem[] }) {
               )}
             >
               <div className="overflow-hidden">
-                <p className="px-5 pb-5 text-sm leading-relaxed text-muted-foreground">
+                <p className="px-3.5 pb-3.5 text-sm leading-relaxed text-muted-foreground sm:px-5 sm:pb-5">
                   {item.answer}
                 </p>
               </div>

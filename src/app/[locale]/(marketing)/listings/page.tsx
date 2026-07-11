@@ -94,8 +94,10 @@ export default async function ListingsPage(props: {
   ]);
 
   return (
-    <div className="container-page py-8">
-      <div className="mb-6">
+    <div className="container-page pt-4 pb-8 md:pt-8">
+      {/* Title stack is the mobile density offender — hidden visually on mobile (kept for
+          a11y/SEO via sr-only), restored at md+ where the desktop header keeps it. */}
+      <div className="mb-6 max-md:sr-only">
         <h1 className="text-3xl font-bold tracking-[-0.02em] text-foreground">{t('title')}</h1>
         <p className="mt-1 text-muted-foreground">{t('subtitle')}</p>
       </div>
@@ -107,7 +109,7 @@ export default async function ListingsPage(props: {
         <MobileSearchSheet amenities={amenities} districts={districts} />
       </div>
 
-      <div className="mt-4 mb-6 flex items-center justify-between gap-3">
+      <div className="mt-3 mb-4 flex items-center justify-between gap-3 md:mt-4 md:mb-6">
         <div className="min-w-0 flex-1">
           <DiscoveryFilterChips amenities={amenities} districts={districts} />
         </div>

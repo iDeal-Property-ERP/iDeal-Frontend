@@ -35,7 +35,7 @@ export function ListingGrid(props: ListingGridProps) {
   }
 
   return (
-    <div className={cn('grid gap-6', COLUMN_CLASS[columns], className)}>
+    <div className={cn('grid gap-2.5 sm:gap-6', COLUMN_CLASS[columns], className)}>
       {listings.map((listing, index) => (
         <div id={`listing-${listing.id}`} key={listing.id}>
           <ListingCard

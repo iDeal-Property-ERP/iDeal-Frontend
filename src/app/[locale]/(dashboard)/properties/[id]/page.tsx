@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, use } from 'react';
+import { PropertyPhotoGallery } from '@/components/properties/PropertyPhotoGallery';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -69,7 +70,7 @@ export default function PropertyDetailPage(props: { params: Promise<{ id: string
             <Button
               variant="outline"
               onClick={() => {
-                router.push(`/properties/${params.id}/edit`);
+                router.push(`/management/properties/${params.id}/edit`);
               }}
             >
               Edit
@@ -80,6 +81,11 @@ export default function PropertyDetailPage(props: { params: Promise<{ id: string
           </div>
         }
       />
+      {property.photos.length > 0 ? (
+        <div className="mb-6">
+          <PropertyPhotoGallery photos={property.photos} name={property.name} />
+        </div>
+      ) : null}
       <DetailGrid>
         <DetailCard title="General">
           <DetailList>

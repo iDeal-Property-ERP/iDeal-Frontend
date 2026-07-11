@@ -56,7 +56,7 @@ export function DiscoveryResults(props: DiscoveryResultsProps) {
   const searchThisArea = (bbox: string) => set({ bbox });
 
   const header = (
-    <div className="mb-4 flex items-center justify-between gap-3">
+    <div className="mb-3 flex items-center justify-between gap-3 md:mb-4">
       <p className="font-display text-xl font-bold tracking-[-0.01em] text-foreground">
         {t('result_count', { count })}
       </p>
