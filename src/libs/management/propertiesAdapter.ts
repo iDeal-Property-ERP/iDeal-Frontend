@@ -320,9 +320,7 @@ export async function getDistricts(): Promise<DistrictOption[]> {
   if (!res) {
     return [];
   }
-  return res
-    .map(({ id, name }) => ({ id, name }))
-    .toSorted((a, b) => a.name.localeCompare(b.name));
+  return res.map(({ id, name }) => ({ id, name })).toSorted((a, b) => a.name.localeCompare(b.name));
 }
 
 export type BulkStatusResult = { succeeded: number[]; failed: number[] };
