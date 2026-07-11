@@ -1,6 +1,6 @@
 'use client';
 
-import { ClipboardList, Download, Plus } from 'lucide-react';
+import { ClipboardList, Download, Info, Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { EntityCell } from '@/components/management/columns/EntityCell';
@@ -35,40 +35,49 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import {
   ACT_TYPES,
   exportActsCsv,
-  getActStatusCounts,
+  getActStats,
   listActs,
 } from '@/libs/management/inventoryAdapter';
-import type { ActStatusCounts } from '@/libs/management/inventoryAdapter';
+import type { InventoryActStats } from '@/libs/management/inventoryAdapter';
 import type { InventoryActListOutput } from '@/types/management';
+
+type ActCounts = InventoryActStats['counts'];
 
 const SAVED_VIEW_DEFS = [
   { id: 'draft', labelKey: 'inv_view_drafts', countKey: 'draft' },
   { id: 'finalized', labelKey: 'inv_view_finalized', countKey: 'finalized' },
+  { id: 'awaiting_ack', labelKey: 'inv_view_awaiting', countKey: 'awaiting_ack' },
   { id: 'all', labelKey: 'view_all', countKey: 'all' },
-] as const satisfies { id: string; labelKey: string; countKey: keyof ActStatusCounts }[];
+] as const satisfies { id: string; labelKey: string; countKey: keyof ActCounts }[];
 
 /**
- * Maps a saved-view id to the backend status query it applies.
+ * Maps a saved-view id to the backend list query it applies.
  * @param view - The saved-view id.
- * @returns The status query for that view.
+ * @returns The list query for that view.
  */
-function queryForView(view: string): { status?: string } {
+function queryForView(view: string): { status?: string; awaiting_ack?: string } {
   if (view === 'all') {
     return {};
+  }
+  if (view === 'awaiting_ack') {
+    return { awaiting_ack: 'true' };
   }
   return { status: view };
 }
 
 /**
- * Reverses a status query back to a saved-view id.
- * @param status - The active status filter, if any.
+ * Reverses a list query back to a saved-view id.
+ * @param query - The active list query (status / awaiting_ack).
  * @returns The matching saved-view id.
  */
-function viewFromQuery(status: string | undefined): string {
-  if (!status) {
+function viewFromQuery(query: { status?: string; awaiting_ack?: string }): string {
+  if (query.awaiting_ack) {
+    return 'awaiting_ack';
+  }
+  if (!query.status) {
     return 'all';
   }
-  return status;
+  return query.status;
 }
 
 /**
@@ -96,19 +105,26 @@ export default function ManagementInventoryPage() {
   const isMobile = useIsMobile();
 
   const resource = usePaginatedResource<InventoryActListOutput>(
-    async ({ page, query }) => await listActs({ page, status: query.status as string | undefined }),
+    async ({ page, query }) =>
+      await listActs({
+        page,
+        status: query.status as string | undefined,
+        awaitingAck: query.awaiting_ack === 'true',
+      }),
     { initialQuery: queryForView('draft') },
   );
 
-  const status = resource.query.status as string | undefined;
-  const view = viewFromQuery(status);
+  const view = viewFromQuery({
+    status: resource.query.status as string | undefined,
+    awaiting_ack: resource.query.awaiting_ack as string | undefined,
+  });
 
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState('newest');
   const [typeFilter, setTypeFilter] = useState<string | null>(null);
   const [propertyFilter, setPropertyFilter] = useState<string | null>(null);
   const [selected, setSelected] = useState<InventoryActListOutput | null>(null);
-  const [counts, setCounts] = useState<ActStatusCounts | null>(null);
+  const [counts, setCounts] = useState<ActCounts | null>(null);
   const [newOpen, setNewOpen] = useState(false);
   const [finalizeTarget, setFinalizeTarget] = useState<InventoryActListOutput | null>(null);
 
@@ -116,9 +132,9 @@ export default function ManagementInventoryPage() {
     let active = true;
     const load = async () => {
       try {
-        const nextCounts = await getActStatusCounts();
+        const stats = await getActStats();
         if (active) {
-          setCounts(nextCounts);
+          setCounts(stats.counts);
         }
       } catch {
         // Counts are supplementary; the tabs render without them.
@@ -366,6 +382,16 @@ export default function ManagementInventoryPage() {
     />
   );
 
+  const infoBanner = (
+    <div className="flex items-start gap-3 rounded-[12px] border border-border bg-muted/40 px-4 py-3.5">
+      <Info className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+      <div className="flex flex-col gap-0.5 text-sm text-muted-foreground">
+        <span>{t('inv_banner_deduction')}</span>
+        <span>{t('inv_banner_eimzo')}</span>
+      </div>
+    </div>
+  );
+
   const dialogs = (
     <>
       <NewActDialog
@@ -404,6 +430,7 @@ export default function ManagementInventoryPage() {
           record={selected ? inventoryRecord : undefined}
           onCloseRecord={() => setSelected(null)}
           empty={body}
+          footer={infoBanner}
         />
         {dialogs}
       </>
@@ -514,6 +541,7 @@ export default function ManagementInventoryPage() {
         }
       >
         {body}
+        {infoBanner}
       </WorkbenchShell>
       {dialogs}
     </>

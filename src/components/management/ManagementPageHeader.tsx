@@ -18,6 +18,8 @@ type ManagementPageHeaderProps = {
   search?: SearchConfig;
   /** Whether to render the notification bell (defaults to true). */
   showBell?: boolean;
+  /** Replaces the top-right bell with a custom control (e.g. a mobile search toggle). */
+  topRight?: React.ReactNode;
   /** Primary action(s) rendered at the far right (e.g. an "Add property" button). */
   actions?: React.ReactNode;
   /** Record count shown next to the title, e.g. "128 properties". */
@@ -33,8 +35,8 @@ type ManagementPageHeaderProps = {
  */
 export function ManagementPageHeader(props: ManagementPageHeaderProps) {
   return (
-    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-      <div className="flex flex-col gap-0.5">
+    <div className="relative flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex flex-col gap-0.5 max-lg:pr-12">
         <div className="flex items-baseline gap-2">
           <h1 className="font-display text-[28px] leading-[34px] font-bold tracking-[-0.14px] text-foreground">
             {props.title}
@@ -48,7 +50,10 @@ export function ManagementPageHeader(props: ManagementPageHeaderProps) {
         ) : null}
       </div>
 
-      <div className="flex items-center gap-2.5">
+      {/* On mobile the cluster dissolves (display:contents) so search/actions flow full-width
+          under the title and the bell escapes to the header's top-right corner (absolute).
+          At lg+ it's the original inline cluster — unchanged. */}
+      <div className="flex items-center gap-2.5 max-lg:contents">
         {props.search ? (
           <label
             className={cn(
@@ -68,7 +73,14 @@ export function ManagementPageHeader(props: ManagementPageHeaderProps) {
             />
           </label>
         ) : null}
-        {props.showBell === false ? null : <NotificationBell appearance="bordered" />}
+        {(() => {
+          const topRight =
+            props.topRight ??
+            (props.showBell === false ? null : <NotificationBell appearance="bordered" />);
+          return topRight ? (
+            <div className="max-lg:absolute max-lg:top-0 max-lg:right-0">{topRight}</div>
+          ) : null;
+        })()}
         {props.actions}
       </div>
     </div>

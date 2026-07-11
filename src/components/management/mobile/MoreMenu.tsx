@@ -11,6 +11,7 @@ import {
   LogOut,
   Map as MapIcon,
   ScrollText,
+  Settings,
   Sparkles,
   TrendingUp,
   Users,
@@ -26,38 +27,20 @@ type Translator = ReturnType<typeof useTranslations<'Dashboard'>>;
 
 const GROUPS = [
   {
-    titleKey: 'more_group_overview',
+    titleKey: 'more_group_workspace',
     rows: [
       { labelKey: 'nav_pnl', href: '/management/pnl', icon: TrendingUp },
       { labelKey: 'nav_portfolio_map', href: '/management/map', icon: MapIcon },
-    ],
-  },
-  {
-    titleKey: 'more_group_leasing',
-    rows: [
       {
         labelKey: 'nav_onboardings',
         href: '/management/onboardings',
         icon: ClipboardCheck,
         badgeKey: 'onboardings',
       },
-    ],
-  },
-  {
-    titleKey: 'more_group_portfolio',
-    rows: [
       { labelKey: 'nav_leases', href: '/management/leases', icon: FileText },
       { labelKey: 'nav_agreements', href: '/management/agreements', icon: ScrollText },
       { labelKey: 'nav_inventory', href: '/management/inventory', icon: ClipboardList },
-    ],
-  },
-  {
-    titleKey: 'more_group_finance',
-    rows: [{ labelKey: 'nav_payouts', href: '/management/payouts', icon: HandCoins }],
-  },
-  {
-    titleKey: 'more_group_operations',
-    rows: [
+      { labelKey: 'nav_payouts', href: '/management/payouts', icon: HandCoins },
       {
         labelKey: 'nav_maintenance',
         href: '/management/maintenance',
@@ -119,9 +102,10 @@ function MoreGroup(props: {
 }
 
 /**
- * The mobile "More" menu — the profile card, grouped navigation rows for every
- * module that isn't a bottom-bar tab (with queue badges), Notifications, and a
- * log-out row. Matches the Figma More frame.
+ * The mobile "More" menu — the profile card and three groups matching the Figma
+ * More frame: WORKSPACE (every module that isn't a bottom-bar tab, with queue
+ * badges), PEOPLE (users + agents), and ACCOUNT (notifications, settings, and
+ * log out).
  * @returns The More menu screen.
  */
 export function MoreMenu() {
@@ -148,22 +132,35 @@ export function MoreMenu() {
         <MoreGroup key={group.titleKey} group={group} t={t} counts={counts} />
       ))}
 
-      <div className="overflow-hidden rounded-[16px] border border-border bg-card">
-        <Link href="/management/notifications" className="flex items-center gap-3 px-4 py-3.5">
-          <Bell className="size-5 shrink-0 text-muted-foreground" />
-          <span className="flex-1 text-sm font-medium text-foreground">
-            {t('nav_notifications')}
-          </span>
-          <ChevronRight className="size-4 text-muted-foreground" />
-        </Link>
-        <button
-          type="button"
-          onClick={logout}
-          className="flex w-full items-center gap-3 border-t border-border px-4 py-3.5 text-left"
-        >
-          <LogOut className="size-5 shrink-0 text-danger" />
-          <span className="flex-1 text-sm font-medium text-danger">{t('nav_logout')}</span>
-        </button>
+      <div>
+        <p className="mb-2 px-1 text-[11px] font-semibold tracking-[0.4px] text-muted-foreground uppercase">
+          {t('more_group_account')}
+        </p>
+        <div className="overflow-hidden rounded-[16px] border border-border bg-card">
+          <Link href="/management/notifications" className="flex items-center gap-3 px-4 py-3.5">
+            <Bell className="size-5 shrink-0 text-muted-foreground" />
+            <span className="flex-1 text-sm font-medium text-foreground">
+              {t('nav_notifications')}
+            </span>
+            <ChevronRight className="size-4 text-muted-foreground" />
+          </Link>
+          <Link
+            href="/management/settings"
+            className="flex items-center gap-3 border-t border-border px-4 py-3.5"
+          >
+            <Settings className="size-5 shrink-0 text-muted-foreground" />
+            <span className="flex-1 text-sm font-medium text-foreground">{t('nav_settings')}</span>
+            <ChevronRight className="size-4 text-muted-foreground" />
+          </Link>
+          <button
+            type="button"
+            onClick={logout}
+            className="flex w-full items-center gap-3 border-t border-border px-4 py-3.5 text-left"
+          >
+            <LogOut className="size-5 shrink-0 text-danger" />
+            <span className="flex-1 text-sm font-medium text-danger">{t('nav_logout')}</span>
+          </button>
+        </div>
       </div>
 
       <p className="px-1 text-xs text-muted-foreground">{t('more_footnote')}</p>

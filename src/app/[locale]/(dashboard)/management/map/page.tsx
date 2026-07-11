@@ -159,7 +159,7 @@ export default function PortfolioMapPage() {
     tenantLine: (row) =>
       row.tenant_name
         ? t('map_popup_tenant', { name: row.tenant_name, date: row.lease_end_date ?? '—' })
-        : t('map_popup_vacant', { days: row.vacant_days }),
+        : t('map_popup_vacant', { days: row.vacant_days ?? 0 }),
     openRecord: t('map_open_record'),
     close: t('map_close'),
   };

@@ -308,26 +308,20 @@ export async function getWorkbenchKpis(counts: StatusCounts): Promise<WorkbenchK
 export type DistrictOption = { id: number; name: string };
 
 /**
- * The distinct districts present in the portfolio, for the District filter chip.
- * BACKEND-GAP: no `/districts/` list endpoint — districts are derived from a
- * wide properties fetch. Replace with a real endpoint when available.
+ * All districts, for the property form's District select and the filter chip.
+ * Reads the real `/marketplace/districts/` list (public, name-ordered), so it
+ * works even with an empty portfolio — unlike deriving districts from properties.
  * @returns District options sorted by name.
  */
 export async function getDistricts(): Promise<DistrictOption[]> {
-  const res = await apiFetch<PaginatedData<ManagementPropertyOutput>>('/management/properties/', {
-    query: { page: 1, per_page: 200 },
-  }).catch(() => null);
+  const res = await apiFetch<{ id: number; name: string }[]>('/marketplace/districts/').catch(
+    () => null,
+  );
   if (!res) {
     return [];
   }
-  const map = new Map<number, string>();
-  for (const row of res.page.object_list) {
-    if (row.district_id !== null && row.district_name !== null) {
-      map.set(row.district_id, row.district_name);
-    }
-  }
-  return [...map.entries()]
-    .map(([id, name]) => ({ id, name }))
+  return res
+    .map(({ id, name }) => ({ id, name }))
     .toSorted((a, b) => a.name.localeCompare(b.name));
 }
 
@@ -411,6 +405,56 @@ export function exportPropertiesCsv(rows: ManagementPropertyOutput[], filename: 
   );
   const csv = [headers.join(','), ...body].join('\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
+/** The header columns the bulk-import CSV must carry (header row required). */
+export const PROPERTY_IMPORT_COLUMNS = [
+  'name',
+  'address',
+  'district_id',
+  'rooms',
+  'area_sqm',
+  'floor',
+  'owner_id',
+  'ask_price',
+  'owner_guaranteed_price',
+  'tenant_charge_price',
+] as const;
+
+export type PropertyImportError = { row: number; message: string };
+
+export type PropertyImportResult = {
+  created: number;
+  errors: PropertyImportError[];
+};
+
+/**
+ * Bulk-imports properties from a CSV file via
+ * `POST /management/properties/import/` (multipart, field `file`).
+ * @param file - The CSV file to upload (header row required).
+ * @returns The created count plus per-row errors (1-based CSV lines).
+ */
+export async function importPropertiesCsv(file: File): Promise<PropertyImportResult> {
+  const formData = new FormData();
+  formData.append('file', file);
+  return await apiUpload<PropertyImportResult>('/management/properties/import/', formData);
+}
+
+/**
+ * Downloads a client-generated CSV template (the header row only) for the
+ * property bulk import — no backend call.
+ * @param filename - The download filename.
+ */
+export function downloadPropertyImportTemplate(filename: string): void {
+  const blob = new Blob([`${PROPERTY_IMPORT_COLUMNS.join(',')}\n`], {
+    type: 'text/csv;charset=utf-8;',
+  });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
   anchor.href = url;

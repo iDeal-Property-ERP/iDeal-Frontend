@@ -25,6 +25,8 @@ export type ActListParams = {
   status?: string;
   propertyId?: number | string;
   leaseId?: number | string;
+  /** Finalized-but-unacknowledged acts (`?awaiting_ack=true`). */
+  awaitingAck?: boolean;
 };
 
 export type ActListResult = {
@@ -54,46 +56,29 @@ export async function listActs(params: ActListParams): Promise<ActListResult> {
   if (params.leaseId) {
     query.lease_id = params.leaseId;
   }
+  if (params.awaitingAck) {
+    query.awaiting_ack = 'true';
+  }
   const res = await apiFetch<PaginatedData<InventoryActListOutput>>('/inventory/acts/', { query });
   return { items: res.page.object_list, total: res.count, totalPages: res.num_pages };
 }
 
-export type ActStatusCounts = {
-  all: number;
-  draft: number;
-  finalized: number;
+export type InventoryActStats = {
+  counts: {
+    draft: number;
+    finalized: number;
+    awaiting_ack: number;
+    all: number;
+  };
 };
 
 /**
- * Fetches the record count for one act-status view via a lightweight
- * (`per_page: 1`) list call.
- * @param status - Optional status filter; omit for the All view.
- * @returns The matching record count, or 0 on error.
+ * Per-tab record counts for the saved-view tabs (Drafts · Finalized · Awaiting
+ * acknowledgment · All) via `GET /inventory/acts/stats/`.
+ * @returns The stats bundle with per-view counts.
  */
-async function actCountOf(status?: string): Promise<number> {
-  try {
-    const res = await apiFetch<PaginatedData<InventoryActListOutput>>('/inventory/acts/', {
-      query: { page: 1, per_page: 1, ...(status ? { status } : {}) },
-    });
-    return res.count;
-  } catch {
-    return 0;
-  }
-}
-
-/**
- * Per-tab record counts for the saved-view tabs (Drafts · Finalized · All).
- * BACKEND-GAP: no aggregate counts endpoint — counts are read from parallel
- * lightweight (`per_page: 1`) list calls using the returned `count`.
- * @returns Counts for All plus each status.
- */
-export async function getActStatusCounts(): Promise<ActStatusCounts> {
-  const [all, draft, finalized] = await Promise.all([
-    actCountOf(),
-    actCountOf('draft'),
-    actCountOf('finalized'),
-  ]);
-  return { all, draft, finalized };
+export async function getActStats(): Promise<InventoryActStats> {
+  return await apiFetch<InventoryActStats>('/inventory/acts/stats/');
 }
 
 /**

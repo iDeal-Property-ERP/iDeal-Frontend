@@ -351,6 +351,7 @@ export default function ManagementPayoutsPage() {
           label: t('payout_kpi_held'),
           value: formatCurrency(stats.held_total, 'USD'),
           icon: AlertCircle,
+          tone: 'danger',
           onClick: () => resource.patchQuery(queryForView('held')),
           active: view === 'held',
         },
@@ -667,19 +668,29 @@ export default function ManagementPayoutsPage() {
             onClear={selection.clear}
             clearLabel={t('bulk_clear')}
             actions={
-              <button
-                type="button"
-                onClick={() =>
-                  runConfirm(
-                    selectedRows.map((row) => row.id),
-                    () => selection.clear(),
-                  )
-                }
-                className="flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-foreground/10 focus-visible:ring-2 focus-visible:ring-primary-foreground/60 focus-visible:outline-none"
-              >
-                <PauseCircle className="size-4" />
-                {t('confirm_payouts')}
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={() =>
+                    runConfirm(
+                      selectedRows.map((row) => row.id),
+                      () => selection.clear(),
+                    )
+                  }
+                  className="flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-foreground/10 focus-visible:ring-2 focus-visible:ring-primary-foreground/60 focus-visible:outline-none"
+                >
+                  <PauseCircle className="size-4" />
+                  {t('confirm_payouts')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setExportOpen(true)}
+                  className="flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-foreground/10 focus-visible:ring-2 focus-visible:ring-primary-foreground/60 focus-visible:outline-none"
+                >
+                  <Download className="size-4" />
+                  {t('export')}
+                </button>
+              </>
             }
           />
         }

@@ -59,7 +59,7 @@ export function AgentsMobileView(props: {
           key={row.id}
           leading={<AvatarInitials name={row.user_name} size={44} />}
           title={row.user_name}
-          subtitle={t('agt_col_agent_secondary')}
+          subtitle={t('agt_deals_ytd_count', { count: row.deals_ytd })}
           meta={
             <StatusPill
               tone={agentStatusTone(row.is_active)}
@@ -67,6 +67,11 @@ export function AgentsMobileView(props: {
             />
           }
           value={formatMoney(row.total_revenue)}
+          valueSuffix={
+            row.pending_commission_total === null
+              ? undefined
+              : t('agt_pending_inline', { amount: formatMoney(row.pending_commission_total) })
+          }
           onClick={() => props.onOpen(row)}
         />
       ))}

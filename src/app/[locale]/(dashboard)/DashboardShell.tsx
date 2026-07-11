@@ -2,6 +2,7 @@
 
 import type { CSSProperties } from 'react';
 import { useEffect } from 'react';
+import { CommandPalette } from '@/components/management/CommandPalette';
 import { MobileTabBar } from '@/components/management/mobile/MobileTabBar';
 import { AppSidebar } from '@/components/ui/app-sidebar';
 import { Header } from '@/components/ui/Header';
@@ -66,6 +67,7 @@ function DashboardContent(props: { children: React.ReactNode }) {
           {props.children}
         </main>
         {showTabBar ? <MobileTabBar counts={queueCounts} /> : null}
+        {isManagement ? <CommandPalette /> : null}
       </SidebarInset>
     </SidebarProvider>
   );

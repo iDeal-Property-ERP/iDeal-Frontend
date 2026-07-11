@@ -2,11 +2,14 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import { DangerConfirmDialog } from '@/components/management/dialogs/DangerConfirmDialog';
 import { Form } from '@/components/ui/form';
 import { usePropertyDraft } from '@/hooks/management/usePropertyDraft';
+import type { DraftState } from '@/hooks/management/usePropertyDraft';
 import { usePropertyPhotos } from '@/hooks/management/usePropertyPhotos';
 import { usePublishChecklist } from '@/hooks/management/usePublishChecklist';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -123,17 +126,40 @@ function stepForCode(code: string): number {
 }
 
 /**
- * Chooses the footer note based on validation state and mode.
+ * The informational footer note for the mode. The "N fields need attention" count
+ * is surfaced separately as a chip beside the primary action, not here.
  * @param t - The translator.
- * @param attentionCount - Number of fields flagged.
  * @param mode - The form mode.
  * @returns The localized note string.
  */
-function footerNote(t: Translator, attentionCount: number, mode: 'create' | 'edit'): string {
-  if (attentionCount > 0) {
-    return t('form_needs_attention', { count: attentionCount });
-  }
+function footerNote(t: Translator, mode: 'create' | 'edit'): string {
   return mode === 'edit' ? t('form_edit_note') : t('form_publish_note');
+}
+
+type DraftChipLabels = { saving: string; saved: string; error: string; unsaved: string };
+
+/**
+ * The header status chip: the autosave state in create, an unsaved-edits alert in
+ * edit (only while dirty), nothing otherwise.
+ * @param mode - The form mode.
+ * @param draftState - The autosave lifecycle state.
+ * @param hasUnsaved - Whether edit mode has pending changes.
+ * @param labels - Localized chip labels.
+ * @returns The chip node, or null.
+ */
+function headerChipFor(
+  mode: 'create' | 'edit',
+  draftState: DraftState,
+  hasUnsaved: boolean,
+  labels: DraftChipLabels,
+): ReactNode {
+  if (mode === 'create') {
+    return <DraftSavedChip state={draftState} labels={labels} />;
+  }
+  if (hasUnsaved) {
+    return <DraftSavedChip state="unsaved" labels={labels} />;
+  }
+  return null;
 }
 
 /**
@@ -155,8 +181,12 @@ export function PropertyForm(props: PropertyFormProps) {
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [errorStep, setErrorStep] = useState<number | null>(null);
+  const [discardOpen, setDiscardOpen] = useState(false);
 
   const form = useForm({
+    // Errors surface on blur (and re-check on change once touched) — never while
+    // first typing, per the Figma field-states board.
+    mode: 'onTouched',
     resolver: zodResolver(managementPropertyDraftSchema),
     defaultValues: initial ? toFormValues(initial) : { tariff: 'standard' },
   });
@@ -203,6 +233,33 @@ export function PropertyForm(props: PropertyFormProps) {
     draft.schedule(toPayload(values));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [serialized, mode]);
+
+  // Edit mode with pending edits: navigating away must confirm first.
+  const hasUnsaved = mode === 'edit' && form.formState.isDirty;
+  const pendingHref = useRef('/management/properties');
+
+  // Guard browser/full-page navigation while there are unsaved edits.
+  useEffect(() => {
+    if (!hasUnsaved) {
+      return;
+    }
+    const handler = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [hasUnsaved]);
+
+  // Route an in-app navigation through the discard dialog when edits are pending.
+  const navigateGuarded = (href: string) => {
+    if (hasUnsaved) {
+      pendingHref.current = href;
+      setDiscardOpen(true);
+    } else {
+      router.push(href);
+    }
+  };
 
   const saveDraftAndLeave = async () => {
     if (mode === 'create' && dirtyRef.current) {
@@ -265,6 +322,11 @@ export function PropertyForm(props: PropertyFormProps) {
     if (!initial) {
       return;
     }
+    // A published property must still satisfy the full schema; gate the save the
+    // same way publish does (errors + focus + count chip) rather than saving blind.
+    if (showPublishErrors()) {
+      return;
+    }
     setPublishing(true);
     try {
       await updateProperty(initial.id, toPayload(form.getValues()));
@@ -285,16 +347,25 @@ export function PropertyForm(props: PropertyFormProps) {
     }
   };
 
-  const attentionCount = useMemo(
-    () => Object.keys(form.formState.errors).length,
-    [form.formState.errors],
-  );
+  // Read errors directly in render so the RHF formState proxy subscribes and the
+  // count re-renders when validation sets/clears field errors (a useMemo keyed on
+  // the errors object misses in-place proxy updates).
+  const { errors } = form.formState;
+  const attentionCount = Object.keys(errors).length;
 
   const ownerLabel = initial?.owner
     ? `${initial.owner.first_name} ${initial.owner.last_name}`.trim()
     : undefined;
   const title = mode === 'edit' ? t('form_edit_title') : t('form_new_title');
   const secondCrumb = mode === 'edit' ? (initial?.name ?? title) : t('form_new_title');
+  const draftLabels = {
+    saving: t('draft_saving'),
+    saved: t('draft_saved'),
+    error: t('draft_error'),
+    unsaved: t('draft_unsaved'),
+  };
+
+  const headerChip = headerChipFor(mode, draft.state, hasUnsaved, draftLabels);
 
   const body = isMobile ? (
     <PropertyFormStepper
@@ -310,20 +381,14 @@ export function PropertyForm(props: PropertyFormProps) {
   ) : (
     <PropertyFormShell
       backHref="/management/properties"
+      onBack={() => navigateGuarded('/management/properties')}
       breadcrumb={
         <span>
           {t('properties')} / {secondCrumb}
         </span>
       }
       title={title}
-      headerAside={
-        mode === 'create' ? (
-          <DraftSavedChip
-            state={draft.state}
-            labels={{ saving: t('draft_saving'), saved: t('draft_saved'), error: t('draft_error') }}
-          />
-        ) : null
-      }
+      headerAside={headerChip}
       rail={
         <>
           {mode === 'create' ? <PublishChecklist rows={checklist.rows} t={t} /> : null}
@@ -335,9 +400,10 @@ export function PropertyForm(props: PropertyFormProps) {
         <PropertyFormFooter
           t={t}
           mode={mode}
-          note={footerNote(t, attentionCount, mode)}
+          note={footerNote(t, mode)}
+          attentionCount={attentionCount}
           submitting={publishing}
-          onCancel={() => router.push('/management/properties')}
+          onCancel={() => navigateGuarded('/management/properties')}
           onSaveDraft={() => void saveDraftAndLeave()}
           onPrimary={onPrimary}
         />
@@ -358,6 +424,18 @@ export function PropertyForm(props: PropertyFormProps) {
         t={t}
         submitting={publishing}
         onConfirm={(iso) => void runPublish(iso)}
+      />
+      <DangerConfirmDialog
+        open={discardOpen}
+        onOpenChange={setDiscardOpen}
+        title={t('discard_title')}
+        description={t('discard_body')}
+        confirmLabel={t('discard_confirm')}
+        cancelLabel={t('discard_keep')}
+        onConfirm={() => {
+          setDiscardOpen(false);
+          router.push(pendingHref.current);
+        }}
       />
     </Form>
   );

@@ -393,6 +393,7 @@ export default function ManagementPaymentsPage() {
         label: t('payment_kpi_overdue'),
         value: formatCurrency(stats.overdue_total, 'USD'),
         icon: AlertCircle,
+        tone: 'danger',
         onClick: () => resource.patchQuery(queryForView('overdue')),
         active: view === 'overdue',
       },

@@ -172,22 +172,30 @@ export type ManagementPropertyOutput = {
   owner_guaranteed_price: string | null;
   tenant_charge_price: string | null;
   vacant_since: string | null;
-  vacant_days: number;
+  // Null when rented — vacancy figures only apply to vacant properties.
+  vacant_days: number | null;
+  // Decimal string (e.g. "16.67"); null when rented.
+  vacancy_loss_per_day: string | null;
+  // Active-lease enrichment: null when the property has no active lease.
+  tenant_name: string | null;
+  tenant_since: string | null;
   map_lat: string | null;
   map_lon: string | null;
   description: string | null;
   score: string;
+  // Absolute URL of the primary photo for the row thumbnail; null when none.
+  cover_image_url: string | null;
   created_at: string;
   updated_at: string;
 };
 
 /**
  * A portfolio-map row — the full property output plus the map popup enrichment
- * (active tenant + lease end). A superset of `ManagementPropertyOutput`, so a
- * marker's row drives the property record panel directly.
+ * (lease end; the tenant name is on the base row). A superset of
+ * `ManagementPropertyOutput`, so a marker's row drives the property record
+ * panel directly.
  */
 export type ManagementPropertyMapRow = ManagementPropertyOutput & {
-  tenant_name: string | null;
   lease_end_date: string | null;
 };
 
@@ -219,6 +227,9 @@ export type ManagementAgreementOutput = {
   end_date: string;
   status: string;
   commission_rate: string;
+  owner_guaranteed_amount: string | null;
+  tenant_charge_amount: string | null;
+  margin: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -309,6 +320,7 @@ export type ManagementServiceRequestOutput = {
   property_name: string;
   tenant_id: number;
   tenant_name: string;
+  tenant_phone: string | null;
   title: string;
   description: string;
   priority: string;
@@ -321,6 +333,11 @@ export type ManagementServiceRequestOutput = {
   resolved_at: string | null;
   photos_count: number;
   photo_urls: string[];
+  // Server-computed SLA: window hours, due datetime, and whether it is past due
+  // (breached = past due and status not resolved/cancelled).
+  sla_hours: number;
+  sla_due_at: string;
+  sla_breached: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -501,11 +518,17 @@ export type AgentOutput = {
   user_id: number;
   user_name: string;
   total_deals: number;
+  deals_ytd: number;
+  pending_commission_total: string | null;
   total_revenue: string;
   commission_rate: string;
   is_active: boolean;
   created_at: string;
   updated_at: string;
+};
+
+export type AgentStats = {
+  counts: { active: number; pending_commission: number; all: number };
 };
 
 export type AgentDealOutput = {

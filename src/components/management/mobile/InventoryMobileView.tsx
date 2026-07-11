@@ -60,6 +60,8 @@ export function InventoryMobileView(props: {
   record?: ReactNode;
   onCloseRecord: () => void;
   empty: ReactNode;
+  /** Optional trailing node under the card list (e.g. the info banner). */
+  footer?: ReactNode;
 }) {
   const { t } = props;
   const card = (row: InventoryActListOutput) => (
@@ -126,6 +128,7 @@ export function InventoryMobileView(props: {
           </SwipeActionRow>
         );
       })}
+      {props.footer}
     </MobileWorkbench>
   );
 }

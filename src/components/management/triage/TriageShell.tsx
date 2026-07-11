@@ -13,7 +13,8 @@ import type { ReactNode } from 'react';
 export function TriageShell(props: {
   header: ReactNode;
   tabs: ReactNode;
-  search: ReactNode;
+  /** Optional rail search box; omitted on queues that have no rail search (e.g. Onboardings). */
+  search?: ReactNode;
   rail: ReactNode;
   railFooter?: ReactNode;
   detail: ReactNode;
@@ -24,7 +25,7 @@ export function TriageShell(props: {
       {props.tabs}
       <div className="flex min-h-[600px] items-stretch gap-6">
         <div className="flex w-[380px] shrink-0 flex-col gap-3">
-          {props.search}
+          {props.search ?? null}
           <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-0.5">
             {props.rail}
           </div>

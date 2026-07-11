@@ -5,6 +5,7 @@ import type {
   AgentDealCreatePayload,
   AgentDealOutput,
   AgentOutput,
+  AgentStats,
   AgentUpdatePayload,
 } from '@/types/management';
 
@@ -24,6 +25,7 @@ export type AgentListParams = {
   page: number;
   perPage?: number;
   isActive?: boolean;
+  hasPendingCommission?: boolean;
 };
 
 export type AgentListResult = {
@@ -47,6 +49,9 @@ export async function listAgents(params: AgentListParams): Promise<AgentListResu
   if (params.isActive !== undefined) {
     query.is_active = params.isActive;
   }
+  if (params.hasPendingCommission !== undefined) {
+    query.has_pending_commission = params.hasPendingCommission;
+  }
   const res = await apiFetch<PaginatedData<AgentOutput>>('/agents/', { query });
   return { items: res.page.object_list, total: res.count, totalPages: res.num_pages };
 }
@@ -54,39 +59,16 @@ export async function listAgents(params: AgentListParams): Promise<AgentListResu
 export type AgentStatusCounts = {
   all: number;
   active: number;
-  inactive: number;
+  pending_commission: number;
 };
 
 /**
- * Fetches the record count for one agent view via a lightweight
- * (`per_page: 1`) list call.
- * @param extra - Extra query filters (e.g. `is_active`) merged into the call.
- * @returns The matching record count, or 0 on error.
- */
-async function agentCountOf(extra: Record<string, string | number | boolean>): Promise<number> {
-  try {
-    const res = await apiFetch<PaginatedData<AgentOutput>>('/agents/', {
-      query: { page: 1, per_page: 1, ...extra },
-    });
-    return res.count;
-  } catch {
-    return 0;
-  }
-}
-
-/**
- * Per-tab record counts for the saved-view tabs.
- * BACKEND-GAP: no aggregate counts endpoint — counts are read from parallel
- * lightweight (`per_page: 1`) list calls using the returned `count`.
- * @returns Counts for the Active / Inactive / All views.
+ * Per-tab record counts for the saved-view tabs via `GET /agents/stats/`.
+ * @returns Counts for the Active / All deals / Pending commission views.
  */
 export async function getAgentStatusCounts(): Promise<AgentStatusCounts> {
-  const [all, active, inactive] = await Promise.all([
-    agentCountOf({}),
-    agentCountOf({ is_active: true }),
-    agentCountOf({ is_active: false }),
-  ]);
-  return { all, active, inactive };
+  const res = await apiFetch<AgentStats>('/agents/stats/');
+  return res.counts;
 }
 
 export type AgentKpis = {
@@ -108,7 +90,7 @@ export async function getAgentKpis(): Promise<AgentKpis> {
   const sample = await listAgents({ page: 1, perPage: 100 }).catch(
     () => ({ items: [], total: 0, totalPages: 1 }) as AgentListResult,
   );
-  const dealsYtd = sample.items.reduce((sum, agent) => sum + agent.total_deals, 0);
+  const dealsYtd = sample.items.reduce((sum, agent) => sum + agent.deals_ytd, 0);
   let commissionPaid = 0;
   for (const agent of sample.items) {
     const revenue = Number.parseFloat(agent.total_revenue) || 0;

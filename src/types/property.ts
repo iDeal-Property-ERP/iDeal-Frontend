@@ -36,6 +36,8 @@ export type PropertyOutput = {
   tenant_charge_currency: Currency;
   vacant_since: string | null;
   vacant_days: number;
+  // The detail endpoint returns the property's photos (primary-first ordering).
+  photos: PropertyPhoto[];
   created_at: string;
   updated_at: string;
 };

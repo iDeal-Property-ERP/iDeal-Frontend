@@ -23,6 +23,8 @@ export type KpiItem = {
   /** When set, the whole card becomes a filter shortcut button. */
   onClick?: () => void;
   active?: boolean;
+  /** Card emphasis — `danger` tints the border, value, icon, and sublabel red. */
+  tone?: 'default' | 'danger';
 };
 
 const deltaToneClass: Record<DeltaTone, string> = {
@@ -42,6 +44,7 @@ export function KpiCard(props: KpiItem) {
   const Icon = props.icon;
   const Arrow = props.deltaDirection === 'down' ? ArrowDownRight : ArrowUpRight;
   const tone = props.deltaTone ?? 'success';
+  const isDanger = props.tone === 'danger';
 
   const body = (
     <>
@@ -49,11 +52,23 @@ export function KpiCard(props: KpiItem) {
         <span className="text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
           {props.label}
         </span>
-        <span className="flex size-[34px] shrink-0 items-center justify-center rounded-[9px] bg-primary-subtle text-primary-subtle-foreground">
+        <span
+          className={cn(
+            'flex size-[34px] shrink-0 items-center justify-center rounded-[9px]',
+            isDanger
+              ? 'bg-danger-subtle text-danger'
+              : 'bg-primary-subtle text-primary-subtle-foreground',
+          )}
+        >
           <Icon className="size-[17px]" strokeWidth={1.75} />
         </span>
       </div>
-      <p className="font-display text-[40px] leading-[44px] font-extrabold tracking-[-0.4px] text-foreground tabular-nums">
+      <p
+        className={cn(
+          'font-display text-[40px] leading-[44px] font-extrabold tracking-[-0.4px] tabular-nums',
+          isDanger ? 'text-danger' : 'text-foreground',
+        )}
+      >
         {props.value}
       </p>
       {props.delta || props.sublabel ? (
@@ -64,7 +79,11 @@ export function KpiCard(props: KpiItem) {
               {props.delta}
             </span>
           ) : null}
-          {props.sublabel ? <span className="text-muted-foreground">{props.sublabel}</span> : null}
+          {props.sublabel ? (
+            <span className={isDanger ? 'text-danger' : 'text-muted-foreground'}>
+              {props.sublabel}
+            </span>
+          ) : null}
         </div>
       ) : null}
     </>
@@ -73,7 +92,12 @@ export function KpiCard(props: KpiItem) {
   const base =
     'flex flex-1 flex-col gap-3 rounded-[16px] border bg-card p-5 text-left shadow-sm transition-colors';
 
+  const idleBorder = isDanger ? 'border-danger/60' : 'border-border';
+
   if (props.onClick) {
+    const activeBorder = isDanger
+      ? 'border-danger/70 ring-1 ring-danger/30'
+      : 'border-primary/60 ring-1 ring-primary/30';
     return (
       <button
         type="button"
@@ -81,8 +105,9 @@ export function KpiCard(props: KpiItem) {
         aria-pressed={props.active}
         className={cn(
           base,
-          'outline-none hover:border-primary/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-          props.active ? 'border-primary/60 ring-1 ring-primary/30' : 'border-border',
+          'outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+          isDanger ? 'hover:border-danger/70' : 'hover:border-primary/40',
+          props.active ? activeBorder : idleBorder,
         )}
       >
         {body}
@@ -90,7 +115,7 @@ export function KpiCard(props: KpiItem) {
     );
   }
 
-  return <div className={cn(base, 'border-border')}>{body}</div>;
+  return <div className={cn(base, idleBorder)}>{body}</div>;
 }
 
 /**

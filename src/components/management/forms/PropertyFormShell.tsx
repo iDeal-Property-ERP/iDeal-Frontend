@@ -6,6 +6,8 @@ import { Link } from '@/libs/I18nNavigation';
 
 type PropertyFormShellProps = {
   backHref: string;
+  /** When set, the back arrow runs this (e.g. to confirm discard) instead of navigating. */
+  onBack?: () => void;
   breadcrumb: ReactNode;
   title: string;
   /** Right side of the header row (e.g. the DraftSavedChip). */
@@ -26,18 +28,22 @@ type PropertyFormShellProps = {
  * @returns The form shell.
  */
 export function PropertyFormShell(props: PropertyFormShellProps) {
-  const { backHref, breadcrumb, title, headerAside, children, rail, footer } = props;
+  const { backHref, onBack, breadcrumb, title, headerAside, children, rail, footer } = props;
+  const backClassName =
+    'flex size-9 items-center justify-center rounded-full border border-border bg-card text-foreground transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none';
   return (
     <div className="flex min-h-full flex-col">
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-3">
-          <Link
-            href={backHref}
-            aria-label="Back"
-            className="flex size-9 items-center justify-center rounded-full border border-border bg-card text-foreground transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-          >
-            <ArrowLeft className="size-4" />
-          </Link>
+          {onBack ? (
+            <button type="button" onClick={onBack} aria-label="Back" className={backClassName}>
+              <ArrowLeft className="size-4" />
+            </button>
+          ) : (
+            <Link href={backHref} aria-label="Back" className={backClassName}>
+              <ArrowLeft className="size-4" />
+            </Link>
+          )}
           <div>
             <div className="text-sm text-muted-foreground">{breadcrumb}</div>
             <h1 className="font-display text-[28px] leading-[34px] font-bold tracking-[-0.14px] text-foreground">

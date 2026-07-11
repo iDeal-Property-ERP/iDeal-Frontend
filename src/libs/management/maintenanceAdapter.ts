@@ -83,6 +83,17 @@ export async function getMaintenanceStats(): Promise<MaintenanceStats> {
   return await apiFetch<MaintenanceStats>('/management/service-requests/stats/');
 }
 
+export type MaintenanceAssignee = { id: number; full_name: string };
+
+/**
+ * Lists management staff eligible for assignment via `GET /management/assignees/`
+ * — the options for the Assignee filter and assignment pickers.
+ * @returns The assignee options.
+ */
+export async function listAssignees(): Promise<MaintenanceAssignee[]> {
+  return await apiFetch<MaintenanceAssignee[]>('/management/assignees/');
+}
+
 /**
  * Creates a service request via `POST /maintenance/requests/`.
  * @param payload - Property, tenant, title, description and priority.

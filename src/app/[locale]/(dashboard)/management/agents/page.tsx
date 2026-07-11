@@ -47,38 +47,42 @@ import type { AgentOutput } from '@/types/management';
 
 const SAVED_VIEW_DEFS = [
   { id: 'active', labelKey: 'agt_view_active', countKey: 'active' },
-  { id: 'inactive', labelKey: 'agt_view_inactive', countKey: 'inactive' },
-  { id: 'all', labelKey: 'view_all', countKey: 'all' },
+  { id: 'all', labelKey: 'agt_view_all_deals', countKey: 'all' },
+  { id: 'pending', labelKey: 'agt_view_pending_commission', countKey: 'pending_commission' },
 ] as const satisfies { id: string; labelKey: string; countKey: keyof AgentStatusCounts }[];
 
 type Translator = ReturnType<typeof useTranslations>;
 
 /**
- * Maps a saved-view id to the `is_active` query it applies (as a string).
+ * Maps a saved-view id to the list query it applies (as strings).
  * @param view - The saved-view id.
- * @returns The `is_active` query for that view.
+ * @returns The `is_active` / `has_pending_commission` query for that view.
  */
-function queryForView(view: string): { is_active?: string } {
+function queryForView(view: string): { is_active?: string; has_pending_commission?: string } {
   if (view === 'active') {
-    return { is_active: 'true' };
+    return { is_active: 'true', has_pending_commission: undefined };
   }
-  if (view === 'inactive') {
-    return { is_active: 'false' };
+  if (view === 'pending') {
+    return { is_active: undefined, has_pending_commission: 'true' };
   }
-  return { is_active: undefined };
+  return { is_active: undefined, has_pending_commission: undefined };
 }
 
 /**
- * Reverses the `is_active` query back to a saved-view id.
+ * Reverses the list query back to a saved-view id.
  * @param isActive - The active `is_active` filter, if any.
+ * @param hasPendingCommission - The active `has_pending_commission` filter, if any.
  * @returns The matching saved-view id.
  */
-function viewFromQuery(isActive: string | undefined): string {
+function viewFromQuery(
+  isActive: string | undefined,
+  hasPendingCommission: string | undefined,
+): string {
+  if (hasPendingCommission === 'true') {
+    return 'pending';
+  }
   if (isActive === 'true') {
     return 'active';
-  }
-  if (isActive === 'false') {
-    return 'inactive';
   }
   return 'all';
 }
@@ -96,10 +100,10 @@ function filterAndSortAgents(data: AgentOutput[], search: string, sort: string):
   const filtered = query ? data.filter((row) => row.user_name.toLowerCase().includes(query)) : data;
   return filtered.toSorted((a, b) => {
     if (sort === 'deals_high') {
-      return b.total_deals - a.total_deals;
+      return b.deals_ytd - a.deals_ytd;
     }
     if (sort === 'deals_low') {
-      return a.total_deals - b.total_deals;
+      return a.deals_ytd - b.deals_ytd;
     }
     if (sort === 'volume_high') {
       return Number.parseFloat(b.total_revenue) - Number.parseFloat(a.total_revenue);
@@ -179,12 +183,14 @@ export default function ManagementAgentsPage() {
       await listAgents({
         page,
         isActive: query.is_active === undefined ? undefined : query.is_active === 'true',
+        hasPendingCommission: query.has_pending_commission === undefined ? undefined : true,
       }),
     { initialQuery: queryForView('active') },
   );
 
   const isActive = resource.query.is_active as string | undefined;
-  const view = viewFromQuery(isActive);
+  const hasPendingCommission = resource.query.has_pending_commission as string | undefined;
+  const view = viewFromQuery(isActive, hasPendingCommission);
 
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState('deals_high');
@@ -272,7 +278,7 @@ export default function ManagementAgentsPage() {
       id: 'deals',
       header: t('agt_col_deals'),
       width: 110,
-      cell: (row) => <span className="text-foreground tabular-nums">{row.total_deals}</span>,
+      cell: (row) => <span className="text-foreground tabular-nums">{row.deals_ytd}</span>,
     },
     {
       id: 'volume',
@@ -288,13 +294,16 @@ export default function ManagementAgentsPage() {
       cell: (row) => <span className="text-foreground tabular-nums">{row.commission_rate}%</span>,
     },
     {
-      id: 'last_deal',
-      header: t('agt_col_last_deal'),
-      width: 130,
-      secondary: true,
-      // BACKEND-GAP: AgentOutput has no last-deal field and per-row fetches are
-      // too costly, so this shows an em dash placeholder.
-      cell: () => <span className="text-muted-foreground">—</span>,
+      id: 'pending_commission',
+      header: t('agt_col_pending_commission'),
+      width: 150,
+      align: 'right',
+      cell: (row) =>
+        row.pending_commission_total === null ? (
+          <span className="text-muted-foreground">—</span>
+        ) : (
+          <NumericCell>{formatMoney(row.pending_commission_total)}</NumericCell>
+        ),
     },
     {
       id: 'status',

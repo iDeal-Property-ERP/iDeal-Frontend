@@ -11,6 +11,7 @@ import {
 import { ManagementPageHeader } from '@/components/management/ManagementPageHeader';
 import { MethodSegmented } from '@/components/management/MethodSegmented';
 import { LeadsMobileView } from '@/components/management/mobile/LeadsMobileView';
+import { MobileSearchToggle } from '@/components/management/mobile/MobileSearchToggle';
 import { ErrorState } from '@/components/management/states/ErrorState';
 import { LeadDetail } from '@/components/management/triage/leads/LeadDetail';
 import type { LeadAction } from '@/components/management/triage/leads/LeadDetail';
@@ -73,16 +74,19 @@ export default function ManagementLeadsPage() {
     reloadStats();
   }, [reloadStats]);
 
-  // Auto-select the first lead whenever the list changes and nothing valid is selected.
+  // Keep the selection valid, and on desktop auto-select the first lead to fill the
+  // two-pane detail. Mobile reuses `selectedId` for push navigation (list ↔ full-screen
+  // detail), so it must default to the list — auto-selecting there re-opens a detail on
+  // load and re-fires the instant "Back to leads" clears it, trapping the user.
   useEffect(() => {
-    if (leads.length === 0) {
+    if (selectedId && !leads.some((l) => l.id === selectedId)) {
       setSelectedId(null);
       return;
     }
-    if (!selectedId || !leads.some((l) => l.id === selectedId)) {
+    if (!isMobile && !selectedId && leads.length > 0) {
       setSelectedId(leads[0]!.id);
     }
-  }, [leads, selectedId]);
+  }, [leads, selectedId, isMobile]);
 
   const selected = useMemo(
     () => leads.find((l) => l.id === selectedId) ?? null,
@@ -228,7 +232,18 @@ export default function ManagementLeadsPage() {
   if (isMobile) {
     return (
       <>
-        <ManagementPageHeader title={t('nav_leads')} subtitle={subtitle} />
+        <ManagementPageHeader
+          title={t('nav_leads')}
+          subtitle={subtitle}
+          topRight={
+            <MobileSearchToggle
+              ariaLabel={t('lead_search')}
+              onChange={changeSearch}
+              placeholder={t('lead_search')}
+              value={search}
+            />
+          }
+        />
         <div className="mt-4">
           <LeadsMobileView
             leads={leads}

@@ -34,7 +34,11 @@ import { usePaginatedResource } from '@/hooks/management/usePaginatedResource';
 import { useRowSelection } from '@/hooks/management/useRowSelection';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { relativeTime } from '@/libs/management/format';
-import { getMaintenanceStats, listServiceRequests } from '@/libs/management/maintenanceAdapter';
+import {
+  getMaintenanceStats,
+  listAssignees,
+  listServiceRequests,
+} from '@/libs/management/maintenanceAdapter';
 import { listProperties } from '@/libs/management/propertiesAdapter';
 import type { ManagementServiceRequestOutput, MaintenanceStats } from '@/types/management';
 
@@ -49,6 +53,7 @@ export default function ManagementMaintenancePage() {
   const [search, setSearch] = useState('');
   const [stats, setStats] = useState<MaintenanceStats | null>(null);
   const [propertyOptions, setPropertyOptions] = useState<{ value: string; label: string }[]>([]);
+  const [assigneeOptions, setAssigneeOptions] = useState<{ value: string; label: string }[]>([]);
   const [selected, setSelected] = useState<ManagementServiceRequestOutput | null>(null);
 
   const [assignReq, setAssignReq] = useState<ManagementServiceRequestOutput | null>(null);
@@ -64,6 +69,7 @@ export default function ManagementMaintenancePage() {
         status: query.status as string,
         priority: query.priority as string,
         propertyId: query.property_id as string,
+        assignedToId: query.assigned_to_id as string,
         unassigned: query.unassigned === 'true',
         search: (query.search as string) || undefined,
         order: (query.order as string) || 'priority',
@@ -87,6 +93,13 @@ export default function ManagementMaintenancePage() {
         setPropertyOptions(res.items.map((i) => ({ value: String(i.id), label: i.name }))),
       )
       .catch(() => setPropertyOptions([]));
+  }, []);
+  useEffect(() => {
+    listAssignees()
+      .then((staff) =>
+        setAssigneeOptions(staff.map((s) => ({ value: String(s.id), label: s.full_name }))),
+      )
+      .catch(() => setAssigneeOptions([]));
   }, []);
 
   const changeView = (next: string) => {
@@ -165,11 +178,28 @@ export default function ManagementMaintenancePage() {
       options: propertyOptions,
       onChange: (value) => patchQuery({ property_id: value ?? undefined }),
     },
+    {
+      id: 'assignee',
+      label: t('mnt_filter_assignee'),
+      anyLabel: t('mnt_filter_assignee'),
+      value:
+        query.unassigned === 'true' ? 'unassigned' : ((query.assigned_to_id as string) ?? null),
+      options: [{ value: 'unassigned', label: t('mnt_unassigned') }, ...assigneeOptions],
+      onChange: (value) =>
+        patchQuery(
+          value === 'unassigned'
+            ? { unassigned: 'true', assigned_to_id: undefined }
+            : { assigned_to_id: value ?? undefined, unassigned: undefined },
+        ),
+    },
   ])();
 
-  const activeFilterCount = [query.priority, query.property_id, query.unassigned].filter(
-    Boolean,
-  ).length;
+  const activeFilterCount = [
+    query.priority,
+    query.property_id,
+    query.assigned_to_id,
+    query.unassigned,
+  ].filter(Boolean).length;
   const hasQuery = Boolean(search) || activeFilterCount > 0 || view !== 'open';
 
   const columns: WorkbenchColumn<ManagementServiceRequestOutput>[] = [
@@ -215,8 +245,13 @@ export default function ManagementMaintenancePage() {
       cell: (row) => (
         <div className="flex flex-col">
           <span className="text-sm text-foreground">{relativeTime(row.created_at)}</span>
-          {row.priority === 'critical' && row.status === 'open' ? (
-            <span className="text-xs text-danger">{t('mnt_sla_line', { hours: 4 })}</span>
+          {row.sla_breached ? (
+            <span className="text-xs text-danger">{t('mnt_sla_breached')}</span>
+          ) : null}
+          {!row.sla_breached && row.priority === 'critical' && row.status === 'open' ? (
+            <span className="text-xs text-danger">
+              {t('mnt_sla_line', { hours: row.sla_hours })}
+            </span>
           ) : null}
         </div>
       ),

@@ -8,6 +8,7 @@ import {
   RequestInfoDialog,
 } from '@/components/management/dialogs/OnboardingDialogs';
 import { ManagementPageHeader } from '@/components/management/ManagementPageHeader';
+import { MobileSearchToggle } from '@/components/management/mobile/MobileSearchToggle';
 import { OnboardingsMobileView } from '@/components/management/mobile/OnboardingsMobileView';
 import { ErrorState } from '@/components/management/states/ErrorState';
 import { OnboardingDetail } from '@/components/management/triage/onboardings/OnboardingDetail';
@@ -16,7 +17,6 @@ import { OnboardingQueueCard } from '@/components/management/triage/onboardings/
 import { TriageShell } from '@/components/management/triage/TriageShell';
 import { SavedViewTabs } from '@/components/management/workbench/SavedViewTabs';
 import type { SavedView } from '@/components/management/workbench/SavedViewTabs';
-import { SearchField } from '@/components/management/workbench/SearchField';
 import { usePaginatedResource } from '@/hooks/management/usePaginatedResource';
 import { useQueueKeyboard } from '@/hooks/management/useQueueKeyboard';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -70,16 +70,19 @@ export default function ManagementOnboardingsPage() {
     reloadStats();
   }, [reloadStats]);
 
-  // Auto-select the first onboarding when the list changes.
+  // Keep the selection valid, and on desktop auto-select the first onboarding to fill the
+  // two-pane detail. Mobile reuses `selectedId` for push navigation (list ↔ full-screen
+  // detail), so it must default to the list — auto-selecting there traps the user in a
+  // detail on load, since "back" clears the selection and this effect re-selects instantly.
   useEffect(() => {
-    if (onboardings.length === 0) {
+    if (selectedId && !onboardings.some((o) => o.id === selectedId)) {
       setSelectedId(null);
       return;
     }
-    if (!selectedId || !onboardings.some((o) => o.id === selectedId)) {
+    if (!isMobile && !selectedId && onboardings.length > 0) {
       setSelectedId(onboardings[0]!.id);
     }
-  }, [onboardings, selectedId]);
+  }, [onboardings, selectedId, isMobile]);
 
   // Fetch the rich detail whenever the selection changes.
   useEffect(() => {
@@ -216,7 +219,18 @@ export default function ManagementOnboardingsPage() {
   if (isMobile) {
     return (
       <>
-        <ManagementPageHeader title={t('nav_onboardings')} subtitle={subtitle} />
+        <ManagementPageHeader
+          title={t('nav_onboardings')}
+          subtitle={subtitle}
+          topRight={
+            <MobileSearchToggle
+              ariaLabel={t('onb_search')}
+              onChange={changeSearch}
+              placeholder={t('onb_search')}
+              value={search}
+            />
+          }
+        />
         <div className="mt-4">
           <OnboardingsMobileView
             onboardings={onboardings}
@@ -240,15 +254,6 @@ export default function ManagementOnboardingsPage() {
       <TriageShell
         header={<ManagementPageHeader title={t('nav_onboardings')} subtitle={subtitle} />}
         tabs={<SavedViewTabs views={views} active={tab} onChange={changeTab} />}
-        search={
-          <SearchField
-            value={search}
-            onChange={changeSearch}
-            placeholder={t('onb_search')}
-            ariaLabel={t('onb_search')}
-            clearLabel={t('clear')}
-          />
-        }
         rail={railContent}
         railFooter={t('onb_kbd_hint')}
         detail={

@@ -2,9 +2,12 @@
 
 import type { useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
+import { useState } from 'react';
 import { PropertyThumbnail } from '@/components/management/columns/PropertyThumbnail';
 import { propertyStatusTone, StatusPill } from '@/components/management/columns/StatusPill';
 import { formatMoney } from '@/components/management/format';
+import type { FilterGroup } from '@/components/management/mobile/MobileFilterSheet';
+import { MobileFilterSheet } from '@/components/management/mobile/MobileFilterSheet';
 import type { MobileChip } from '@/components/management/mobile/MobileWorkbench';
 import { MobileWorkbench } from '@/components/management/mobile/MobileWorkbench';
 import { ModuleListCard } from '@/components/management/mobile/ModuleListCard';
@@ -36,6 +39,32 @@ function currencyOf(row: ManagementPropertyOutput): string {
 }
 
 /**
+ * The dot-joined tenant-or-vacancy subtitle for a mobile card — tenant name +
+ * since-date when rented, days · accrued loss when vacant, else the
+ * district · rooms fallback.
+ * @param t - The translator.
+ * @param row - The property row.
+ * @returns The subtitle string.
+ */
+function subtitleOf(t: Translator, row: ManagementPropertyOutput): string {
+  if (row.tenant_name) {
+    return row.tenant_since
+      ? `${row.tenant_name} · ${t('tenant_since_caption', { date: new Date(row.tenant_since).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) })}`
+      : row.tenant_name;
+  }
+  if (row.vacant_days !== null && row.vacancy_loss_per_day !== null) {
+    const perDay = Number.parseFloat(row.vacancy_loss_per_day);
+    if (!Number.isNaN(perDay)) {
+      return t('vacancy_inline', {
+        days: row.vacant_days,
+        amount: formatMoney(row.vacant_days * perDay, currencyOf(row)),
+      });
+    }
+  }
+  return `${row.district_name ?? '—'} · ${row.rooms === null ? '—' : t('rooms_count', { count: row.rooms })}`;
+}
+
+/**
  * The mobile Properties workbench — the list-screen archetype on mobile: a card
  * list with status pills and rent, a floating "Add property" FAB, and a tapped
  * row that opens the shared property record panel full-screen.
@@ -60,8 +89,13 @@ export function PropertiesMobileView(props: {
   record?: ReactNode;
   onCloseRecord: () => void;
   empty: ReactNode;
+  /** Secondary-filter groups (District, Tariff, Price, Sort) for the filter sheet. */
+  filterGroups: FilterGroup[];
+  activeFilterCount: number;
+  onResetFilters: () => void;
 }) {
   const { t } = props;
+  const [filterOpen, setFilterOpen] = useState(false);
   return (
     <MobileWorkbench
       title={props.title}
@@ -80,13 +114,28 @@ export function PropertiesMobileView(props: {
       onCloseRecord={props.onCloseRecord}
       backLabel={t('back')}
       fab={{ label: props.addLabel, onClick: props.onAdd }}
+      onOpenFilters={() => setFilterOpen(true)}
+      activeFilterCount={props.activeFilterCount}
+      filtersLabel={t('filters')}
+      filterSheet={
+        <MobileFilterSheet
+          open={filterOpen}
+          onOpenChange={setFilterOpen}
+          title={t('filters_title')}
+          resetLabel={t('filters_reset')}
+          cancelLabel={t('cancel')}
+          applyLabel={t('filters_show', { count: props.rows.length })}
+          onReset={props.onResetFilters}
+          groups={props.filterGroups}
+        />
+      }
     >
       {props.rows.map((row) => (
         <ModuleListCard
           key={row.id}
-          leading={<PropertyThumbnail alt={row.name} />}
+          leading={<PropertyThumbnail src={row.cover_image_url} alt={row.name} />}
           title={row.name}
-          subtitle={`${row.district_name ?? '—'} · ${row.rooms === null ? '—' : t('rooms_count', { count: row.rooms })}`}
+          subtitle={subtitleOf(t, row)}
           meta={
             <StatusPill
               tone={propertyStatusTone(row.status)}

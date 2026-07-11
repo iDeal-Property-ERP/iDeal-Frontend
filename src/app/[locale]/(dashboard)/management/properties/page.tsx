@@ -1,23 +1,36 @@
 'use client';
 
-import { Building2, ClipboardCheck, Coins, Download, PieChart, Plus } from 'lucide-react';
+import {
+  Building2,
+  ClipboardCheck,
+  Coins,
+  Download,
+  FileUp,
+  PieChart,
+  Plus,
+  Users,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { EntityCell } from '@/components/management/columns/EntityCell';
 import { NumericCell } from '@/components/management/columns/NumericCell';
 import { PropertyThumbnail } from '@/components/management/columns/PropertyThumbnail';
 import { RowActions } from '@/components/management/columns/RowActions';
 import { propertyStatusTone, StatusPill } from '@/components/management/columns/StatusPill';
+import { DangerConfirmDialog } from '@/components/management/dialogs/DangerConfirmDialog';
+import { ImportDialog } from '@/components/management/dialogs/ImportDialog';
 import { formatMoney } from '@/components/management/format';
 import { KpiCard } from '@/components/management/KpiStrip';
 import type { KpiItem } from '@/components/management/KpiStrip';
 import { ManagementPageHeader } from '@/components/management/ManagementPageHeader';
+import type { FilterGroup } from '@/components/management/mobile/MobileFilterSheet';
 import { PropertiesMobileView } from '@/components/management/mobile/PropertiesMobileView';
 import { PropertyRecordPanel } from '@/components/management/record-panel/PropertyRecordPanel';
-import { EmptyState } from '@/components/management/states/EmptyState';
+import { ArchivedViewBanner } from '@/components/management/states/ArchivedViewBanner';
 import { ErrorState } from '@/components/management/states/ErrorState';
 import { FilteredEmptyState } from '@/components/management/states/FilteredEmptyState';
+import { FirstRunState } from '@/components/management/states/FirstRunState';
 import { BulkSelectionBar } from '@/components/management/workbench/BulkSelectionBar';
 import { SavedViewTabs } from '@/components/management/workbench/SavedViewTabs';
 import type { SavedView } from '@/components/management/workbench/SavedViewTabs';
@@ -28,16 +41,6 @@ import type { WorkbenchColumn } from '@/components/management/workbench/Workbenc
 import { WorkbenchTableSkeleton } from '@/components/management/workbench/WorkbenchTableSkeleton';
 import { WorkbenchToolbar } from '@/components/management/workbench/WorkbenchToolbar';
 import type { ChipFilter } from '@/components/management/workbench/WorkbenchToolbar';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -136,6 +139,33 @@ function currencyOf(row: ManagementPropertyOutput): string {
 }
 
 /**
+ * Short date label ("Aug 31, 2026") for the tenant-since caption.
+ * @param iso - The ISO date string.
+ * @returns The formatted date, or an empty string when unparseable.
+ */
+function shortDate(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+/**
+ * The accrued vacancy loss for a vacant row (vacant_days × loss/day), or null
+ * when the row has no vacancy figures (e.g. rented).
+ * @param row - The property row.
+ * @returns The accrued loss, or null.
+ */
+function vacancyLossOf(row: ManagementPropertyOutput): number | null {
+  if (row.vacant_days === null || row.vacancy_loss_per_day === null) {
+    return null;
+  }
+  const perDay = Number.parseFloat(row.vacancy_loss_per_day);
+  return Number.isNaN(perDay) ? null : row.vacant_days * perDay;
+}
+
+/**
  * Sorts rows client-side (the backend fixes ordering to newest-first).
  * @param rows - The rows to sort.
  * @param sort - The sort key.
@@ -157,6 +187,19 @@ function sortRows(rows: ManagementPropertyOutput[], sort: string): ManagementPro
     }
     return 0;
   });
+}
+
+/**
+ * Hides the row sitting in the archive undo window from the visible list.
+ * @param rows - The sorted, filtered rows.
+ * @param pending - The record pending archive (or null).
+ * @returns The rows without the pending-archive record.
+ */
+function withoutPendingArchive(
+  rows: ManagementPropertyOutput[],
+  pending: ManagementPropertyOutput | null,
+): ManagementPropertyOutput[] {
+  return pending ? rows.filter((row) => row.id !== pending.id) : rows;
 }
 
 /**
@@ -271,6 +314,11 @@ export default function ManagementPropertiesPage() {
   const [counts, setCounts] = useState<StatusCounts | null>(null);
   const [kpis, setKpis] = useState<WorkbenchKpis | null>(null);
   const [districts, setDistricts] = useState<DistrictOption[]>([]);
+  // The record sitting in the archive undo window: hidden from the table and
+  // shown in the ArchivedViewBanner until Restore is clicked or the window closes.
+  const [pendingArchive, setPendingArchive] = useState<ManagementPropertyOutput | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
+  const archiveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const undo = useUndoableAction();
 
@@ -359,7 +407,7 @@ export default function ManagementPropertiesPage() {
   const filteredRows = range
     ? overridden.filter((row) => rentOf(row) >= range[0] && rentOf(row) < range[1])
     : overridden;
-  const rows = sortRows(filteredRows, sort);
+  const rows = withoutPendingArchive(sortRows(filteredRows, sort), pendingArchive);
 
   const pageIds = rows.map((row) => row.id);
   const selection = useRowSelection(pageIds);
@@ -368,24 +416,43 @@ export default function ManagementPropertiesPage() {
   const closeRecord = () => setSelected(null);
 
   const [archiveTarget, setArchiveTarget] = useState<ManagementPropertyOutput | null>(null);
-  const [archiving, setArchiving] = useState(false);
 
-  const confirmArchive = async () => {
-    if (!archiveTarget) {
-      return;
-    }
-    setArchiving(true);
+  const commitArchive = async (target: ManagementPropertyOutput) => {
+    archiveTimer.current = null;
     try {
-      await deleteProperty(archiveTarget.id);
+      await deleteProperty(target.id);
       toast.success(t('archive_success'));
-      setArchiveTarget(null);
       resource.refetch();
     } catch (error) {
       // e.g. a 409 when the property is still referenced by an agreement/lease.
       toast.error(getApiErrorMessage(error, t('archive_failed')));
     } finally {
-      setArchiving(false);
+      setPendingArchive(null);
     }
+  };
+
+  const confirmArchive = () => {
+    if (!archiveTarget) {
+      return;
+    }
+    const target = archiveTarget;
+    setArchiveTarget(null);
+    if (selected?.id === target.id) {
+      setSelected(null);
+    }
+    // Optimistic: hide the row and open the restore window before deleting.
+    setPendingArchive(target);
+    archiveTimer.current = setTimeout(() => {
+      void commitArchive(target);
+    }, 30_000);
+  };
+
+  const restoreArchived = () => {
+    if (archiveTimer.current) {
+      clearTimeout(archiveTimer.current);
+      archiveTimer.current = null;
+    }
+    setPendingArchive(null);
   };
 
   const changeStatus = (ids: number[], nextStatus: string) => {
@@ -461,13 +528,45 @@ export default function ManagementPropertiesPage() {
     setPrice(null);
   };
 
+  const sortOptions = [
+    { value: 'newest', label: t('sort_newest') },
+    { value: 'oldest', label: t('sort_oldest') },
+    { value: 'rent_high', label: t('sort_rent_high') },
+    { value: 'rent_low', label: t('sort_rent_low') },
+    { value: 'name', label: t('sort_name') },
+  ];
+
+  // The mobile filter sheet reuses the desktop chip filters plus a Sort group.
+  const mobileFilterGroups: FilterGroup[] = [
+    ...chipFilters.map((filter) => ({
+      id: filter.id,
+      label: filter.label,
+      options: filter.options,
+      value: filter.value,
+      onChange: filter.onChange,
+    })),
+    {
+      id: 'sort',
+      label: t('sort'),
+      options: sortOptions,
+      value: sort,
+      onChange: (value: string | null) => setSort(value ?? 'newest'),
+    },
+  ];
+
+  const resetMobileFilters = () => {
+    resource.patchQuery({ district_id: undefined, tariff: undefined });
+    setPrice(null);
+    setSort('newest');
+  };
+
   const columns: WorkbenchColumn<ManagementPropertyOutput>[] = [
     {
       id: 'property',
       header: t('col_property'),
       cell: (row) => (
         <EntityCell
-          thumbnail={<PropertyThumbnail alt={row.name} />}
+          thumbnail={<PropertyThumbnail src={row.cover_image_url} alt={row.name} />}
           name={row.name}
           secondary={row.address}
         />
@@ -513,11 +612,36 @@ export default function ManagementPropertiesPage() {
       cell: (row) => <NumericCell>{formatMoney(rentOf(row), currencyOf(row))}</NumericCell>,
     },
     {
-      id: 'owner',
-      header: t('col_owner'),
+      id: 'tenant',
+      header: t('col_tenant_vacancy'),
       width: 150,
       secondary: true,
-      cell: (row) => <span className="truncate text-muted-foreground">{row.owner_name}</span>,
+      cell: (row) => {
+        if (row.tenant_name) {
+          return (
+            <div className="flex min-w-0 flex-col">
+              <span className="truncate text-sm text-foreground">{row.tenant_name}</span>
+              {row.tenant_since ? (
+                <span className="truncate text-xs text-muted-foreground">
+                  {t('tenant_since_caption', { date: shortDate(row.tenant_since) })}
+                </span>
+              ) : null}
+            </div>
+          );
+        }
+        const loss = vacancyLossOf(row);
+        if (loss !== null) {
+          return (
+            <span className="text-sm font-medium text-warning">
+              {t('vacancy_inline', {
+                days: row.vacant_days ?? 0,
+                amount: formatMoney(loss, currencyOf(row)),
+              })}
+            </span>
+          );
+        }
+        return <span className="text-muted-foreground">—</span>;
+      },
     },
   ];
 
@@ -528,6 +652,14 @@ export default function ManagementPropertiesPage() {
       showBell={false}
       actions={
         <div className="flex items-center gap-2.5">
+          <Button
+            variant="outline"
+            className="h-10 gap-2 rounded-[10px] px-4 shadow-none"
+            onClick={() => setImportOpen(true)}
+          >
+            <FileUp className="size-[17px]" />
+            {t('imp_import_csv')}
+          </Button>
           <Button
             variant="outline"
             className="h-10 gap-2 rounded-[10px] px-4 shadow-none"
@@ -638,12 +770,32 @@ export default function ManagementPropertiesPage() {
       onClear={clearAll}
     />
   ) : (
-    <EmptyState
-      icon={Building2}
-      title={t('empty_properties')}
-      description={t('empty_properties_desc')}
+    <FirstRunState
+      title={t('first_run_title')}
+      description={t('first_run_desc')}
+      steps={[
+        {
+          id: 'add',
+          icon: Building2,
+          title: t('first_run_step_add'),
+          description: t('first_run_step_add_desc'),
+        },
+        {
+          id: 'invite',
+          icon: Users,
+          title: t('first_run_step_invite'),
+          description: t('first_run_step_invite_desc'),
+        },
+        {
+          id: 'import',
+          icon: FileUp,
+          title: t('first_run_step_import'),
+          description: t('first_run_step_import_desc'),
+          onClick: () => setImportOpen(true),
+        },
+      ]}
       action={
-        <Button asChild className="h-9 gap-2 rounded-[10px]">
+        <Button asChild className="h-10 gap-2 rounded-[10px]">
           <Link href="/management/properties/new">
             <Plus className="size-4" />
             {t('add_first_property')}
@@ -763,42 +915,41 @@ export default function ManagementPropertiesPage() {
   );
 
   const archiveDialog = (
-    <AlertDialog
+    <DangerConfirmDialog
       open={archiveTarget !== null}
       onOpenChange={(open) => {
         if (!open) {
           setArchiveTarget(null);
         }
       }}
-    >
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>{t('archive_title')}</AlertDialogTitle>
-          <AlertDialogDescription>
-            {t('archive_desc', { name: archiveTarget?.name ?? '' })}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={archiving}>{t('cancel')}</AlertDialogCancel>
-          <AlertDialogAction
-            disabled={archiving}
-            onClick={(event) => {
-              event.preventDefault();
-              confirmArchive().catch(() => {
-                // handled via toast in confirmArchive
-              });
-            }}
-          >
-            {t('row_archive')}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+      title={t('archive_title')}
+      description={t('archive_desc', { name: archiveTarget?.name ?? '' })}
+      consequences={[
+        t('archive_conseq_market'),
+        t('archive_conseq_leads'),
+        t('archive_conseq_history'),
+      ]}
+      confirmPhrase={archiveTarget?.name ?? ''}
+      typeLabel={t('archive_type_label')}
+      confirmLabel={t('archive_confirm')}
+      cancelLabel={t('cancel')}
+      onConfirm={confirmArchive}
+    />
   );
+
+  const archivedBanner = pendingArchive ? (
+    <ArchivedViewBanner
+      message={t('archived_banner', { name: pendingArchive.name })}
+      restoreLabel={t('restore')}
+      onRestore={restoreArchived}
+      className={isMobile ? 'mb-3' : undefined}
+    />
+  ) : null;
 
   if (isMobile) {
     return (
       <>
+        {archivedBanner}
         <PropertiesMobileView
           t={t}
           title={t('properties')}
@@ -817,8 +968,16 @@ export default function ManagementPropertiesPage() {
           record={selected ? propertyRecord : undefined}
           onCloseRecord={closeRecord}
           empty={body}
+          filterGroups={mobileFilterGroups}
+          activeFilterCount={activeFilterCount}
+          onResetFilters={resetMobileFilters}
         />
         {archiveDialog}
+        <ImportDialog
+          open={importOpen}
+          onOpenChange={setImportOpen}
+          onImported={resource.refetch}
+        />
       </>
     );
   }
@@ -834,9 +993,11 @@ export default function ManagementPropertiesPage() {
         panel={propertyRecord}
         bulkBar={bulkBar}
       >
+        {archivedBanner}
         {body}
       </WorkbenchShell>
       {archiveDialog}
+      <ImportDialog open={importOpen} onOpenChange={setImportOpen} onImported={resource.refetch} />
     </>
   );
 }

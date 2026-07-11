@@ -185,6 +185,8 @@ export default function ManagementDashboardPage() {
   const { dashboard, pnl, properties } = data;
   const { kpi, occupancy } = dashboard;
 
+  const marginChange = Number.parseFloat(kpi.net_profit.change) || 0;
+
   const kpiItems: KpiItem[] = [
     {
       id: 'occupancy',
@@ -212,10 +214,12 @@ export default function ManagementDashboardPage() {
       value: formatMoney(kpi.net_profit.value),
       icon: TrendingUp,
       delta:
-        kpi.net_profit.change !== '0.00' ? `+${formatMoney(kpi.net_profit.change)}` : undefined,
-      deltaTone: 'success',
-      deltaDirection: 'up',
-      sublabel: kpi.net_profit.change !== '0.00' ? t('kpi_vs_last_month') : undefined,
+        marginChange !== 0
+          ? `${marginChange > 0 ? '+' : '-'}${formatMoney(Math.abs(marginChange))}`
+          : undefined,
+      deltaTone: marginChange >= 0 ? 'success' : 'danger',
+      deltaDirection: marginChange >= 0 ? 'up' : 'down',
+      sublabel: marginChange !== 0 ? t('kpi_vs_last_month') : undefined,
     },
     {
       id: 'vacancy',
@@ -292,7 +296,7 @@ export default function ManagementDashboardPage() {
             rent: t('col_rent'),
             occupancy: t('col_occupancy'),
             statusLabel,
-            occupancyText: (row) => (row.vacant_days > 0 ? `${row.vacant_days}d` : '—'),
+            occupancyText: (row) => (row.vacant_days ? `${row.vacant_days}d` : '—'),
           }}
         />
         <NeedsAttention
