@@ -1,9 +1,9 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { apiFetch } from '@/libs/api';
+import { apiFetch, SESSION_EXPIRED_EVENT } from '@/libs/api';
 import { logger } from '@/libs/Logger';
 // Re-exported from the framework-agnostic module so the Edge middleware can share
 // the same maps (a 'use client' module can't be imported there).
@@ -29,10 +29,17 @@ export function AuthProvider(props: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
+  // Mirrors `user` for the (non-React) session-expired event handler, and guards
+  // against firing the forced logout more than once per expiry.
+  const userRef = useRef<AuthUser | null>(null);
+  userRef.current = user;
+  const expiringRef = useRef(false);
+
   const fetchUser = useCallback(async () => {
     try {
       const data = await apiFetch<AuthUser>('/users/me/');
       setUser(data);
+      expiringRef.current = false;
     } catch {
       setUser(null);
     }
@@ -43,6 +50,23 @@ export function AuthProvider(props: { children: ReactNode }) {
       setIsLoading(false);
     });
   }, [fetchUser]);
+
+  // When any API call 401s after a failed refresh, the session is dead. Clear the
+  // user and send them to /login — but only if they were actually signed in, so
+  // the anonymous `/users/me/` probe doesn't bounce visitors off public pages.
+  useEffect(() => {
+    const onSessionExpired = () => {
+      if (userRef.current === null || expiringRef.current) {
+        return;
+      }
+      expiringRef.current = true;
+      logger.info('Session expired — logging out');
+      setUser(null);
+      router.replace('/login');
+    };
+    window.addEventListener(SESSION_EXPIRED_EVENT, onSessionExpired);
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, onSessionExpired);
+  }, [router]);
 
   const login = useCallback(
     async (payload: LoginPayload) => {

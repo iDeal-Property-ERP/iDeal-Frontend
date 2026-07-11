@@ -10,7 +10,7 @@ import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { TextField } from '@/components/ui/form-fields';
-import { apiFetch, ApiError_ } from '@/libs/api';
+import { apiFetch, ApiError_, refreshSession } from '@/libs/api';
 import { roleDashboardMap, useAuth } from '@/libs/auth';
 import { useRouter } from '@/libs/I18nNavigation';
 
@@ -54,8 +54,20 @@ export default function SetPasswordPage() {
         method: 'POST',
         body: { current_password: data.current_password, new_password: data.new_password },
       });
+      // The `must_change_password` flag is also baked into the access-token JWT
+      // (read by the Edge middleware). The DB flag is now cleared, but the cookie
+      // still carries the stale claim — rotate it via a refresh so the middleware
+      // stops redirecting back here, then sync the client user + leave.
+      const rotated = await refreshSession();
       await refreshUser();
-      router.push(user ? roleDashboardMap[user.role] : '/login');
+      const dest = user ? roleDashboardMap[user.role] : '/login';
+      if (rotated) {
+        router.replace(dest);
+      } else {
+        // Refresh failed unexpectedly — hard-navigate so the browser re-reads
+        // cookies through the middleware rather than silently looping here.
+        window.location.assign(dest);
+      }
     } catch (error) {
       setServerError(
         error instanceof ApiError_ && error.status === 400

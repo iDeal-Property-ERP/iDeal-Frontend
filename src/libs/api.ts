@@ -8,13 +8,33 @@ const API_BASE = '/api/v1';
 
 let refreshing: Promise<boolean> | null = null;
 
+/** Event fired when a request is still 401 after a refresh attempt — the session
+ * is dead and the app should log the user out. `AuthProvider` listens for it. */
+export const SESSION_EXPIRED_EVENT = 'auth:session-expired';
+
+// A 401 on these auth-flow endpoints is expected (anonymous login/refresh/logout)
+// and must NOT trigger a forced logout — that would loop on the login screen.
+const AUTH_FLOW_PATHS = ['/auth/login/', '/auth/refresh/', '/auth/logout/'];
+
+/**
+ * Broadcasts that the session has expired so the auth layer can log out and
+ * redirect. No-op on the server and for the auth-flow endpoints themselves.
+ * @param path - The API path that returned the terminal 401.
+ */
+function notifySessionExpired(path: string): void {
+  if (typeof window === 'undefined' || AUTH_FLOW_PATHS.some((p) => path.startsWith(p))) {
+    return;
+  }
+  window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
+}
+
 /**
  * Refreshes the session by exchanging the httpOnly refresh cookie for a new pair
  * (the backend sets fresh cookies). Single-flight: concurrent 401s share one
  * in-flight refresh so a rotating refresh token isn't consumed twice.
  * @returns Whether the refresh succeeded.
  */
-async function refreshSession(): Promise<boolean> {
+export async function refreshSession(): Promise<boolean> {
   if (refreshing) {
     return await refreshing;
   }
@@ -107,6 +127,9 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
   if (res.status === 401 && (await refreshSession())) {
     res = await send();
   }
+  if (res.status === 401) {
+    notifySessionExpired(path);
+  }
   return await unwrap<T>(res, options.method ?? 'GET', path);
 }
 
@@ -132,6 +155,9 @@ export async function apiUpload<T>(
   let res = await send();
   if (res.status === 401 && (await refreshSession())) {
     res = await send();
+  }
+  if (res.status === 401) {
+    notifySessionExpired(path);
   }
   return await unwrap<T>(res, method, path);
 }
