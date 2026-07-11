@@ -3,11 +3,13 @@
 import {
   Briefcase,
   Building2,
+  ChevronsUpDown,
   ClipboardCheck,
   ClipboardList,
   DollarSign,
   FilePlus,
   FileText,
+  Globe,
   HandCoins,
   HelpCircle,
   Home,
@@ -18,6 +20,7 @@ import {
   Moon,
   ScrollText,
   Search,
+  Settings,
   Sparkles,
   Sun,
   TrendingUp,
@@ -25,9 +28,17 @@ import {
   Wrench,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { LogoMark } from '@/components/ui/Logo';
 import {
   Sidebar,
@@ -44,7 +55,8 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { roleDashboardMap, useAuth } from '@/libs/auth';
-import { Link, usePathname } from '@/libs/I18nNavigation';
+import { Link, usePathname, useRouter } from '@/libs/I18nNavigation';
+import { routing } from '@/libs/I18nRouting';
 import { cn } from '@/libs/utils';
 import type { Role } from '@/types/enums';
 
@@ -63,7 +75,6 @@ type NavItemLabel =
   | 'nav_pnl'
   | 'nav_portfolio_map'
   | 'nav_leads'
-  | 'nav_inquiries'
   | 'nav_my_listings'
   | 'nav_maintenance'
   | 'nav_how_it_works'
@@ -129,7 +140,6 @@ const mgmtSections: NavSection[] = [
         icon: ClipboardCheck,
         countKey: 'onboardings',
       },
-      { labelKey: 'nav_inquiries', href: '/management/inquiries', icon: Inbox },
     ],
   },
   {
@@ -271,10 +281,11 @@ function roleLabel(t: ReturnType<typeof useTranslations<'Dashboard'>>, role: Rol
 }
 
 /**
- * Theme toggle rendered as a sidebar footer control.
- * @returns Theme toggle button, or null before hydration.
+ * Theme toggle rendered as an item inside the account menu. Selecting it flips
+ * the theme without closing the menu, so the change is visible in place.
+ * @returns Theme toggle menu item, or null before hydration.
  */
-function SidebarThemeToggle() {
+function ThemeToggleMenuItem() {
   const t = useTranslations('Dashboard');
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -288,13 +299,67 @@ function SidebarThemeToggle() {
   }
 
   return (
-    <SidebarMenuButton
-      onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-      tooltip={t('theme_toggle')}
+    <DropdownMenuItem
+      onSelect={(event) => {
+        event.preventDefault();
+        setTheme(theme === 'dark' ? 'light' : 'dark');
+      }}
     >
       {theme === 'dark' ? <Sun strokeWidth={1.5} /> : <Moon strokeWidth={1.5} />}
-      <span>{t('theme_toggle')}</span>
-    </SidebarMenuButton>
+      {t('theme_toggle')}
+    </DropdownMenuItem>
+  );
+}
+
+/**
+ * Language selector rendered as an inline EN/RU/UZ segmented control inside the
+ * account menu. Choosing the active locale is a no-op (the menu stays open, like
+ * the theme toggle); choosing another switches to the localized route. Not a
+ * DropdownMenuItem so a pill click doesn't dismiss the menu.
+ * @returns The language menu row.
+ */
+function LanguageMenuItem() {
+  const t = useTranslations('Dashboard');
+  const locale = useLocale();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const change = (next: string) => {
+    if (next === locale) {
+      return;
+    }
+    const { search } = window.location;
+    router.push(`${pathname}${search}`, { locale: next, scroll: false });
+  };
+
+  return (
+    <div className="flex items-center justify-between gap-2 px-2 py-1.5 text-sm text-foreground">
+      <span className="flex items-center gap-2">
+        <Globe strokeWidth={1.5} className="size-4" />
+        {t('language')}
+      </span>
+      <div className="flex items-center gap-0.5 rounded-lg bg-muted p-0.5">
+        {routing.locales.map((loc) => {
+          const active = loc === locale;
+          return (
+            <button
+              key={loc}
+              type="button"
+              onClick={() => change(loc)}
+              aria-current={active ? 'true' : undefined}
+              className={cn(
+                'rounded-md px-2 py-0.5 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+                active
+                  ? 'bg-primary-subtle text-primary-subtle-foreground'
+                  : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              {loc.toUpperCase()}
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -307,7 +372,7 @@ export function AppSidebar(props: { role: Role; counts?: Record<string, number> 
   const { user, logout } = useAuth();
   const pathname = usePathname();
   const t = useTranslations('Dashboard');
-  const { setOpenMobile } = useSidebar();
+  const { setOpenMobile, isMobile } = useSidebar();
 
   const sections = props.role === 'agent' ? [] : roleNavMap[props.role];
   const counts = props.counts ?? {};
@@ -363,36 +428,70 @@ export function AppSidebar(props: { role: Role; counts?: Record<string, number> 
           </SidebarGroup>
         ))}
       </SidebarContent>
-      <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarThemeToggle />
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton onClick={logout} tooltip={t('nav_logout')}>
-              <LogOut strokeWidth={1.5} />
-              <span>{t('nav_logout')}</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          {user !== null && (
+      {user !== null && (
+        <SidebarFooter>
+          <SidebarMenu>
             <SidebarMenuItem>
-              <div className="flex items-center gap-2.5 rounded-lg px-3 py-1.5">
-                <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-subtle text-xs font-medium text-primary-subtle-foreground">
-                  {initials(user.first_name, user.last_name, user.username)}
-                </span>
-                <div className="flex min-w-0 flex-col group-data-[collapsible=icon]:hidden">
-                  <span className="truncate text-sm font-medium text-foreground">
-                    {displayName(user.first_name, user.last_name, user.username)}
-                  </span>
-                  <span className="truncate text-xs text-muted-foreground">
-                    {roleLabel(t, user.role)}
-                  </span>
-                </div>
-              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <SidebarMenuButton
+                    size="lg"
+                    aria-label={t('account_menu')}
+                    className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                  >
+                    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-subtle text-xs font-medium text-primary-subtle-foreground">
+                      {initials(user.first_name, user.last_name, user.username)}
+                    </span>
+                    <div className="flex min-w-0 flex-col text-left group-data-[collapsible=icon]:hidden">
+                      <span className="truncate text-sm font-medium text-foreground">
+                        {displayName(user.first_name, user.last_name, user.username)}
+                      </span>
+                      <span className="truncate text-xs text-muted-foreground">
+                        {roleLabel(t, user.role)}
+                      </span>
+                    </div>
+                    <ChevronsUpDown className="ml-auto size-4 text-muted-foreground group-data-[collapsible=icon]:hidden" />
+                  </SidebarMenuButton>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  side={isMobile ? 'bottom' : 'right'}
+                  align="end"
+                  sideOffset={8}
+                  className="w-60"
+                >
+                  <DropdownMenuLabel className="flex items-center gap-2.5 font-normal">
+                    <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary-subtle text-xs font-medium text-primary-subtle-foreground">
+                      {initials(user.first_name, user.last_name, user.username)}
+                    </span>
+                    <div className="flex min-w-0 flex-col">
+                      <span className="truncate text-sm font-medium text-foreground">
+                        {displayName(user.first_name, user.last_name, user.username)}
+                      </span>
+                      <span className="truncate text-xs text-muted-foreground">{user.email}</span>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {props.role === 'mgmt' && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/management/settings" onClick={() => setOpenMobile(false)}>
+                        <Settings strokeWidth={1.5} />
+                        {t('nav_settings')}
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  <ThemeToggleMenuItem />
+                  <LanguageMenuItem />
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem variant="destructive" onSelect={logout}>
+                    <LogOut strokeWidth={1.5} />
+                    {t('nav_logout')}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </SidebarMenuItem>
-          )}
-        </SidebarMenu>
-      </SidebarFooter>
+          </SidebarMenu>
+        </SidebarFooter>
+      )}
       <SidebarRail />
     </Sidebar>
   );
