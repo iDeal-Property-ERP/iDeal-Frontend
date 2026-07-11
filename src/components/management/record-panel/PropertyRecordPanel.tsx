@@ -153,7 +153,7 @@ export function PropertyRecordPanel(props: {
   const marginPct = tenantCharge ? Math.round((margin / tenantCharge) * 100) : 0;
 
   const dailyLoss = tenantCharge / 30;
-  const accrued = dailyLoss * property.vacant_days;
+  const accrued = dailyLoss * (property.vacant_days ?? 0);
   const metaLine = metaLineOf(t, property);
 
   const tabs = [
@@ -212,7 +212,7 @@ export function PropertyRecordPanel(props: {
       </div>
       <div className="flex shrink-0 items-center gap-1">
         <Button asChild variant="ghost" size="icon-sm" aria-label={t('record_open_full')}>
-          <Link href={`/properties/${property.id}`}>
+          <Link href={`/management/properties/${property.id}/edit`}>
             <SquareArrowOutUpRight className="size-4" />
           </Link>
         </Button>
@@ -220,6 +220,7 @@ export function PropertyRecordPanel(props: {
           type="button"
           variant="ghost"
           size="icon-sm"
+          className="max-lg:hidden"
           aria-label={t('record_close')}
           onClick={props.onClose}
         >
@@ -233,7 +234,7 @@ export function PropertyRecordPanel(props: {
     <div className="flex items-center justify-between gap-2">
       <div className="flex items-center gap-2.5">
         <Button asChild className="h-10 gap-2 rounded-[10px] px-4 text-[15px] shadow-sm">
-          <Link href={`/properties/${property.id}`}>
+          <Link href={`/management/properties/${property.id}/edit`}>
             <Pencil className="size-[15px]" />
             {t('record_edit')}
           </Link>
@@ -274,7 +275,7 @@ export function PropertyRecordPanel(props: {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
           <DropdownMenuItem asChild>
-            <Link href={`/properties/${property.id}`}>
+            <Link href={`/management/properties/${property.id}/edit`}>
               <SquareArrowOutUpRight className="size-4" />
               {t('record_open_full')}
             </Link>
@@ -285,9 +286,24 @@ export function PropertyRecordPanel(props: {
   );
 
   return (
-    <RecordPanel open={props.open} onClose={props.onClose} header={header} footer={footer}>
-      <div className="flex h-[180px] w-full items-center justify-center rounded-[12px] bg-muted text-muted-foreground">
-        <Building2 className="size-10" strokeWidth={1.5} />
+    <RecordPanel
+      open={props.open}
+      onClose={props.onClose}
+      title={t('record_type_property')}
+      header={header}
+      footer={footer}
+    >
+      <div className="flex h-[180px] w-full items-center justify-center overflow-hidden rounded-[12px] bg-muted text-muted-foreground">
+        {property.cover_image_url ? (
+          // eslint-disable-next-line @next/next/no-img-element -- remote media host; next/image adds no value in a side panel
+          <img
+            src={property.cover_image_url}
+            alt={property.name}
+            className="size-full object-cover"
+          />
+        ) : (
+          <Building2 className="size-10" strokeWidth={1.5} />
+        )}
       </div>
 
       <PricingTrio
@@ -315,7 +331,7 @@ export function PropertyRecordPanel(props: {
 
       {isVacant ? (
         <VacancyAlert
-          title={t('vacancy_title', { days: property.vacant_days })}
+          title={t('vacancy_title', { days: property.vacant_days ?? 0 })}
           detail={t('vacancy_detail', {
             perDay: formatMoney(dailyLoss, currency),
             accrued: formatMoney(accrued, currency),

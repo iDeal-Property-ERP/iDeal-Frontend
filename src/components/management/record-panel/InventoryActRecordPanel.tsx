@@ -305,6 +305,7 @@ export function InventoryActRecordPanel(props: {
           type="button"
           variant="ghost"
           size="icon-sm"
+          className="max-lg:hidden"
           aria-label={t('record_close')}
           onClick={props.onClose}
         >
@@ -341,7 +342,13 @@ export function InventoryActRecordPanel(props: {
   );
 
   return (
-    <RecordPanel open={props.open} onClose={props.onClose} header={header} footer={footer}>
+    <RecordPanel
+      open={props.open}
+      onClose={props.onClose}
+      title={t('record_type_inventory')}
+      header={header}
+      footer={footer}
+    >
       <div className="flex h-[180px] w-full items-center justify-center rounded-[12px] bg-muted text-muted-foreground">
         <Building2 className="size-10" strokeWidth={1.5} />
       </div>

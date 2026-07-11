@@ -240,6 +240,7 @@ export function AgentRecordPanel(props: {
           type="button"
           variant="ghost"
           size="icon-sm"
+          className="max-lg:hidden"
           aria-label={t('record_close')}
           onClick={props.onClose}
         >
@@ -274,7 +275,13 @@ export function AgentRecordPanel(props: {
   );
 
   return (
-    <RecordPanel open={props.open} onClose={props.onClose} header={header} footer={footer}>
+    <RecordPanel
+      open={props.open}
+      onClose={props.onClose}
+      title={t('record_type_agent')}
+      header={header}
+      footer={footer}
+    >
       <PricingTrio
         items={[
           {

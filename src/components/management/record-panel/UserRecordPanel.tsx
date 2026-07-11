@@ -147,6 +147,7 @@ export function UserRecordPanel(props: {
           type="button"
           variant="ghost"
           size="icon-sm"
+          className="max-lg:hidden"
           aria-label={t('record_close')}
           onClick={props.onClose}
         >
@@ -189,7 +190,13 @@ export function UserRecordPanel(props: {
   }
 
   return (
-    <RecordPanel open={props.open} onClose={props.onClose} header={header} footer={footer}>
+    <RecordPanel
+      open={props.open}
+      onClose={props.onClose}
+      title={t('record_type_user')}
+      header={header}
+      footer={footer}
+    >
       <PricingTrio
         items={[
           {

@@ -137,6 +137,7 @@ export function ServiceOrderRecordPanel(props: {
     <RecordPanel
       open={props.open}
       onClose={props.onClose}
+      title={t('record_type_service')}
       header={header}
       footer={
         <div className="flex items-center gap-3">

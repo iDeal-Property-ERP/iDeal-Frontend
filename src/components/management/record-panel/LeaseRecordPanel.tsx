@@ -165,7 +165,13 @@ export function LeaseRecordPanel(props: {
   );
 
   return (
-    <RecordPanel open={props.open} onClose={props.onClose} header={header} footer={footer}>
+    <RecordPanel
+      open={props.open}
+      onClose={props.onClose}
+      title={t('record_type_lease')}
+      header={header}
+      footer={footer}
+    >
       <div className="flex h-[180px] w-full items-center justify-center rounded-[12px] bg-muted text-muted-foreground">
         <Building2 className="size-10" strokeWidth={1.5} />
       </div>

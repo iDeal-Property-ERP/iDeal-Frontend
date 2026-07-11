@@ -167,6 +167,7 @@ export function PaymentRecordPanel(props: {
         type="button"
         variant="ghost"
         size="icon-sm"
+        className="max-lg:hidden"
         aria-label={t('record_close')}
         onClick={props.onClose}
       >
@@ -213,7 +214,13 @@ export function PaymentRecordPanel(props: {
   );
 
   return (
-    <RecordPanel open={props.open} onClose={props.onClose} header={header} footer={footer}>
+    <RecordPanel
+      open={props.open}
+      onClose={props.onClose}
+      title={t('record_type_payment')}
+      header={header}
+      footer={footer}
+    >
       <PricingTrio
         items={[
           {

@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { AvatarInitials, initialsOf } from '@/components/management/columns/AvatarInitials';
 import { agreementStatusTone, StatusPill } from '@/components/management/columns/StatusPill';
+import { formatMoney } from '@/components/management/format';
 import { EmptyState } from '@/components/management/states/EmptyState';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/libs/utils';
@@ -50,10 +51,9 @@ function daysUntil(iso: string): number | null {
 /**
  * The Owner Agreement instance of the record panel (archetype D) — fills the
  * reusable RecordPanel with an agreement's header, property hero, a
- * commission/signed/ends trio, an expiry alert, the owner card, tabs, and derived
+ * commission / owner-guaranteed / tenant-charge trio (with the monthly margin as
+ * the tenant-charge caption), an expiry alert, the owner card, tabs, and derived
  * activity, plus a sticky Renew / Terminate footer.
- * BACKEND-GAP: the agreement output carries no guaranteed/charged monthly amount,
- * so the trio surfaces the honest commission/date fields only.
  * @param props - The agreement, open/close state, and renew/terminate callbacks.
  * @returns The agreement record panel element.
  */
@@ -86,8 +86,8 @@ export function AgreementRecordPanel(props: {
 
   const tabs = [
     { id: 'overview', label: t('tab_overview') },
-    { id: 'properties', label: t('agr_tab_properties') },
     { id: 'payouts', label: t('agr_tab_payouts') },
+    { id: 'properties', label: t('agr_tab_properties') },
     { id: 'documents', label: t('tab_documents') },
     { id: 'activity', label: t('tab_activity') },
   ];
@@ -146,6 +146,7 @@ export function AgreementRecordPanel(props: {
           type="button"
           variant="ghost"
           size="icon-sm"
+          className="max-lg:hidden"
           aria-label={t('record_close')}
           onClick={props.onClose}
         >
@@ -179,7 +180,13 @@ export function AgreementRecordPanel(props: {
   );
 
   return (
-    <RecordPanel open={props.open} onClose={props.onClose} header={header} footer={footer}>
+    <RecordPanel
+      open={props.open}
+      onClose={props.onClose}
+      title={t('record_type_agreement')}
+      header={header}
+      footer={footer}
+    >
       <div className="flex h-[180px] w-full items-center justify-center rounded-[12px] bg-muted text-muted-foreground">
         <Building2 className="size-10" strokeWidth={1.5} />
       </div>
@@ -192,14 +199,23 @@ export function AgreementRecordPanel(props: {
             caption: t('agr_commission_caption'),
           },
           {
-            label: t('agr_signed'),
-            value: longDate(agreement.signed_date),
-            caption: t('agr_signed_caption'),
+            label: t('agr_owner_guaranteed'),
+            value:
+              agreement.owner_guaranteed_amount === null
+                ? '—'
+                : formatMoney(agreement.owner_guaranteed_amount),
+            caption: t('agr_owner_guaranteed_caption'),
           },
           {
-            label: t('agr_ends'),
-            value: longDate(agreement.end_date),
-            caption: t('agr_ends_caption', { count: term }),
+            label: t('agr_tenant_charge'),
+            value:
+              agreement.tenant_charge_amount === null
+                ? '—'
+                : formatMoney(agreement.tenant_charge_amount),
+            caption:
+              agreement.margin === null
+                ? t('agr_tenant_charge_caption')
+                : t('agr_margin_caption', { amount: formatMoney(agreement.margin) }),
           },
         ]}
       />
