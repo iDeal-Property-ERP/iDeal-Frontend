@@ -311,7 +311,7 @@ export default function ManagementUsersPage() {
           title={t('error_title')}
           message={t('usr_error')}
           retryLabel={t('retry')}
-          onRetry={resource.refetch}
+          onRetry={() => resource.refetch()}
         />
       );
     }
@@ -324,7 +324,7 @@ export default function ManagementUsersPage() {
           title={t('no_matches')}
           description={t('no_matches_desc')}
           clearLabel={t('clear_filters')}
-          onClear={clearAll}
+          onClear={() => clearAll()}
         />
       ) : (
         <EmptyState
@@ -346,10 +346,10 @@ export default function ManagementUsersPage() {
         rows={rows}
         getRowId={(row) => row.id}
         isSelected={selection.isSelected}
-        onToggleRow={selection.toggle}
+        onToggleRow={(...args) => selection.toggle(...args)}
         allChecked={selection.allChecked}
         someChecked={selection.someChecked}
-        onToggleAll={selection.toggleAll}
+        onToggleAll={(...args) => selection.toggleAll(...args)}
         onOpenRecord={setSelected}
         activeId={selected?.id ?? null}
         dense={Boolean(selected)}
@@ -381,14 +381,14 @@ export default function ManagementUsersPage() {
       <InviteUserDialog
         open={inviteOpen}
         onOpenChange={setInviteOpen}
-        onSuccess={resource.refetch}
+        onSuccess={() => resource.refetch()}
       />
       <EditUserDialog
         key={editTarget?.id}
         user={editTarget}
         open={Boolean(editTarget)}
         onOpenChange={(open) => !open && setEditTarget(null)}
-        onSuccess={resource.refetch}
+        onSuccess={() => resource.refetch()}
       />
     </>
   );
@@ -504,7 +504,7 @@ export default function ManagementUsersPage() {
             <WorkbenchPagination
               page={resource.page}
               totalPages={resource.totalPages}
-              onPageChange={resource.setPage}
+              onPageChange={(p) => resource.setPage(p)}
               summary={t('usr_pagination', {
                 from: (resource.page - 1) * 20 + 1,
                 to: (resource.page - 1) * 20 + rows.length,
@@ -519,7 +519,7 @@ export default function ManagementUsersPage() {
           <BulkSelectionBar
             open={selection.count > 0}
             countLabel={t('bulk_selected', { count: selection.count })}
-            onClear={selection.clear}
+            onClear={() => selection.clear()}
             clearLabel={t('bulk_clear')}
             actions={
               <button

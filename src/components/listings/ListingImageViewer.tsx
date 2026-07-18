@@ -55,13 +55,6 @@ export function ListingImageViewer(props: {
   );
 
   useEffect(() => {
-    if (open) {
-      setActive(startIndex);
-      setShowGrid(false);
-    }
-  }, [open, startIndex]);
-
-  useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (!open) {
         return;
@@ -100,7 +93,7 @@ export function ListingImageViewer(props: {
   const counter = `${active + 1} / ${count}`;
 
   return (
-    <DialogPrimitive.Root onOpenChange={onOpenChange} open={open}>
+    <DialogPrimitive.Root key={`${open}-${startIndex}`} onOpenChange={onOpenChange} open={open}>
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-background data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0" />
         <DialogPrimitive.Content

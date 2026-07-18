@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { AvatarInitials } from '@/components/management/columns/AvatarInitials';
 import { EntityCell } from '@/components/management/columns/EntityCell';
 import { NumericCell } from '@/components/management/columns/NumericCell';
@@ -48,7 +49,6 @@ import { usePaginatedResource } from '@/hooks/management/usePaginatedResource';
 import type { QueryParams } from '@/hooks/management/usePaginatedResource';
 import { useRowSelection } from '@/hooks/management/useRowSelection';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useUndoableAction } from '@/hooks/useUndoableAction';
 import { downloadTable } from '@/libs/management/exportFile';
 import {
   bulkMarkPayoutsPaid,
@@ -152,7 +152,7 @@ function PayoutSchedSubline(props: {
  * The Payouts Workbench — the owner-payout queue (due-first): money KPI strip,
  * saved-view tabs (Due / Held / Paid / Cancelled / All), filter toolbar (owner,
  * status, scheduled-date range), a selectable table with a floating "Confirm
- * payouts" bulk bar (30s undo), pagination, an in-flow payout record panel, and
+ * payouts" bulk bar, pagination, an in-flow payout record panel, and
  * the schedule / hold / cancel + export dialogs. Reuses the workbench foundation;
  * wired to the live backend.
  * @returns The payouts workbench page.
@@ -160,8 +160,6 @@ function PayoutSchedSubline(props: {
 export default function ManagementPayoutsPage() {
   const t = useTranslations('Management');
   const isMobile = useIsMobile();
-  const undo = useUndoableAction();
-
   const resource = usePaginatedResource<ManagementPayoutOutput>(
     async ({ page, query }) => await listPayouts(queryToParams(page, query)),
     { initialQuery: { ...queryForView('due'), order: 'scheduled_date' } },
@@ -209,16 +207,16 @@ export default function ManagementPayoutsPage() {
   const nextRunDate = stats ? shortDate(stats.next_run_date) : '';
 
   const runConfirm = (ids: number[], onDone?: () => void) => {
-    undo.run({
-      message: t('bulk_confirm_toast', { count: ids.length }),
-      undoLabel: t('undo'),
-      onCommit: async () => {
-        await bulkMarkPayoutsPaid(ids);
-        resource.refetch();
-      },
-      onError: () => resource.refetch(),
-    });
     onDone?.();
+    void bulkMarkPayoutsPaid(ids)
+      .then(() => {
+        toast.success(t('bulk_confirm_toast', { count: ids.length }));
+        resource.refetch();
+      })
+      .catch(() => {
+        resource.refetch();
+        toast.error(t('bulk_confirm_failed'));
+      });
   };
 
   const runRelease = (id: number) => {
@@ -429,7 +427,7 @@ export default function ManagementPayoutsPage() {
           title={t('error_title')}
           message={t('payout_error')}
           retryLabel={t('retry')}
-          onRetry={resource.refetch}
+          onRetry={() => resource.refetch()}
         />
       );
     }
@@ -442,7 +440,7 @@ export default function ManagementPayoutsPage() {
           title={t('no_matches')}
           description={t('no_matches_desc')}
           clearLabel={t('clear_filters')}
-          onClear={clearAll}
+          onClear={() => clearAll()}
         />
       ) : (
         <EmptyState
@@ -464,10 +462,10 @@ export default function ManagementPayoutsPage() {
         rows={rows}
         getRowId={(row) => row.id}
         isSelected={selection.isSelected}
-        onToggleRow={selection.toggle}
+        onToggleRow={(...args) => selection.toggle(...args)}
         allChecked={selection.allChecked}
         someChecked={selection.someChecked}
-        onToggleAll={selection.toggleAll}
+        onToggleAll={(...args) => selection.toggleAll(...args)}
         onOpenRecord={setSelected}
         activeId={selected?.id ?? null}
         dense={Boolean(selected)}
@@ -498,19 +496,19 @@ export default function ManagementPayoutsPage() {
       <SchedulePayoutDialog
         open={scheduleOpen}
         onOpenChange={setScheduleOpen}
-        onSuccess={resource.refetch}
+        onSuccess={() => resource.refetch()}
       />
       <HoldPayoutDialog
         payout={holdTarget}
         open={Boolean(holdTarget)}
         onOpenChange={(open) => !open && setHoldTarget(null)}
-        onSuccess={resource.refetch}
+        onSuccess={() => resource.refetch()}
       />
       <CancelPayoutDialog
         payout={cancelTarget}
         open={Boolean(cancelTarget)}
         onOpenChange={(open) => !open && setCancelTarget(null)}
-        onSuccess={resource.refetch}
+        onSuccess={() => resource.refetch()}
       />
       <ExportDialog
         open={exportOpen}
@@ -644,7 +642,7 @@ export default function ManagementPayoutsPage() {
             <WorkbenchPagination
               page={resource.page}
               totalPages={resource.totalPages}
-              onPageChange={resource.setPage}
+              onPageChange={(p) => resource.setPage(p)}
               summary={t('payout_pagination', {
                 from: (resource.page - 1) * 20 + 1,
                 to: (resource.page - 1) * 20 + rows.length,
@@ -661,11 +659,11 @@ export default function ManagementPayoutsPage() {
             countLabel={t('bulk_selected_sum', {
               count: selection.count,
               sum: formatCurrency(
-                selectedRows.reduce((acc, row) => acc + (Number.parseFloat(row.amount) || 0), 0),
+                selectedRows.reduce((acc, row) => acc + (Number(row.amount) || 0), 0),
                 'USD',
               ),
             })}
-            onClear={selection.clear}
+            onClear={() => selection.clear()}
             clearLabel={t('bulk_clear')}
             actions={
               <>

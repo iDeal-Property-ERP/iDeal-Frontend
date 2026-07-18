@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { startTransition, useCallback, useEffect, useMemo, useState } from 'react';
 import { ConvertToLeaseWizard } from '@/components/management/dialogs/ConvertToLeaseWizard';
 import {
   ApproveBookingDialog,
@@ -80,11 +80,15 @@ export default function ManagementLeadsPage() {
   // load and re-fires the instant "Back to leads" clears it, trapping the user.
   useEffect(() => {
     if (selectedId && !leads.some((l) => l.id === selectedId)) {
-      setSelectedId(null);
+      startTransition(() => {
+        setSelectedId(null);
+      });
       return;
     }
     if (!isMobile && !selectedId && leads.length > 0) {
-      setSelectedId(leads[0]!.id);
+      startTransition(() => {
+        setSelectedId(leads[0]!.id);
+      });
     }
   }, [leads, selectedId, isMobile]);
 
@@ -223,7 +227,7 @@ export default function ManagementLeadsPage() {
       <ErrorState
         title={t('lead_error')}
         message={resource.error}
-        onRetry={resource.refetch}
+        onRetry={() => resource.refetch()}
         retryLabel={t('retry')}
       />
     );

@@ -48,7 +48,9 @@ function shouldIgnore(event: KeyboardEvent, enabled: boolean | undefined): boole
  */
 export function useQueueKeyboard(options: Options) {
   const ref = useRef(options);
-  ref.current = options;
+  useEffect(() => {
+    ref.current = options;
+  });
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {

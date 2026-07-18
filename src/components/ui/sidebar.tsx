@@ -61,15 +61,15 @@ function SidebarProvider({
   const isMobile = useIsMobile();
   const [openMobile, setOpenMobile] = React.useState(false);
 
-  const [_open, _setOpen] = React.useState(defaultOpen);
-  const open = openProp ?? _open;
+  const [openFromState, setOpenFromState] = React.useState(defaultOpen);
+  const open = openProp ?? openFromState;
   const setOpen = React.useCallback(
     (value: boolean | ((value: boolean) => boolean)) => {
       const openState = typeof value === 'function' ? value(open) : value;
       if (setOpenProp) {
         setOpenProp(openState);
       } else {
-        _setOpen(openState);
+        setOpenFromState(openState);
       }
     },
     [setOpenProp, open],
@@ -502,7 +502,8 @@ function SidebarMenuSkeleton({
   showIcon = false,
   ...props
 }: React.ComponentProps<'div'> & { showIcon?: boolean }) {
-  const width = React.useMemo(() => `${Math.floor(Math.random() * 40) + 50}%`, []);
+  const [width, setWidth] = React.useState(() => `${Math.floor(Math.random() * 40) + 50}%`);
+  void setWidth;
   return (
     <div
       data-slot="sidebar-menu-skeleton"

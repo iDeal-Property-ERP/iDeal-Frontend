@@ -21,7 +21,6 @@ export function useQueueCounts(enabled: boolean, pathname: string): Record<strin
 
   useEffect(() => {
     if (!enabled) {
-      setCounts({});
       return () => {
         // Not enabled — no poll to tear down.
       };
@@ -46,5 +45,5 @@ export function useQueueCounts(enabled: boolean, pathname: string): Record<strin
     };
   }, [enabled, pathname]);
 
-  return counts;
+  return enabled ? counts : {};
 }

@@ -64,7 +64,15 @@ export default function ManagementServicesPage() {
   const t = useTranslations('Management');
   const isMobile = useIsMobile();
 
-  const [tab, setTab] = useState<string>('orders');
+  const [tab, setTab] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const initial = new URLSearchParams(window.location.search).get('tab');
+      if (initial && (TABS as readonly string[]).includes(initial)) {
+        return initial;
+      }
+    }
+    return 'orders';
+  });
   const [search, setSearch] = useState('');
   const [stats, setStats] = useState<VasOrderStats | null>(null);
   const [catalog, setCatalog] = useState<ServiceCatalogItemOutput[]>([]);
@@ -92,14 +100,6 @@ export default function ManagementServicesPage() {
   );
   const { patchQuery, refetch, data: rows, query } = resource;
   const selection = useRowSelection(rows.map((r) => r.id));
-
-  // The legacy /vas-catalog route redirects here with ?tab=catalog.
-  useEffect(() => {
-    const initial = new URLSearchParams(window.location.search).get('tab');
-    if (initial && (TABS as readonly string[]).includes(initial)) {
-      setTab(initial);
-    }
-  }, []);
 
   const reloadStats = () => {
     getVasStats()
@@ -375,10 +375,10 @@ export default function ManagementServicesPage() {
           rows={rows}
           getRowId={(row) => row.id}
           isSelected={selection.isSelected}
-          onToggleRow={selection.toggle}
+          onToggleRow={(...args) => selection.toggle(...args)}
           allChecked={selection.allChecked}
           someChecked={selection.someChecked}
-          onToggleAll={selection.toggleAll}
+          onToggleAll={(...args) => selection.toggleAll(...args)}
           onOpenRecord={setSelected}
           activeId={selected?.id ?? null}
           rowActions={rowActions}
@@ -501,7 +501,7 @@ export default function ManagementServicesPage() {
       <ErrorState
         title={t('svc_error')}
         message={resource.error}
-        onRetry={resource.refetch}
+        onRetry={() => resource.refetch()}
         retryLabel={t('retry')}
       />
     );
@@ -606,7 +606,7 @@ export default function ManagementServicesPage() {
             <WorkbenchPagination
               page={resource.page}
               totalPages={resource.totalPages}
-              onPageChange={resource.setPage}
+              onPageChange={(p) => resource.setPage(p)}
               summary={t('svc_pagination', {
                 from: (resource.page - 1) * 20 + 1,
                 to: (resource.page - 1) * 20 + rows.length,

@@ -3,7 +3,7 @@
 import { ChevronLeft } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 /**
@@ -28,19 +28,17 @@ export function RecordPanel(props: {
 }) {
   const isMobile = useIsMobile();
   const t = useTranslations('Management');
-  const closeRef = useRef(props.onClose);
-  closeRef.current = props.onClose;
 
-  const { open } = props;
+  const { open, onClose } = props;
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (open && event.key === 'Escape') {
-        closeRef.current();
+        onClose();
       }
     };
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
-  }, [open]);
+  }, [open, onClose]);
 
   if (!props.open) {
     return null;

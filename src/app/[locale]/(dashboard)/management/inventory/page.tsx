@@ -321,7 +321,7 @@ export default function ManagementInventoryPage() {
           title={t('error_title')}
           message={t('inv_error')}
           retryLabel={t('retry')}
-          onRetry={resource.refetch}
+          onRetry={() => resource.refetch()}
         />
       );
     }
@@ -334,7 +334,7 @@ export default function ManagementInventoryPage() {
           title={t('no_matches')}
           description={t('no_matches_desc')}
           clearLabel={t('clear_filters')}
-          onClear={clearAll}
+          onClear={() => clearAll()}
         />
       ) : (
         <EmptyState
@@ -356,10 +356,10 @@ export default function ManagementInventoryPage() {
         rows={rows}
         getRowId={(row) => row.id}
         isSelected={selection.isSelected}
-        onToggleRow={selection.toggle}
+        onToggleRow={(...args) => selection.toggle(...args)}
         allChecked={selection.allChecked}
         someChecked={selection.someChecked}
-        onToggleAll={selection.toggleAll}
+        onToggleAll={(...args) => selection.toggleAll(...args)}
         onOpenRecord={setSelected}
         activeId={selected?.id ?? null}
         dense={Boolean(selected)}
@@ -397,14 +397,14 @@ export default function ManagementInventoryPage() {
       <NewActDialog
         open={newOpen}
         onOpenChange={setNewOpen}
-        onSuccess={resource.refetch}
+        onSuccess={() => resource.refetch()}
         typeLabel={typeLabel}
       />
       <FinalizeActDialog
         act={finalizeTarget}
         open={Boolean(finalizeTarget)}
         onOpenChange={(open) => !open && setFinalizeTarget(null)}
-        onSuccess={resource.refetch}
+        onSuccess={() => resource.refetch()}
       />
     </>
   );
@@ -466,7 +466,7 @@ export default function ManagementInventoryPage() {
             }
           />
         }
-        kpi={<></>}
+        kpi={null}
         tabs={
           <SavedViewTabs
             views={savedViews}
@@ -508,7 +508,7 @@ export default function ManagementInventoryPage() {
             <WorkbenchPagination
               page={resource.page}
               totalPages={resource.totalPages}
-              onPageChange={resource.setPage}
+              onPageChange={(p) => resource.setPage(p)}
               summary={t('inv_pagination', {
                 from: (resource.page - 1) * 20 + 1,
                 to: (resource.page - 1) * 20 + rows.length,
@@ -523,7 +523,7 @@ export default function ManagementInventoryPage() {
           <BulkSelectionBar
             open={selection.count > 0}
             countLabel={t('bulk_selected', { count: selection.count })}
-            onClear={selection.clear}
+            onClear={() => selection.clear()}
             clearLabel={t('bulk_clear')}
             actions={
               <button

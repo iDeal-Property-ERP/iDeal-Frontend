@@ -15,6 +15,22 @@ export type PropertyStatus = (typeof PROPERTY_STATUSES)[number];
 
 export type PropertyDraftPayload = Record<string, string | number | undefined>;
 
+export type OneOffBrokerageDraftPayload = {
+  seller_name?: string;
+  seller_phone?: string;
+  seller_email?: string;
+  channel?: 'marketplace' | 'off_market';
+  commission_type?: 'none' | 'fixed' | 'percentage';
+  commission_fixed_amount?: string;
+  commission_percentage?: string;
+  commission_currency?: 'USD' | 'UZS';
+};
+
+export type OneOffPropertyDraftPayload = {
+  brokerage: OneOffBrokerageDraftPayload;
+  [key: string]: string | number | undefined | OneOffBrokerageDraftPayload;
+};
+
 /**
  * Fetches the full management property detail (nullable fields + photos +
  * verification). Backs both the Edit page load and the draft autosave lifecycle.
@@ -33,6 +49,36 @@ export async function fetchPropertyDetail(id: number | string): Promise<Property
  */
 export async function createPropertyDraft(payload: PropertyDraftPayload): Promise<PropertyDetail> {
   return await apiFetch<PropertyDetail>('/properties/drafts/', { method: 'POST', body: payload });
+}
+
+/**
+ * Creates the shared property and its one-off brokerage draft atomically.
+ * @param payload Shared property fields plus draft brokerage terms.
+ * @returns The created one-off property detail.
+ */
+export async function createOneOffPropertyDraft(
+  payload: OneOffPropertyDraftPayload,
+): Promise<PropertyDetail> {
+  return await apiFetch<PropertyDetail>('/properties/one-off-drafts/', {
+    method: 'POST',
+    body: payload,
+  });
+}
+
+/**
+ * Atomically patches shared property fields and the draft-only brokerage branch.
+ * @param id The one-off property identifier.
+ * @param payload Shared property fields plus optional brokerage terms.
+ * @returns The updated one-off property detail.
+ */
+export async function updateOneOffProperty(
+  id: number | string,
+  payload: Partial<OneOffPropertyDraftPayload>,
+): Promise<PropertyDetail> {
+  return await apiFetch<PropertyDetail>(`/properties/${id}/one-off/`, {
+    method: 'PATCH',
+    body: payload,
+  });
 }
 
 /**
@@ -159,8 +205,7 @@ export async function scheduleVerification(
 
 /**
  * Archives (soft-deletes) a property via `DELETE /properties/{id}/`. The backend
- * keeps the row (soft delete) and returns a clean 409 if the property is still
- * referenced by an agreement/lease, which the caller surfaces as an error.
+ * keeps the row and preserves any related agreement or lease history.
  * @param id - The property id.
  */
 export async function deleteProperty(id: number | string): Promise<void> {
@@ -289,7 +334,7 @@ export async function getWorkbenchKpis(counts: StatusCounts): Promise<WorkbenchK
   ]);
 
   const rents = sample.items
-    .map((row) => Number.parseFloat(row.tenant_charge_price ?? row.ask_price ?? ''))
+    .map((row) => Number(row.tenant_charge_price ?? row.ask_price ?? ''))
     .filter((value) => !Number.isNaN(value) && value > 0);
   const avgRent = rents.length
     ? Math.round(rents.reduce((sum, value) => sum + value, 0) / rents.length)

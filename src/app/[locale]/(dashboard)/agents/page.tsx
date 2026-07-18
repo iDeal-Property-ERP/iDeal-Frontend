@@ -2,7 +2,7 @@
 
 import type { ColumnDef } from '@tanstack/react-table';
 import { useTranslations } from 'next-intl';
-import { useState, useEffect, useCallback } from 'react';
+import { startTransition, useState, useEffect, useCallback } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { DataTable } from '@/components/ui/DataTable';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -22,7 +22,6 @@ export default function AgentsPage() {
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async (p: number) => {
-    setLoading(true);
     try {
       const res = await apiFetch<PaginatedData<AgentOutput>>('/agents/', { query: { page: p } });
       setData(res.page.object_list);
@@ -34,9 +33,16 @@ export default function AgentsPage() {
     }
   }, []);
 
+  const onPageChange = (p: number) => {
+    setPage(p);
+    setLoading(true);
+  };
+
   useEffect(() => {
-    fetchData(page).catch(() => {
-      void 0;
+    startTransition(() => {
+      fetchData(page).catch(() => {
+        void 0;
+      });
     });
   }, [page, fetchData]);
 
@@ -69,7 +75,7 @@ export default function AgentsPage() {
           rowHref={(item) => `/agents/${item.id}`}
           page={page}
           totalPages={totalPages}
-          onPageChange={setPage}
+          onPageChange={onPageChange}
         />
       )}
     </>

@@ -127,7 +127,7 @@ export async function getAgreementKpis(counts: AgreementStatusCounts): Promise<A
     () => ({ items: [], total: 0, totalPages: 1 }) as AgreementListResult,
   );
   const rates = sample.items
-    .map((row) => Number.parseFloat(row.commission_rate))
+    .map((row) => Number(row.commission_rate))
     .filter((value) => Number.isFinite(value) && value > 0);
   const avgCommission = rates.length
     ? Math.round((rates.reduce((sum, value) => sum + value, 0) / rates.length) * 10) / 10

@@ -11,7 +11,7 @@ import {
   Users,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { EntityCell } from '@/components/management/columns/EntityCell';
 import { NumericCell } from '@/components/management/columns/NumericCell';
@@ -27,7 +27,6 @@ import { ManagementPageHeader } from '@/components/management/ManagementPageHead
 import type { FilterGroup } from '@/components/management/mobile/MobileFilterSheet';
 import { PropertiesMobileView } from '@/components/management/mobile/PropertiesMobileView';
 import { PropertyRecordPanel } from '@/components/management/record-panel/PropertyRecordPanel';
-import { ArchivedViewBanner } from '@/components/management/states/ArchivedViewBanner';
 import { ErrorState } from '@/components/management/states/ErrorState';
 import { FilteredEmptyState } from '@/components/management/states/FilteredEmptyState';
 import { FirstRunState } from '@/components/management/states/FirstRunState';
@@ -51,7 +50,6 @@ import {
 import { usePaginatedResource } from '@/hooks/management/usePaginatedResource';
 import { useRowSelection } from '@/hooks/management/useRowSelection';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useUndoableAction } from '@/hooks/useUndoableAction';
 import { getApiErrorMessage } from '@/libs/forms';
 import { Link, useRouter } from '@/libs/I18nNavigation';
 import {
@@ -121,11 +119,11 @@ function viewFromStatus(status: string | undefined): string {
  * @returns The rent as a number, or 0 when unset.
  */
 function rentOf(row: ManagementPropertyOutput): number {
-  const charge = Number.parseFloat(row.tenant_charge_price ?? '');
+  const charge = Number(row.tenant_charge_price ?? '');
   if (!Number.isNaN(charge) && charge > 0) {
     return charge;
   }
-  const ask = Number.parseFloat(row.ask_price ?? '');
+  const ask = Number(row.ask_price ?? '');
   return Number.isNaN(ask) ? 0 : ask;
 }
 
@@ -161,7 +159,7 @@ function vacancyLossOf(row: ManagementPropertyOutput): number | null {
   if (row.vacant_days === null || row.vacancy_loss_per_day === null) {
     return null;
   }
-  const perDay = Number.parseFloat(row.vacancy_loss_per_day);
+  const perDay = Number(row.vacancy_loss_per_day);
   return Number.isNaN(perDay) ? null : row.vacant_days * perDay;
 }
 
@@ -187,19 +185,6 @@ function sortRows(rows: ManagementPropertyOutput[], sort: string): ManagementPro
     }
     return 0;
   });
-}
-
-/**
- * Hides the row sitting in the archive undo window from the visible list.
- * @param rows - The sorted, filtered rows.
- * @param pending - The record pending archive (or null).
- * @returns The rows without the pending-archive record.
- */
-function withoutPendingArchive(
-  rows: ManagementPropertyOutput[],
-  pending: ManagementPropertyOutput | null,
-): ManagementPropertyOutput[] {
-  return pending ? rows.filter((row) => row.id !== pending.id) : rows;
 }
 
 /**
@@ -314,13 +299,7 @@ export default function ManagementPropertiesPage() {
   const [counts, setCounts] = useState<StatusCounts | null>(null);
   const [kpis, setKpis] = useState<WorkbenchKpis | null>(null);
   const [districts, setDistricts] = useState<DistrictOption[]>([]);
-  // The record sitting in the archive undo window: hidden from the table and
-  // shown in the ArchivedViewBanner until Restore is clicked or the window closes.
-  const [pendingArchive, setPendingArchive] = useState<ManagementPropertyOutput | null>(null);
   const [importOpen, setImportOpen] = useState(false);
-  const archiveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const undo = useUndoableAction();
 
   // Status counts (drive the tab + KPI numbers) refresh with the search term.
   useEffect(() => {
@@ -407,7 +386,7 @@ export default function ManagementPropertiesPage() {
   const filteredRows = range
     ? overridden.filter((row) => rentOf(row) >= range[0] && rentOf(row) < range[1])
     : overridden;
-  const rows = withoutPendingArchive(sortRows(filteredRows, sort), pendingArchive);
+  const rows = sortRows(filteredRows, sort);
 
   const pageIds = rows.map((row) => row.id);
   const selection = useRowSelection(pageIds);
@@ -417,21 +396,7 @@ export default function ManagementPropertiesPage() {
 
   const [archiveTarget, setArchiveTarget] = useState<ManagementPropertyOutput | null>(null);
 
-  const commitArchive = async (target: ManagementPropertyOutput) => {
-    archiveTimer.current = null;
-    try {
-      await deleteProperty(target.id);
-      toast.success(t('archive_success'));
-      resource.refetch();
-    } catch (error) {
-      // e.g. a 409 when the property is still referenced by an agreement/lease.
-      toast.error(getApiErrorMessage(error, t('archive_failed')));
-    } finally {
-      setPendingArchive(null);
-    }
-  };
-
-  const confirmArchive = () => {
+  const confirmArchive = async () => {
     if (!archiveTarget) {
       return;
     }
@@ -440,46 +405,39 @@ export default function ManagementPropertiesPage() {
     if (selected?.id === target.id) {
       setSelected(null);
     }
-    // Optimistic: hide the row and open the restore window before deleting.
-    setPendingArchive(target);
-    archiveTimer.current = setTimeout(() => {
-      void commitArchive(target);
-    }, 30_000);
-  };
-
-  const restoreArchived = () => {
-    if (archiveTimer.current) {
-      clearTimeout(archiveTimer.current);
-      archiveTimer.current = null;
+    try {
+      await deleteProperty(target.id);
+      toast.success(t('archive_success'));
+      resource.refetch();
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error, t('archive_failed')));
     }
-    setPendingArchive(null);
   };
 
   const changeStatus = (ids: number[], nextStatus: string) => {
-    undo.run({
-      message: t('status_changed', { count: ids.length, status: statusLabel(nextStatus) }),
-      undoLabel: t('undo'),
-      onOptimistic: () => {
-        setOverrides((prev) => {
-          const next = { ...prev };
-          for (const id of ids) {
-            next[id] = nextStatus;
-          }
-          return next;
-        });
-      },
-      onRevert: () => setOverrides((prev) => withoutOverrides(prev, ids)),
-      onCommit: async () => {
-        const result = await bulkChangeStatus(ids, nextStatus);
+    setOverrides((prev) => {
+      const next = { ...prev };
+      for (const id of ids) {
+        next[id] = nextStatus;
+      }
+      return next;
+    });
+    selection.clear();
+    void bulkChangeStatus(ids, nextStatus)
+      .then((result) => {
         setOverrides((prev) => withoutOverrides(prev, ids));
         resource.refetch();
         if (result.failed.length > 0) {
-          throw new Error('partial');
+          toast.error(t('status_change_failed'));
+          return;
         }
-      },
-      onError: () => toast.error(t('status_change_failed')),
-    });
-    selection.clear();
+        toast.success(t('status_changed', { count: ids.length, status: statusLabel(nextStatus) }));
+      })
+      .catch(() => {
+        setOverrides((prev) => withoutOverrides(prev, ids));
+        resource.refetch();
+        toast.error(t('status_change_failed'));
+      });
   };
 
   const savedViews: SavedView[] = SAVED_VIEW_DEFS.map((def) => ({
@@ -812,7 +770,7 @@ export default function ManagementPropertiesPage() {
           title={t('error_title')}
           message={t('error_properties')}
           retryLabel={t('retry')}
-          onRetry={resource.refetch}
+          onRetry={() => resource.refetch()}
         />
       );
     }
@@ -828,10 +786,10 @@ export default function ManagementPropertiesPage() {
         rows={rows}
         getRowId={(row) => row.id}
         isSelected={selection.isSelected}
-        onToggleRow={selection.toggle}
+        onToggleRow={(...args) => selection.toggle(...args)}
         allChecked={selection.allChecked}
         someChecked={selection.someChecked}
-        onToggleAll={selection.toggleAll}
+        onToggleAll={(...args) => selection.toggleAll(...args)}
         onOpenRecord={openRecord}
         activeId={selected?.id ?? null}
         dense={Boolean(selected)}
@@ -846,7 +804,7 @@ export default function ManagementPropertiesPage() {
     <WorkbenchPagination
       page={resource.page}
       totalPages={resource.totalPages}
-      onPageChange={resource.setPage}
+      onPageChange={(p) => resource.setPage(p)}
       summary={t('pagination_summary', {
         from: (resource.page - 1) * 20 + 1,
         to: (resource.page - 1) * 20 + rows.length,
@@ -860,7 +818,7 @@ export default function ManagementPropertiesPage() {
     <BulkSelectionBar
       open={selection.count > 0}
       countLabel={t('bulk_selected', { count: selection.count })}
-      onClear={selection.clear}
+      onClear={() => selection.clear()}
       clearLabel={t('bulk_clear')}
       actions={
         <>
@@ -937,19 +895,9 @@ export default function ManagementPropertiesPage() {
     />
   );
 
-  const archivedBanner = pendingArchive ? (
-    <ArchivedViewBanner
-      message={t('archived_banner', { name: pendingArchive.name })}
-      restoreLabel={t('restore')}
-      onRestore={restoreArchived}
-      className={isMobile ? 'mb-3' : undefined}
-    />
-  ) : null;
-
   if (isMobile) {
     return (
       <>
-        {archivedBanner}
         <PropertiesMobileView
           t={t}
           title={t('properties')}
@@ -976,7 +924,7 @@ export default function ManagementPropertiesPage() {
         <ImportDialog
           open={importOpen}
           onOpenChange={setImportOpen}
-          onImported={resource.refetch}
+          onImported={() => resource.refetch()}
         />
       </>
     );
@@ -993,11 +941,14 @@ export default function ManagementPropertiesPage() {
         panel={propertyRecord}
         bulkBar={bulkBar}
       >
-        {archivedBanner}
         {body}
       </WorkbenchShell>
       {archiveDialog}
-      <ImportDialog open={importOpen} onOpenChange={setImportOpen} onImported={resource.refetch} />
+      <ImportDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onImported={() => resource.refetch()}
+      />
     </>
   );
 }

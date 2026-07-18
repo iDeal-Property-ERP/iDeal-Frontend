@@ -9,7 +9,7 @@ import {
   Pencil,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { AvatarInitials, initialsOf } from '@/components/management/columns/AvatarInitials';
 import {
@@ -85,6 +85,32 @@ function worstCondition(items: InventoryActOutput['items']): string | null {
     }
   }
   return worstIndex >= 0 ? (CONDITION_ORDER[worstIndex] ?? null) : null;
+}
+
+/**
+ * Computes the display label for the worst item condition across an act.
+ * @param items - The act's inventory items.
+ * @param t - The translator function.
+ * @returns The condition display label.
+ */
+function computeConditionValue(
+  items: InventoryActOutput['items'],
+  t: (key: string) => string,
+): string {
+  const worst = worstCondition(items);
+  return worst ? t(`inv_condition_${worst}` as 'inv_condition_good') : t('inv_condition_good');
+}
+
+/**
+ * Filters items whose condition is "poor" or "damaged" — the flagged set.
+ * @param items - The act's inventory items.
+ * @returns The flagged items.
+ */
+function computeFlagged(items: InventoryActOutput['items']): InventoryActOutput['items'] {
+  return items.filter((item) => {
+    const c = item.condition.toLowerCase();
+    return c === 'poor' || c === 'damaged';
+  });
 }
 
 /**
@@ -174,125 +200,28 @@ function InventoryActTabBody(props: {
 }
 
 /**
- * The Inventory-act instance of the record panel (archetype D) — fills the
- * reusable RecordPanel with an act's header, property hero, items/condition/photos
- * trio, a flagged-items alert, the created-by card, tabs (overview, items, photos,
- * documents, activity), and a sticky Finalize / Edit footer. The full detail
- * (items + photos) is fetched per act on open.
- * @param props - The act row, open/close state, finalize callback, and labelers.
- * @returns The inventory-act record panel element.
+ * The header slot for the inventory-act record panel — title code, status/type
+ * pills, property name, created date, and close button.
+ * @param props - Act data, labelers, and close handler.
+ * @returns The header element.
  */
-export function InventoryActRecordPanel(props: {
-  act: InventoryActListOutput | null;
-  open: boolean;
-  onClose: () => void;
-  onFinalize: () => void;
+function InventoryActHeader(props: {
+  act: InventoryActListOutput;
   statusLabel: (status: string) => string;
   typeLabel: (type: string) => string;
+  onClose: () => void;
 }) {
   const t = useTranslations('Management');
-  const { act } = props;
-  const [detail, setDetail] = useState<InventoryActOutput | null>(null);
-  const [activeTab, setActiveTab] = useState('overview');
-
-  useEffect(() => {
-    setActiveTab('overview');
-    setDetail(null);
-    let active = true;
-    const load = async () => {
-      if (!act) {
-        return;
-      }
-      try {
-        const res = await getAct(act.id);
-        if (active) {
-          setDetail(res);
-        }
-      } catch {
-        // Detail is supplementary — the panel falls back to the list-row counts.
-      }
-    };
-    void load();
-    return () => {
-      active = false;
-    };
-  }, [act]);
-
-  if (!act) {
-    return null;
-  }
-
-  const items = detail?.items ?? [];
-  const photos = detail?.photos ?? [];
-  const itemCount = detail ? items.length : act.item_count;
-  const photoCount = detail ? photos.length : act.photo_count;
-  const isDraft = act.status.toLowerCase() === 'draft';
-
-  const worst = worstCondition(items);
-  const conditionValue = worst
-    ? t(`inv_condition_${worst}` as 'inv_condition_good')
-    : t('inv_condition_good');
-
-  const flagged = items.filter((item) => {
-    const c = item.condition.toLowerCase();
-    return c === 'poor' || c === 'damaged';
-  });
-
-  let createdByName: string;
-  if (detail?.acknowledged_by_name) {
-    createdByName = detail.acknowledged_by_name;
-  } else if (detail) {
-    createdByName = t('inv_created_by', { id: detail.created_by_id });
-  } else {
-    createdByName = t('inv_created_by_unknown');
-  }
-
-  const tabs = [
-    { id: 'overview', label: t('tab_overview') },
-    { id: 'items', label: t('inv_tab_items') },
-    { id: 'photos', label: t('inv_tab_photos') },
-    { id: 'documents', label: t('tab_documents') },
-    { id: 'activity', label: t('tab_activity') },
-  ];
-
-  const activity: ActivityEvent[] = [
-    {
-      id: 'created',
-      title: t('inv_activity_created'),
-      time: longDate(act.created_at),
-      tone: 'accent',
-    },
-    {
-      id: 'updated',
-      title: t('inv_activity_updated'),
-      time: longDate(act.updated_at),
-      tone: 'muted',
-    },
-  ];
-  if (detail?.finalized_at) {
-    activity.push({
-      id: 'finalized',
-      title: t('inv_activity_finalized'),
-      time: longDate(detail.finalized_at),
-      tone: 'success',
-    });
-  }
-
-  const header = (
+  const { act, statusLabel, typeLabel, onClose } = props;
+  return (
     <div className="flex items-start justify-between gap-3">
       <div className="flex min-w-0 flex-col gap-1">
         <div className="flex items-center gap-2.5">
           <h2 className="truncate font-display text-[22px] leading-[28px] font-bold tracking-[-0.3px] text-foreground">
             {t('inv_code', { id: act.id })}
           </h2>
-          <StatusPill
-            tone={inventoryStatusTone(act.status)}
-            label={props.statusLabel(act.status)}
-          />
-          <StatusPill
-            tone={inventoryTypeTone(act.act_type)}
-            label={props.typeLabel(act.act_type)}
-          />
+          <StatusPill tone={inventoryStatusTone(act.status)} label={statusLabel(act.status)} />
+          <StatusPill tone={inventoryTypeTone(act.act_type)} label={typeLabel(act.act_type)} />
         </div>
         <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
           <span className="truncate">
@@ -307,22 +236,32 @@ export function InventoryActRecordPanel(props: {
           size="icon-sm"
           className="max-lg:hidden"
           aria-label={t('record_close')}
-          onClick={props.onClose}
+          onClick={onClose}
         >
           <PanelRightClose className="size-4" />
         </Button>
       </div>
     </div>
   );
+}
 
-  const footer = (
+/**
+ * The footer slot for the inventory-act record panel — finalize button (draft
+ * only) and edit button.
+ * @param props - Draft flag and finalize callback.
+ * @returns The footer element.
+ */
+function InventoryActFooter(props: { isDraft: boolean; onFinalize: () => void }) {
+  const t = useTranslations('Management');
+  const { isDraft, onFinalize } = props;
+  return (
     <div className="flex items-center justify-between gap-2">
       <div className="flex items-center gap-2.5">
         {isDraft ? (
           <Button
             type="button"
             className="h-10 gap-2 rounded-[10px] px-4 text-[15px] shadow-sm"
-            onClick={props.onFinalize}
+            onClick={onFinalize}
           >
             <CheckCircle2 className="size-[15px]" />
             {t('inv_finalize')}
@@ -340,15 +279,45 @@ export function InventoryActRecordPanel(props: {
       </div>
     </div>
   );
+}
 
+/**
+ * The body content for the inventory-act record panel — hero image, pricing trio,
+ * flagged-items alert, creator card, tabs, and tab body.
+ * @param props - Act data, derived state, and tab state.
+ * @returns The body element.
+ */
+function InventoryActBody(props: {
+  act: InventoryActListOutput;
+  detail: InventoryActOutput | null;
+  itemCount: number;
+  photoCount: number;
+  conditionValue: string;
+  flagged: InventoryActOutput['items'];
+  createdByName: string;
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
+  items: InventoryActOutput['items'];
+  photos: InventoryActOutput['photos'];
+  activity: ActivityEvent[];
+}) {
+  const t = useTranslations('Management');
+  const {
+    act,
+    detail,
+    itemCount,
+    photoCount,
+    conditionValue,
+    flagged,
+    createdByName,
+    activeTab,
+    setActiveTab,
+    items,
+    photos,
+    activity,
+  } = props;
   return (
-    <RecordPanel
-      open={props.open}
-      onClose={props.onClose}
-      title={t('record_type_inventory')}
-      header={header}
-      footer={footer}
-    >
+    <>
       <div className="flex h-[180px] w-full items-center justify-center rounded-[12px] bg-muted text-muted-foreground">
         <Building2 className="size-10" strokeWidth={1.5} />
       </div>
@@ -392,10 +361,146 @@ export function InventoryActRecordPanel(props: {
         statusLabel={detail?.acknowledged_by_name ? t('inv_acknowledged') : undefined}
       />
 
-      <RecordPanelTabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
+      <RecordPanelTabs
+        tabs={[
+          { id: 'overview', label: t('tab_overview') },
+          { id: 'items', label: t('inv_tab_items') },
+          { id: 'photos', label: t('inv_tab_photos') },
+          { id: 'documents', label: t('tab_documents') },
+          { id: 'activity', label: t('tab_activity') },
+        ]}
+        active={activeTab}
+        onChange={setActiveTab}
+      />
 
       <InventoryActTabBody
         activeTab={activeTab}
+        items={items}
+        photos={photos}
+        activity={activity}
+      />
+    </>
+  );
+}
+
+/**
+ * The Inventory-act instance of the record panel (archetype D) — fills the
+ * reusable RecordPanel with an act's header, property hero, items/condition/photos
+ * trio, a flagged-items alert, the created-by card, tabs (overview, items, photos,
+ * documents, activity), and a sticky Finalize / Edit footer. The full detail
+ * (items + photos) is fetched per act on open.
+ * @param props - The act row, open/close state, finalize callback, and labelers.
+ * @returns The inventory-act record panel element.
+ */
+export function InventoryActRecordPanel(props: {
+  act: InventoryActListOutput | null;
+  open: boolean;
+  onClose: () => void;
+  onFinalize: () => void;
+  statusLabel: (status: string) => string;
+  typeLabel: (type: string) => string;
+}) {
+  const t = useTranslations('Management');
+  const { act } = props;
+  const [detail, setDetail] = useState<InventoryActOutput | null>(null);
+  const [activeTab, setActiveTab] = useState('overview');
+
+  const prevActRef = useRef(act?.id ?? null);
+  if (prevActRef.current !== (act?.id ?? null)) {
+    prevActRef.current = act?.id ?? null;
+    setActiveTab('overview');
+    setDetail(null);
+  }
+
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      if (!act) {
+        return;
+      }
+      try {
+        const res = await getAct(act.id);
+        if (active) {
+          setDetail(res);
+        }
+      } catch {
+        // Detail is supplementary — the panel falls back to the list-row counts.
+      }
+    };
+    void load();
+    return () => {
+      active = false;
+    };
+  }, [act]);
+
+  if (!act) {
+    return null;
+  }
+
+  const items = detail?.items ?? [];
+  const photos = detail?.photos ?? [];
+  const itemCount = detail ? items.length : act.item_count;
+  const photoCount = detail ? photos.length : act.photo_count;
+  const isDraft = act.status.toLowerCase() === 'draft';
+  const conditionValue = computeConditionValue(items, (key) => t(key as 'inv_condition_good'));
+  const flagged = computeFlagged(items);
+
+  const createdByName =
+    detail?.acknowledged_by_name ??
+    (detail ? t('inv_created_by', { id: detail.created_by_id }) : t('inv_created_by_unknown'));
+
+  const activity: ActivityEvent[] = [
+    {
+      id: 'created',
+      title: t('inv_activity_created'),
+      time: longDate(act.created_at),
+      tone: 'accent',
+    },
+    {
+      id: 'updated',
+      title: t('inv_activity_updated'),
+      time: longDate(act.updated_at),
+      tone: 'muted',
+    },
+  ];
+  if (detail?.finalized_at) {
+    activity.push({
+      id: 'finalized',
+      title: t('inv_activity_finalized'),
+      time: longDate(detail.finalized_at),
+      tone: 'success',
+    });
+  }
+
+  const header = (
+    <InventoryActHeader
+      act={act}
+      statusLabel={props.statusLabel}
+      typeLabel={props.typeLabel}
+      onClose={props.onClose}
+    />
+  );
+
+  const footer = <InventoryActFooter isDraft={isDraft} onFinalize={props.onFinalize} />;
+
+  return (
+    <RecordPanel
+      open={props.open}
+      onClose={props.onClose}
+      title={t('record_type_inventory')}
+      header={header}
+      footer={footer}
+    >
+      <InventoryActBody
+        act={act}
+        detail={detail}
+        itemCount={itemCount}
+        photoCount={photoCount}
+        conditionValue={conditionValue}
+        flagged={flagged}
+        createdByName={createdByName}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
         items={items}
         photos={photos}
         activity={activity}

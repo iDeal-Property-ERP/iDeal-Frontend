@@ -63,7 +63,7 @@ export function ActionMenu(props: {
               <DropdownMenuItem
                 variant={item.variant}
                 disabled={item.disabled}
-                onSelect={item.onSelect}
+                onSelect={() => item.onSelect()}
               >
                 {Icon ? <Icon className="size-4" /> : null}
                 {item.label}

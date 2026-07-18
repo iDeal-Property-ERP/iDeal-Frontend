@@ -2,7 +2,7 @@
 
 import { CalendarDays, Check, Clock, MessageCircle, ShieldCheck } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import { BookViewingModal } from '@/components/listings/BookViewingModal';
 import { InquiryModal } from '@/components/listings/InquiryModal';
 import type { Currency } from '@/types/enums';
@@ -64,11 +64,8 @@ export function ListingBooking(props: {
   const t = useTranslations('ListingDetail');
   const locale = useLocale();
   const price = formatWhole(monthlyPrice, currency);
-  // Next-available slot for the preferred-date preview — computed client-side to avoid a
-  // timezone hydration mismatch; shows a stable placeholder until mounted.
-  const [slot, setSlot] = useState(t('pick_slot'));
-
-  useEffect(() => {
+  // Next-available slot for the preferred-date preview — computed from current date + locale.
+  const slot = useMemo(() => {
     const d = new Date();
     d.setDate(d.getDate() + 1);
     const label = d.toLocaleDateString(locale, {
@@ -76,7 +73,7 @@ export function ListingBooking(props: {
       day: 'numeric',
       month: 'short',
     });
-    setSlot(`${label} · 14:00`);
+    return `${label} · 14:00`;
   }, [locale]);
 
   const bookButton = (

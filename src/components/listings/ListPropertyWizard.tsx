@@ -713,7 +713,9 @@ function StepContent(props: {
       <PhotosStep
         busy={p.busy}
         draft={p.draft}
-        onUpload={p.onUpload}
+        onUpload={(files) => {
+          p.onUpload(files);
+        }}
         removePhoto={p.removePhoto}
         setCaption={p.setCaption}
         t={p.t}
@@ -978,7 +980,14 @@ export function ListPropertyWizard() {
     </Button>
   );
   const saveDraftBtn = actions?.saveDraft ? (
-    <Button className="min-w-[120px]" disabled={busy} onClick={actions.saveDraft} variant="outline">
+    <Button
+      className="min-w-[120px]"
+      disabled={busy}
+      onClick={() => {
+        void actions.saveDraft();
+      }}
+      variant="outline"
+    >
       {t('save_draft')}
     </Button>
   ) : null;
@@ -1029,7 +1038,9 @@ export function ListPropertyWizard() {
                 districts={districts}
                 draft={draft}
                 goTo={setStep}
-                onUpload={onUpload}
+                onUpload={(files) => {
+                  void onUpload(files);
+                }}
                 pricing={pricing}
                 removePhoto={removePhoto}
                 setAcceptOffer={setAcceptOffer}
@@ -1074,7 +1085,9 @@ export function ListPropertyWizard() {
                   <Button
                     className="h-11"
                     disabled={busy}
-                    onClick={actions.saveDraft}
+                    onClick={() => {
+                      void actions.saveDraft();
+                    }}
                     variant="outline"
                   >
                     {t('save_draft')}

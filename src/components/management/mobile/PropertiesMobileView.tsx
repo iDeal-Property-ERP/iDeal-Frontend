@@ -21,11 +21,11 @@ type Translator = ReturnType<typeof useTranslations>;
  * @returns The rent as a number, or 0 when unset.
  */
 function rentOf(row: ManagementPropertyOutput): number {
-  const charge = Number.parseFloat(row.tenant_charge_price ?? '');
+  const charge = Number(row.tenant_charge_price ?? '');
   if (!Number.isNaN(charge) && charge > 0) {
     return charge;
   }
-  const ask = Number.parseFloat(row.ask_price ?? '');
+  const ask = Number(row.ask_price ?? '');
   return Number.isNaN(ask) ? 0 : ask;
 }
 
@@ -53,7 +53,7 @@ function subtitleOf(t: Translator, row: ManagementPropertyOutput): string {
       : row.tenant_name;
   }
   if (row.vacant_days !== null && row.vacancy_loss_per_day !== null) {
-    const perDay = Number.parseFloat(row.vacancy_loss_per_day);
+    const perDay = Number(row.vacancy_loss_per_day);
     if (!Number.isNaN(perDay)) {
       return t('vacancy_inline', {
         days: row.vacant_days,

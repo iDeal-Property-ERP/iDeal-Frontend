@@ -55,7 +55,10 @@ export function PortfolioMap(props: {
   const mapRef = useRef<YmapsMap | null>(null);
   const clustererRef = useRef<YmapsClusterer | null>(null);
   const onMarkerClickRef = useRef(props.onMarkerClick);
-  onMarkerClickRef.current = props.onMarkerClick;
+
+  useEffect(() => {
+    onMarkerClickRef.current = props.onMarkerClick;
+  }, [props.onMarkerClick]);
 
   const apiKey = Env.NEXT_PUBLIC_YANDEX_MAPS_API_KEY;
 

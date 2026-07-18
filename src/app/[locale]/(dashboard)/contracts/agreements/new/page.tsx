@@ -90,7 +90,7 @@ export default function NewAgreementPage() {
                 <OwnerSelect
                   id="owner_id"
                   value={field.value as number | null | undefined}
-                  onChange={field.onChange}
+                  onChange={(v) => field.onChange(v)}
                   aria-invalid={invalid}
                 />
               )}
@@ -100,7 +100,7 @@ export default function NewAgreementPage() {
                 <PropertySelect
                   id="property_id"
                   value={field.value as number | null | undefined}
-                  onChange={field.onChange}
+                  onChange={(v) => field.onChange(v)}
                   aria-invalid={invalid}
                 />
               )}

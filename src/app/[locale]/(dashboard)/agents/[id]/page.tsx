@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Loader2Icon } from 'lucide-react';
-import { useState, useEffect, use } from 'react';
+import { startTransition, useState, useEffect, use } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Badge } from '@/components/ui/badge';
@@ -69,7 +69,9 @@ export default function AgentDetailPage(props: { params: Promise<{ id: string }>
   };
 
   useEffect(() => {
-    fetchData();
+    startTransition(() => {
+      fetchData();
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id]);
 
@@ -141,7 +143,7 @@ export default function AgentDetailPage(props: { params: Promise<{ id: string }>
                 <PropertySelect
                   id="property_id"
                   value={field.value as number | null | undefined}
-                  onChange={field.onChange}
+                  onChange={(v) => field.onChange(v)}
                   aria-invalid={invalid}
                 />
               )}

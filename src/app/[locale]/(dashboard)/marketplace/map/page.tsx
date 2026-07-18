@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { apiFetch } from '@/libs/api';
@@ -9,7 +9,7 @@ import { Env } from '@/libs/Env';
 import type { PortfolioMapOutput } from '@/types/management';
 
 function fCurrency(amount: string): string {
-  const n = Number.parseFloat(amount);
+  const n = Number(amount);
   if (Number.isNaN(n)) {
     return `$${amount}`;
   }
@@ -23,8 +23,13 @@ function fCurrency(amount: string): string {
 export default function MapSearchPage() {
   const t = useTranslations('Pages');
   const mapRef = useRef<HTMLDivElement>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const hasApiKey = useMemo(() => Env.NEXT_PUBLIC_YANDEX_MAPS_API_KEY !== '', []);
+  const [isLoading, setIsLoading] = useState(hasApiKey);
+  const [error, setError] = useState<string | null>(
+    hasApiKey
+      ? null
+      : 'Yandex Maps API key is not configured. Set NEXT_PUBLIC_YANDEX_MAPS_API_KEY in .env',
+  );
 
   const initMap = useCallback(async () => {
     try {
@@ -78,26 +83,26 @@ export default function MapSearchPage() {
   }, []);
 
   useEffect(() => {
-    if (Env.NEXT_PUBLIC_YANDEX_MAPS_API_KEY === '') {
-      setError(
-        'Yandex Maps API key is not configured. Set NEXT_PUBLIC_YANDEX_MAPS_API_KEY in .env',
-      );
-      setIsLoading(false);
+    if (!hasApiKey) {
       return;
     }
     if (document.querySelector('#yandex-maps-script')) {
-      initMap();
+      startTransition(() => {
+        initMap();
+      });
       return;
     }
     window.handleMapReady = () => {
-      initMap();
+      startTransition(() => {
+        initMap();
+      });
     };
     const script = document.createElement('script');
     script.id = 'yandex-maps-script';
     script.src = `https://api-maps.yandex.ru/2.1/?apikey=${Env.NEXT_PUBLIC_YANDEX_MAPS_API_KEY}&lang=en_US&onload=handleMapReady`;
     script.async = true;
     document.head.append(script);
-  }, [initMap]);
+  }, [initMap, hasApiKey]);
 
   return (
     <div className="space-y-6">

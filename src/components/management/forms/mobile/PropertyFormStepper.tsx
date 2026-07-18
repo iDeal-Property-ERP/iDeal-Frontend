@@ -11,6 +11,7 @@ import { useRouter } from '@/libs/I18nNavigation';
 import type { DistrictOption } from '@/libs/management/propertiesAdapter';
 import type { ManagementPropertyFormData } from '@/libs/schemas/managementProperty';
 import { cn } from '@/libs/utils';
+import { OneOffBrokerageCard } from '../OneOffBrokerageCard';
 import { PropertyBasicsCard } from '../PropertyBasicsCard';
 import { PropertyOwnerCard } from '../PropertyOwnerCard';
 import { PropertyPhotosCard } from '../PropertyPhotosCard';
@@ -24,6 +25,9 @@ type PropertyFormStepperProps = {
   districts: DistrictOption[];
   photos: UsePropertyPhotosResult;
   mode: 'create' | 'edit';
+  engagement: 'managed' | 'one_off';
+  brokerageLocked?: boolean;
+  askPriceLocked?: boolean;
   submitting: boolean;
   onPrimary: () => void;
   /** Set by the parent on a failed publish to jump to the first invalid step. */
@@ -34,7 +38,7 @@ const STEP_COUNT = 3;
 
 /** The form fields owned by each stepper step (for the per-step error hint). */
 const STEP_FIELDS: (keyof ManagementPropertyFormData)[][] = [
-  ['name', 'address', 'district_id', 'rooms', 'area_sqm', 'floor', 'owner_id'],
+  ['name', 'address', 'district_id', 'rooms', 'area_sqm', 'floor', 'total_floors', 'owner_id'],
   ['ask_price', 'owner_guaranteed_price', 'tenant_charge_price'],
   [],
 ];
@@ -47,7 +51,20 @@ const STEP_FIELDS: (keyof ManagementPropertyFormData)[][] = [
  * @returns The mobile stepper.
  */
 export function PropertyFormStepper(props: PropertyFormStepperProps) {
-  const { t, control, districts, photos, mode, submitting, onPrimary, errorStep } = props;
+  const {
+    t,
+    control,
+    districts,
+    photos,
+    mode,
+    engagement,
+    brokerageLocked,
+    askPriceLocked,
+    submitting,
+    onPrimary,
+    errorStep,
+  } = props;
+  const oneOff = engagement === 'one_off';
   const router = useRouter();
   const [step, setStep] = useState(0);
   const { errors } = useFormState({ control });
@@ -128,10 +145,21 @@ export function PropertyFormStepper(props: PropertyFormStepperProps) {
         {step === 0 ? (
           <>
             <PropertyBasicsCard control={control} t={t} districts={districts} />
-            <PropertyOwnerCard control={control} t={t} />
+            {!oneOff ? (
+              <PropertyOwnerCard control={control} t={t} />
+            ) : (
+              <OneOffBrokerageCard control={control} t={t} disabled={brokerageLocked} />
+            )}
           </>
         ) : null}
-        {step === 1 ? <PropertyPricingCard control={control} t={t} /> : null}
+        {step === 1 ? (
+          <PropertyPricingCard
+            control={control}
+            t={t}
+            engagement={engagement}
+            askPriceLocked={askPriceLocked}
+          />
+        ) : null}
         {step === 2 ? <PropertyPhotosCard t={t} photos={photos} capture /> : null}
       </div>
 

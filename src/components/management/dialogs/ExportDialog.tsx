@@ -95,18 +95,22 @@ export function ExportDialog(props: {
               const active = option.value === scope;
               const disabled = option.value === 'selected' && option.count === 0;
               return (
-                <button
+                <label
                   key={option.value}
-                  type="button"
-                  role="radio"
-                  aria-checked={active}
-                  disabled={disabled}
-                  onClick={() => setScope(option.value)}
                   className={cn(
-                    'flex items-center gap-3 rounded-[10px] px-1 py-1.5 text-left text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                    'flex cursor-pointer items-center gap-3 rounded-[10px] px-1 py-1.5 text-left text-sm outline-none',
                     disabled && 'cursor-not-allowed opacity-40',
                   )}
                 >
+                  <input
+                    type="radio"
+                    name="export-scope"
+                    value={option.value}
+                    checked={active}
+                    disabled={disabled}
+                    onChange={() => setScope(option.value)}
+                    className="peer sr-only"
+                  />
                   <span
                     className={cn(
                       'flex size-[18px] shrink-0 items-center justify-center rounded-full border-2',
@@ -116,7 +120,7 @@ export function ExportDialog(props: {
                     {active ? <span className="size-2 rounded-full bg-primary" /> : null}
                   </span>
                   <span className="text-foreground">{option.label}</span>
-                </button>
+                </label>
               );
             })}
           </div>

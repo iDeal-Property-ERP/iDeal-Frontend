@@ -35,21 +35,25 @@ export function MethodSegmented(props: {
         {props.options.map((option) => {
           const active = option.value === props.value;
           return (
-            <button
+            <label
               key={option.value}
-              type="button"
-              role="radio"
-              aria-checked={active}
-              onClick={() => props.onChange(option.value)}
               className={cn(
-                'min-h-11 flex-1 rounded-[9px] px-3 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                'flex min-h-11 flex-1 cursor-pointer items-center justify-center rounded-[9px] px-3 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring',
                 active
                   ? 'bg-card text-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground',
               )}
             >
+              <input
+                type="radio"
+                name={props.label ?? 'segmented'}
+                value={option.value}
+                checked={active}
+                onChange={() => props.onChange(option.value)}
+                className="sr-only"
+              />
               {option.label}
-            </button>
+            </label>
           );
         })}
       </div>

@@ -3,7 +3,7 @@
 import { Moon, Sun } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useTheme } from 'next-themes';
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { NotificationBell } from '@/components/ui/NotificationBell';
@@ -19,11 +19,11 @@ export function Header() {
   const { user } = useAuth();
   const t = useTranslations('Dashboard');
   const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useSyncExternalStore(
+    () => () => void 0,
+    () => true,
+    () => false,
+  );
 
   return (
     <header className="flex h-16 shrink-0 items-center justify-between border-b border-border bg-card px-4 lg:px-6">

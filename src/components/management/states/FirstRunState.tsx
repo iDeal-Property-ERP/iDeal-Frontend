@@ -60,7 +60,7 @@ export function FirstRunState(props: {
               {step.onClick ? (
                 <button
                   type="button"
-                  onClick={step.onClick}
+                  onClick={() => step.onClick?.()}
                   className="flex w-full items-center gap-3.5 px-4 py-3.5 text-left transition-colors hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                 >
                   {content}

@@ -92,7 +92,7 @@ function FilterPanel(props: {
       ))}
       <div className="flex flex-col gap-1.5">
         <span className="text-xs font-medium text-muted-foreground">{props.labels.sort}</span>
-        <Select value={props.sort.value} onValueChange={props.sort.onChange}>
+        <Select value={props.sort.value} onValueChange={(v) => props.sort.onChange(v)}>
           <SelectTrigger className="h-9 w-full">
             <SelectValue />
           </SelectTrigger>
@@ -174,7 +174,7 @@ export function WorkbenchToolbar(props: {
       <div className="flex flex-1 flex-wrap items-center gap-2.5">
         <SearchField
           value={props.search.value}
-          onChange={props.search.onChange}
+          onChange={(v) => props.search.onChange(v)}
           placeholder={props.labels.search.placeholder}
           ariaLabel={props.labels.search.aria}
           clearLabel={props.labels.search.clear}
@@ -187,7 +187,7 @@ export function WorkbenchToolbar(props: {
               label={filter.label}
               value={filter.value}
               options={filter.options}
-              onChange={filter.onChange}
+              onChange={(v) => filter.onChange(v)}
               clearLabel={props.labels.clearAll}
             />
           ))}
@@ -232,7 +232,7 @@ export function WorkbenchToolbar(props: {
         <SortMenu
           options={props.sort.options}
           value={props.sort.value}
-          onChange={props.sort.onChange}
+          onChange={(v) => props.sort.onChange(v)}
           label={props.labels.sort}
         />
         {props.columns ? (

@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useCallback, useEffect, useState } from 'react';
+import { startTransition, useCallback, useEffect, useState } from 'react';
 import {
   ApproveOnboardingDrawer,
   RejectOnboardingDialog,
@@ -76,24 +76,32 @@ export default function ManagementOnboardingsPage() {
   // detail on load, since "back" clears the selection and this effect re-selects instantly.
   useEffect(() => {
     if (selectedId && !onboardings.some((o) => o.id === selectedId)) {
-      setSelectedId(null);
+      startTransition(() => {
+        setSelectedId(null);
+      });
       return;
     }
     if (!isMobile && !selectedId && onboardings.length > 0) {
-      setSelectedId(onboardings[0]!.id);
+      startTransition(() => {
+        setSelectedId(onboardings[0]!.id);
+      });
     }
   }, [onboardings, selectedId, isMobile]);
 
   // Fetch the rich detail whenever the selection changes.
   useEffect(() => {
     if (selectedId === null) {
-      setDetail(null);
+      startTransition(() => {
+        setDetail(null);
+      });
       return () => {
-        // No selection — nothing to tear down.
+        // cleanup not needed
       };
     }
     let active = true;
-    setDetailLoading(true);
+    startTransition(() => {
+      setDetailLoading(true);
+    });
     getOnboarding(selectedId)
       .then((d) => {
         if (active) {
@@ -120,7 +128,7 @@ export default function ManagementOnboardingsPage() {
     setSelectedId(null);
     patchQuery({ status: next });
   };
-  const changeSearch = (next: string) => {
+  const handleChangeSearch = (next: string) => {
     setSearch(next);
     patchQuery({ search: next });
   };
@@ -210,7 +218,7 @@ export default function ManagementOnboardingsPage() {
       <ErrorState
         title={t('onb_error')}
         message={resource.error}
-        onRetry={resource.refetch}
+        onRetry={() => resource.refetch()}
         retryLabel={t('retry')}
       />
     );
@@ -225,7 +233,7 @@ export default function ManagementOnboardingsPage() {
           topRight={
             <MobileSearchToggle
               ariaLabel={t('onb_search')}
-              onChange={changeSearch}
+              onChange={handleChangeSearch}
               placeholder={t('onb_search')}
               value={search}
             />

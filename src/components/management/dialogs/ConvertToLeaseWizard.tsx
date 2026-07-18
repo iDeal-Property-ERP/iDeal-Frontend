@@ -41,7 +41,7 @@ function currencySymbol(currency: string | null): string {
  */
 function invalidTerms(terms: Terms): Set<string> {
   const bad = new Set<string>();
-  if (!terms.rent || Number.parseFloat(terms.rent) <= 0) {
+  if (!terms.rent || Number(terms.rent) <= 0) {
     bad.add('rent');
   }
   if (!terms.deposit) {

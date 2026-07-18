@@ -22,6 +22,7 @@ const CODE_TO_ROW: Record<string, ChecklistRowId> = {
   rooms: 'basics',
   area_sqm: 'basics',
   floor: 'basics',
+  total_floors: 'basics',
   owner: 'owner',
   ask_price: 'pricing',
   owner_guaranteed_price: 'pricing',
@@ -66,6 +67,7 @@ export function usePublishChecklist(args: UsePublishChecklistArgs): {
       Boolean(values.rooms) &&
       Boolean(values.area_sqm) &&
       Boolean(values.floor) &&
+      Boolean(values.total_floors) &&
       !serverRows.has('basics');
     const ownerDone = Boolean(values.owner_id) && !serverRows.has('owner');
     const pricingDone =
@@ -76,7 +78,11 @@ export function usePublishChecklist(args: UsePublishChecklistArgs): {
     const photosDone = photoCount >= MIN_PUBLISH_PHOTOS && !serverRows.has('photos');
 
     const rows: ChecklistRow[] = [
-      { id: 'basics', done: basicsDone, codes: ['district', 'rooms', 'area_sqm', 'floor'] },
+      {
+        id: 'basics',
+        done: basicsDone,
+        codes: ['district', 'rooms', 'area_sqm', 'floor', 'total_floors'],
+      },
       { id: 'owner', done: ownerDone, codes: ['owner'] },
       {
         id: 'pricing',

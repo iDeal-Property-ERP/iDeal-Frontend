@@ -7,5 +7,5 @@ export default async function ListingsLayout(props: {
   const { locale } = await props.params;
   setRequestLocale(locale);
 
-  return <>{props.children}</>;
+  return await props.children;
 }

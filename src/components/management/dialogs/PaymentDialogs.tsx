@@ -65,8 +65,6 @@ export function RecordPaymentDialog(props: {
           setAmount((current) => current || lease.monthly_rent);
         }
       });
-    } else {
-      setTenantId(null);
     }
     return () => {
       active = false;
@@ -187,14 +185,14 @@ export function RecordPaymentDialog(props: {
  * @returns The formatted total.
  */
 function totalOf(rows: ManagementPaymentOutput[]): string {
-  const sum = rows.reduce((acc, row) => acc + (Number.parseFloat(row.amount) || 0), 0);
+  const sum = rows.reduce((acc, row) => acc + (Number(row.amount) || 0), 0);
   return formatCurrency(sum, rows[0]?.currency ?? 'USD');
 }
 
 /**
  * The "Mark N payments as paid?" confirmation (Figma `dialog/bulk-mark-paid`) —
- * shows the total, a per-payment list, and the note that each gets today's date
- * and that undo is available. Confirming runs the caller's undoable bulk action.
+ * shows the total, a per-payment list, and the note that each gets today's date.
+ * Confirming runs the bulk action immediately.
  * @param props - Open state, the selected payments, labels, and the confirm handler.
  * @returns The bulk-mark-paid dialog element.
  */

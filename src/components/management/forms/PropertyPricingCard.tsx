@@ -21,8 +21,8 @@ function MarginIndicator(props: { control: Control<ManagementPropertyFormData>; 
   const { control, t } = props;
   const owner = useWatch({ control, name: 'owner_guaranteed_price' });
   const tenant = useWatch({ control, name: 'tenant_charge_price' });
-  const ownerValue = Number.parseFloat(owner ?? '');
-  const tenantValue = Number.parseFloat(tenant ?? '');
+  const ownerValue = owner === undefined || owner === '' ? Number.NaN : Number(owner);
+  const tenantValue = tenant === undefined || tenant === '' ? Number.NaN : Number(tenant);
   if (Number.isNaN(ownerValue) || Number.isNaN(tenantValue) || tenantValue <= 0) {
     return <p className="text-sm text-muted-foreground">{t('form_margin_hint')}</p>;
   }
@@ -42,6 +42,8 @@ function MarginIndicator(props: { control: Control<ManagementPropertyFormData>; 
 type PropertyPricingCardProps = {
   control: Control<ManagementPropertyFormData>;
   t: Translator;
+  engagement?: 'managed' | 'one_off';
+  askPriceLocked?: boolean;
 };
 
 /**
@@ -51,10 +53,19 @@ type PropertyPricingCardProps = {
  * @returns The Pricing section card.
  */
 export function PropertyPricingCard(props: PropertyPricingCardProps) {
-  const { control, t } = props;
+  const { control, t, engagement = 'managed', askPriceLocked = false } = props;
+  const oneOff = engagement === 'one_off';
   return (
-    <FormSectionCard title={t('form_pricing')} description={t('form_pricing_hint')}>
-      <div className="grid gap-5 sm:grid-cols-3">
+    <FormSectionCard
+      title={t('form_pricing')}
+      description={oneOff ? t('form_ask_price_hint') : t('form_pricing_hint')}
+    >
+      <div
+        className={cn(
+          'grid gap-5',
+          oneOff ? 'sm:max-w-[calc(33.333%-0.875rem)]' : 'sm:grid-cols-3',
+        )}
+      >
         <TextField
           control={control}
           name="ask_price"
@@ -62,24 +73,30 @@ export function PropertyPricingCard(props: PropertyPricingCardProps) {
           required
           inputMode="decimal"
           description={t('form_ask_price_hint')}
+          disabled={askPriceLocked}
         />
-        <TextField
-          control={control}
-          name="owner_guaranteed_price"
-          label={t('form_owner_guaranteed')}
-          required
-          inputMode="decimal"
-        />
-        <div className="space-y-2">
-          <TextField
-            control={control}
-            name="tenant_charge_price"
-            label={t('form_tenant_charge')}
-            required
-            inputMode="decimal"
-          />
-          <MarginIndicator control={control} t={t} />
-        </div>
+        {!oneOff ? (
+          <>
+            <TextField
+              control={control}
+              name="owner_guaranteed_price"
+              label={t('form_owner_guaranteed')}
+              required
+              inputMode="decimal"
+              description={t('form_owner_guaranteed_hint')}
+            />
+            <div className="space-y-2">
+              <TextField
+                control={control}
+                name="tenant_charge_price"
+                label={t('form_tenant_charge')}
+                required
+                inputMode="decimal"
+              />
+              <MarginIndicator control={control} t={t} />
+            </div>
+          </>
+        ) : null}
       </div>
     </FormSectionCard>
   );

@@ -23,8 +23,6 @@ export function DonutChart(props: {
   const total = props.segments.reduce((sum, s) => sum + s.value, 0) || 1;
   const active = props.segments.filter((s) => s.value > 0);
 
-  let offset = 0;
-
   return (
     <div className="relative" style={{ width: size, height: size }}>
       <svg
@@ -44,7 +42,10 @@ export function DonutChart(props: {
         />
         {active.map((segment, index) => {
           const dash = (segment.value / total) * circumference;
-          const element = (
+          const cumulativeOffset = active
+            .slice(0, index)
+            .reduce((sum, s) => sum + (s.value / total) * circumference, 0);
+          return (
             <circle
               key={index}
               cx={size / 2}
@@ -54,12 +55,10 @@ export function DonutChart(props: {
               stroke={segment.color}
               strokeWidth={strokeWidth}
               strokeDasharray={`${dash} ${circumference - dash}`}
-              strokeDashoffset={-offset}
+              strokeDashoffset={-cumulativeOffset}
               strokeLinecap="butt"
             />
           );
-          offset += dash;
-          return element;
         })}
       </svg>
       {props.centerLabel ? (

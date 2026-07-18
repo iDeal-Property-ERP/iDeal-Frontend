@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useEffect, useMemo, useState } from 'react';
+import { startTransition, useEffect, useMemo, useState } from 'react';
 import { ManagementPageHeader } from '@/components/management/ManagementPageHeader';
 import { MapFilterBar } from '@/components/management/map/MapFilterBar';
 import type { MapFilterChip } from '@/components/management/map/MapFilterBar';
@@ -71,33 +71,37 @@ export default function PortfolioMapPage() {
       : value;
 
   useEffect(() => {
-    getDistricts()
-      .then(setDistricts)
-      .catch(() => setDistricts([]));
+    startTransition(() => {
+      getDistricts()
+        .then(setDistricts)
+        .catch(() => setDistricts([]));
+    });
   }, []);
 
   useEffect(() => {
     let active = true;
     const band = price ? PRICE_BANDS[price] : undefined;
-    setError(null);
-    listMapProperties({
-      search: search || undefined,
-      status: status ?? undefined,
-      districtId: districtId ?? undefined,
-      rooms: rooms ?? undefined,
-      priceMin: band?.min,
-      priceMax: band?.max,
-    })
-      .then((rows) => {
-        if (active) {
-          setProperties(rows);
-        }
+    startTransition(() => {
+      setError(null);
+      listMapProperties({
+        search: search || undefined,
+        status: status ?? undefined,
+        districtId: districtId ?? undefined,
+        rooms: rooms ?? undefined,
+        priceMin: band?.min,
+        priceMax: band?.max,
       })
-      .catch((caughtError: unknown) => {
-        if (active) {
-          setError(caughtError instanceof Error ? caughtError.message : t('map_error'));
-        }
-      });
+        .then((rows) => {
+          if (active) {
+            setProperties(rows);
+          }
+        })
+        .catch((caughtError: unknown) => {
+          if (active) {
+            setError(caughtError instanceof Error ? caughtError.message : t('map_error'));
+          }
+        });
+    });
     return () => {
       active = false;
     };

@@ -35,7 +35,7 @@ function RevenueCard(props: {
           strokeWidth={20}
           centerLabel={props.centerLabel}
           segments={props.rows.map((r) => ({
-            value: Number.parseFloat(r.amount) || 0,
+            value: Number(r.amount) || 0,
             color: sourceColor(r.source),
           }))}
         />
@@ -77,7 +77,7 @@ function ExpensesCard(props: {
               <div
                 className="h-full rounded-full"
                 style={{
-                  width: `${Math.min(Number.parseFloat(r.share) || 0, 100)}%`,
+                  width: `${Math.min(Number(r.share) || 0, 100)}%`,
                   backgroundColor: sourceColor(r.source),
                 }}
               />

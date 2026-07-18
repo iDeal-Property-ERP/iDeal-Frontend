@@ -69,14 +69,13 @@ function EntityCombobox<T>(props: EntityComboboxProps<T>) {
   const [debounced, setDebounced] = React.useState('');
   const [items, setItems] = React.useState<T[]>([]);
   const [loading, setLoading] = React.useState(false);
-  const labelCache = React.useRef<Map<number, string>>(new Map());
-
-  // Seed the label cache with a preloaded label so edit forms show the current value.
-  React.useEffect(() => {
-    if (value !== null && value !== undefined && initialLabel && !labelCache.current.has(value)) {
-      labelCache.current.set(value, initialLabel);
+  const [labelCache, setLabelCache] = React.useState<Map<number, string>>(() => {
+    const map = new Map<number, string>();
+    if (value !== null && value !== undefined && initialLabel) {
+      map.set(value, initialLabel);
     }
-  }, [value, initialLabel]);
+    return map;
+  });
 
   // Debounce the search term.
   React.useEffect(() => {
@@ -88,7 +87,6 @@ function EntityCombobox<T>(props: EntityComboboxProps<T>) {
   React.useEffect(() => {
     let cancelled = false;
     if (open) {
-      setLoading(true);
       const requestQuery: Record<string, string | number | boolean | undefined> = {
         ...query,
         page: 1,
@@ -102,9 +100,10 @@ function EntityCombobox<T>(props: EntityComboboxProps<T>) {
             return;
           }
           const list = res.page.object_list;
-          for (const item of list) {
-            labelCache.current.set(getValue(item), getLabel(item));
-          }
+          setLabelCache((prev) => {
+            const entries = list.map((item) => [getValue(item), getLabel(item)] as const);
+            return new Map([...prev, ...entries]);
+          });
           setItems(list);
         })
         .catch(() => {
@@ -131,8 +130,17 @@ function EntityCombobox<T>(props: EntityComboboxProps<T>) {
     return items.filter((item) => getLabel(item).toLowerCase().includes(term));
   }, [items, clientFilter, debounced, getLabel]);
 
-  const selectedLabel =
-    value !== null && value !== undefined ? labelCache.current.get(value) : undefined;
+  const selectedLabel = React.useMemo(() => {
+    if (value === null || value === undefined) {
+      return null;
+    }
+    const cached = labelCache.get(value);
+    if (cached) {
+      return cached;
+    }
+    const item = items.find((i) => getValue(i) === value);
+    return item ? getLabel(item) : null;
+  }, [value, labelCache, items, getValue, getLabel]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

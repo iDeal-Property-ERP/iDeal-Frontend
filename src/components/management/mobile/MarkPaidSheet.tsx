@@ -12,8 +12,7 @@ export type MarkPaidLine = { id: number; name: string; detail: string };
  * The mobile "Mark paid" bottom sheet (Figma M · Mark paid) — a grabber sheet
  * listing the chosen payments, a Cash/Bank/Click/Payme method segmented control
  * with the "Cash needs no reference…" hint, and a full-width "Confirm · $sum"
- * action. Confirms with the picked method; the caller runs the undoable bulk
- * mark-paid so the top undo toast still applies.
+ * action. Confirms with the picked method and marks the payments paid immediately.
  * @param props - Open state, the payment lines, total, method options, labels,
  *   and the confirm handler.
  * @returns The mark-paid bottom sheet.

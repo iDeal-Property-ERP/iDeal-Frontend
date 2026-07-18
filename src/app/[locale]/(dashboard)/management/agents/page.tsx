@@ -106,7 +106,7 @@ function filterAndSortAgents(data: AgentOutput[], search: string, sort: string):
       return a.deals_ytd - b.deals_ytd;
     }
     if (sort === 'volume_high') {
-      return Number.parseFloat(b.total_revenue) - Number.parseFloat(a.total_revenue);
+      return Number(b.total_revenue) - Number(a.total_revenue);
     }
     return b.created_at.localeCompare(a.created_at);
   });
@@ -343,7 +343,7 @@ export default function ManagementAgentsPage() {
           title={t('error_title')}
           message={t('agt_error')}
           retryLabel={t('retry')}
-          onRetry={resource.refetch}
+          onRetry={() => resource.refetch()}
         />
       );
     }
@@ -356,7 +356,7 @@ export default function ManagementAgentsPage() {
           title={t('no_matches')}
           description={t('no_matches_desc')}
           clearLabel={t('clear_filters')}
-          onClear={clearAll}
+          onClear={() => clearAll()}
         />
       ) : (
         <EmptyState
@@ -378,10 +378,10 @@ export default function ManagementAgentsPage() {
         rows={rows}
         getRowId={(row) => row.id}
         isSelected={selection.isSelected}
-        onToggleRow={selection.toggle}
+        onToggleRow={(...args) => selection.toggle(...args)}
         allChecked={selection.allChecked}
         someChecked={selection.someChecked}
-        onToggleAll={selection.toggleAll}
+        onToggleAll={(...args) => selection.toggleAll(...args)}
         onOpenRecord={setSelected}
         activeId={selected?.id ?? null}
         dense={Boolean(selected)}
@@ -411,14 +411,18 @@ export default function ManagementAgentsPage() {
         agent={recordTarget}
         open={Boolean(recordTarget)}
         onOpenChange={(open) => !open && setRecordTarget(null)}
-        onSuccess={resource.refetch}
+        onSuccess={() => resource.refetch()}
       />
-      <NewAgentDialog open={newOpen} onOpenChange={setNewOpen} onSuccess={resource.refetch} />
+      <NewAgentDialog
+        open={newOpen}
+        onOpenChange={setNewOpen}
+        onSuccess={() => resource.refetch()}
+      />
       <EditAgentDialog
         agent={editTarget}
         open={Boolean(editTarget)}
         onOpenChange={(open) => !open && setEditTarget(null)}
-        onSuccess={resource.refetch}
+        onSuccess={() => resource.refetch()}
       />
     </>
   );
@@ -537,7 +541,7 @@ export default function ManagementAgentsPage() {
             <WorkbenchPagination
               page={resource.page}
               totalPages={resource.totalPages}
-              onPageChange={resource.setPage}
+              onPageChange={(p) => resource.setPage(p)}
               summary={t('agt_pagination', {
                 from: (resource.page - 1) * 20 + 1,
                 to: (resource.page - 1) * 20 + rows.length,
@@ -552,7 +556,7 @@ export default function ManagementAgentsPage() {
           <BulkSelectionBar
             open={selection.count > 0}
             countLabel={t('bulk_selected', { count: selection.count })}
-            onClear={selection.clear}
+            onClear={() => selection.clear()}
             clearLabel={t('bulk_clear')}
             actions={
               <button

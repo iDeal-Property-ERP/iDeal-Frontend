@@ -41,7 +41,6 @@ import { usePaginatedResource } from '@/hooks/management/usePaginatedResource';
 import type { QueryParams } from '@/hooks/management/usePaginatedResource';
 import { useRowSelection } from '@/hooks/management/useRowSelection';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useUndoableAction } from '@/hooks/useUndoableAction';
 import { downloadTable } from '@/libs/management/exportFile';
 import {
   bulkMarkPaymentsPaid,
@@ -169,7 +168,7 @@ function daysBetween(iso: string): number | null {
  * The Payments Workbench — the overdue-first rent-collection list: money KPI
  * strip, saved-view tabs, filter toolbar (method, property, due-date range), a
  * selectable table with quick Mark-paid + a floating bulk bar (mark paid / send
- * reminder, with 30s undo), pagination, an in-flow payment record panel, and the
+ * reminder), pagination, an in-flow payment record panel, and the
  * record-payment + bulk-mark-paid + export dialogs. On mobile it swaps to the
  * swipe/long-press list with a Mark-paid bottom sheet. Reuses the workbench
  * foundation; wired to the live backend.
@@ -178,8 +177,6 @@ function daysBetween(iso: string): number | null {
 export default function ManagementPaymentsPage() {
   const t = useTranslations('Management');
   const isMobile = useIsMobile();
-  const undo = useUndoableAction();
-
   const resource = usePaginatedResource<ManagementPaymentOutput>(
     async ({ page, query }) => await listPayments(queryToParams(page, query)),
     { initialQuery: { ...queryForView('overdue'), order: 'due_date' } },
@@ -250,16 +247,16 @@ export default function ManagementPaymentsPage() {
   };
 
   const runMarkPaid = (ids: number[], onDone?: () => void, method?: string) => {
-    undo.run({
-      message: t('bulk_mark_paid_toast', { count: ids.length }),
-      undoLabel: t('undo'),
-      onCommit: async () => {
-        await bulkMarkPaymentsPaid(ids, method);
-        resource.refetch();
-      },
-      onError: () => resource.refetch(),
-    });
     onDone?.();
+    void bulkMarkPaymentsPaid(ids, method)
+      .then(() => {
+        toast.success(t('bulk_mark_paid_toast', { count: ids.length }));
+        resource.refetch();
+      })
+      .catch(() => {
+        resource.refetch();
+        toast.error(t('bulk_mark_paid_failed'));
+      });
   };
 
   const runReminder = (ids: number[]) => {
@@ -458,7 +455,7 @@ export default function ManagementPaymentsPage() {
           title={t('error_title')}
           message={t('payment_error')}
           retryLabel={t('retry')}
-          onRetry={resource.refetch}
+          onRetry={() => resource.refetch()}
         />
       );
     }
@@ -471,7 +468,7 @@ export default function ManagementPaymentsPage() {
           title={t('no_matches')}
           description={t('no_matches_desc')}
           clearLabel={t('clear_filters')}
-          onClear={clearAll}
+          onClear={() => clearAll()}
         />
       ) : (
         <EmptyState
@@ -493,10 +490,10 @@ export default function ManagementPaymentsPage() {
         rows={rows}
         getRowId={(row) => row.id}
         isSelected={selection.isSelected}
-        onToggleRow={selection.toggle}
+        onToggleRow={(...args) => selection.toggle(...args)}
         allChecked={selection.allChecked}
         someChecked={selection.someChecked}
-        onToggleAll={selection.toggleAll}
+        onToggleAll={(...args) => selection.toggleAll(...args)}
         onOpenRecord={setSelected}
         activeId={selected?.id ?? null}
         dense={Boolean(selected)}
@@ -655,7 +652,7 @@ export default function ManagementPaymentsPage() {
               <WorkbenchPagination
                 page={resource.page}
                 totalPages={resource.totalPages}
-                onPageChange={resource.setPage}
+                onPageChange={(p) => resource.setPage(p)}
                 summary={t('payment_pagination', {
                   from: (resource.page - 1) * 20 + 1,
                   to: (resource.page - 1) * 20 + rows.length,
@@ -682,11 +679,11 @@ export default function ManagementPaymentsPage() {
               countLabel={t('bulk_selected_sum', {
                 count: selection.count,
                 sum: formatCurrency(
-                  selectedRows.reduce((acc, row) => acc + (Number.parseFloat(row.amount) || 0), 0),
+                  selectedRows.reduce((acc, row) => acc + (Number(row.amount) || 0), 0),
                   'USD',
                 ),
               })}
-              onClear={selection.clear}
+              onClear={() => selection.clear()}
               clearLabel={t('bulk_clear')}
               actions={
                 <>
@@ -716,7 +713,7 @@ export default function ManagementPaymentsPage() {
       <RecordPaymentDialog
         open={recordOpen}
         onOpenChange={setRecordOpen}
-        onSuccess={resource.refetch}
+        onSuccess={() => resource.refetch()}
       />
       <BulkMarkPaidDialog
         open={bulkOpen}

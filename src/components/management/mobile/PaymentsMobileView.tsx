@@ -18,7 +18,7 @@ const MOBILE_METHODS = ['cash', 'bank_transfer', 'click', 'payme'];
  */
 function selectedSum(rows: ManagementPaymentOutput[]): string {
   return formatCurrency(
-    rows.reduce((acc, row) => acc + (Number.parseFloat(row.amount) || 0), 0),
+    rows.reduce((acc, row) => acc + (Number(row.amount) || 0), 0),
     'USD',
   );
 }
@@ -109,7 +109,7 @@ export function PaymentsMobileView(props: {
       />
       <MarkPaidSheet
         open={props.markSheetOpen}
-        onOpenChange={props.setMarkSheetOpen}
+        onOpenChange={(v) => props.setMarkSheetOpen(v)}
         title={t('bulk_mark_paid_q', { count: props.selectionCount })}
         subtitle={t('bulk_mark_paid_desc', { total: sum })}
         lines={props.selectedRows.map((row) => ({

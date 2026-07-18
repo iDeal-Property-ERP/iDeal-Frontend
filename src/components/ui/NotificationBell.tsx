@@ -40,9 +40,10 @@ export function NotificationBell(props: { appearance?: 'ghost' | 'bordered' }) {
   }, [isAuthenticated]);
 
   useEffect(() => {
-    loadUnread();
+    const initial = setTimeout(loadUnread, 0);
     const id = setInterval(loadUnread, POLL_INTERVAL_MS);
     return () => {
+      clearTimeout(initial);
       clearInterval(id);
     };
   }, [loadUnread]);

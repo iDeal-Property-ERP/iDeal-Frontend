@@ -27,7 +27,7 @@ export function MapFilterBar(props: {
     <div className="flex flex-wrap items-center gap-2.5">
       <SearchField
         value={props.search.value}
-        onChange={props.search.onChange}
+        onChange={(v) => props.search.onChange(v)}
         placeholder={props.labels.searchPlaceholder}
         ariaLabel={props.labels.searchAria}
         clearLabel={props.labels.clear}
@@ -39,7 +39,7 @@ export function MapFilterBar(props: {
           label={chip.label}
           value={chip.value}
           options={chip.options}
-          onChange={chip.onChange}
+          onChange={(v) => chip.onChange(v)}
           clearLabel={props.labels.clear}
         />
       ))}

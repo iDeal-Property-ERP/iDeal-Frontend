@@ -122,7 +122,7 @@ export function MobileWorkbench(props: MobileWorkbenchProps) {
         {props.fab ? (
           <button
             type="button"
-            onClick={props.fab.onClick}
+            onClick={() => props.fab!.onClick()}
             aria-label={props.fab.label}
             className="fixed right-5 bottom-20 z-20 flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg lg:hidden"
           >

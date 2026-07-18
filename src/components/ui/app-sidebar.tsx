@@ -3,6 +3,7 @@
 import {
   Briefcase,
   Building2,
+  CircleDollarSign,
   ChevronsUpDown,
   ClipboardCheck,
   ClipboardList,
@@ -30,7 +31,7 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useTheme } from 'next-themes';
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -73,6 +74,7 @@ type NavItemLabel =
   | 'nav_my_properties'
   | 'nav_earnings'
   | 'nav_pnl'
+  | 'nav_brokerage'
   | 'nav_portfolio_map'
   | 'nav_leads'
   | 'nav_my_listings'
@@ -167,6 +169,7 @@ const mgmtSections: NavSection[] = [
         icon: HandCoins,
         countKey: 'payouts',
       },
+      { labelKey: 'nav_brokerage', href: '/management/brokerage', icon: CircleDollarSign },
     ],
   },
   {
@@ -288,11 +291,11 @@ function roleLabel(t: ReturnType<typeof useTranslations<'Dashboard'>>, role: Rol
 function ThemeToggleMenuItem() {
   const t = useTranslations('Dashboard');
   const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useSyncExternalStore(
+    () => () => void 0,
+    () => true,
+    () => false,
+  );
 
   if (!mounted) {
     return null;

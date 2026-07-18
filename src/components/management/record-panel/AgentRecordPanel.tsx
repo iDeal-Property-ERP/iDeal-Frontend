@@ -2,7 +2,7 @@
 
 import { FileText, Handshake, PanelRightClose, Pencil, Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AvatarInitials, initialsOf } from '@/components/management/columns/AvatarInitials';
 import { agentStatusTone, StatusPill } from '@/components/management/columns/StatusPill';
 import { formatMoney } from '@/components/management/format';
@@ -154,10 +154,16 @@ export function AgentRecordPanel(props: {
   const agentId = agent?.id ?? null;
   const isOpen = props.open;
 
+  const prevAgentRef = useRef(agentId);
+  if (prevAgentRef.current !== agentId) {
+    prevAgentRef.current = agentId;
+    setDeals([]);
+    setDealsLoading(true);
+  }
+
   useEffect(() => {
     let active = true;
     if (isOpen && agentId !== null) {
-      setDealsLoading(true);
       const load = async () => {
         try {
           const rows = await getAgentDeals(agentId);
@@ -180,10 +186,6 @@ export function AgentRecordPanel(props: {
       active = false;
     };
   }, [isOpen, agentId]);
-
-  useEffect(() => {
-    setActiveTab('overview');
-  }, [agentId]);
 
   if (!agent) {
     return null;

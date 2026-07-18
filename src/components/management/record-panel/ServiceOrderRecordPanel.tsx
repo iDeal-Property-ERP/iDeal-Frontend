@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
+import { useRef, useState } from 'react';
 import { AvatarInitials } from '@/components/management/columns/AvatarInitials';
 import { StatusPill, vasOrderStatusTone } from '@/components/management/columns/StatusPill';
 import { ActivityTimeline } from '@/components/management/record-panel/ActivityTimeline';
@@ -36,16 +36,17 @@ export function ServiceOrderRecordPanel(props: {
   const { order } = props;
   const orderId = order?.id ?? null;
 
-  useEffect(() => {
+  const prevOrderRef = useRef(orderId);
+  if (prevOrderRef.current !== orderId) {
+    prevOrderRef.current = orderId;
     setTab('overview');
-  }, [orderId]);
+  }
 
   if (!order) {
     return null;
   }
 
   const terminal = order.status === 'completed' || order.status === 'cancelled';
-  const Icon = serviceTypeIcon(order.service_type);
 
   const trio = [
     {
@@ -159,7 +160,7 @@ export function ServiceOrderRecordPanel(props: {
       }
     >
       <div className="flex h-28 items-center justify-center rounded-[12px] bg-muted">
-        <Icon className="size-10 text-primary" />
+        {serviceTypeIcon(order.service_type)({ className: 'size-10 text-primary' })}
       </div>
 
       <PricingTrio items={trio} />

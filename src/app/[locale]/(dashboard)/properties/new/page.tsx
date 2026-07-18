@@ -57,7 +57,7 @@ export default function NewPropertyPage() {
                 <OwnerSelect
                   id="owner_id"
                   value={field.value as number | null | undefined}
-                  onChange={field.onChange}
+                  onChange={(v) => field.onChange(v)}
                   aria-invalid={invalid}
                 />
               )}

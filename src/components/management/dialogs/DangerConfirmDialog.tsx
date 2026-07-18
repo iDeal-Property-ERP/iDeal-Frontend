@@ -1,7 +1,7 @@
 'use client';
 
 import { AlertTriangle, CircleAlert } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -43,19 +43,12 @@ export function DangerConfirmDialog(props: {
 }) {
   const [typed, setTyped] = useState('');
 
-  // Reset the typed phrase whenever the dialog re-opens for a new target.
-  useEffect(() => {
-    if (props.open) {
-      setTyped('');
-    }
-  }, [props.open]);
-
   const gated = props.confirmPhrase !== undefined;
   const matches = !gated || typed.trim() === props.confirmPhrase;
-  const disabled = props.loading || !matches;
+  const disabled = (props.loading ?? false) || !matches;
 
   return (
-    <AlertDialog open={props.open} onOpenChange={props.onOpenChange}>
+    <AlertDialog key={String(props.open)} open={props.open} onOpenChange={props.onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2.5">

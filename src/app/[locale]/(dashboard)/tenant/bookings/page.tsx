@@ -2,7 +2,7 @@
 
 import type { ColumnDef } from '@tanstack/react-table';
 import { useTranslations } from 'next-intl';
-import { useCallback, useEffect, useState } from 'react';
+import { startTransition, useCallback, useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/DataTable';
@@ -25,7 +25,6 @@ export default function TenantBookingsPage() {
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async (p: number) => {
-    setLoading(true);
     try {
       const res = await apiFetch<PaginatedData<TenantBookingOutput>>('/tenant/bookings/', {
         query: { page: p },
@@ -39,9 +38,16 @@ export default function TenantBookingsPage() {
     }
   }, []);
 
+  const onPageChange = (p: number) => {
+    setPage(p);
+    setLoading(true);
+  };
+
   useEffect(() => {
-    fetchData(page).catch(() => {
-      void 0;
+    startTransition(() => {
+      fetchData(page).catch(() => {
+        void 0;
+      });
     });
   }, [page, fetchData]);
 
@@ -107,7 +113,7 @@ export default function TenantBookingsPage() {
           data={data}
           page={page}
           totalPages={totalPages}
-          onPageChange={setPage}
+          onPageChange={onPageChange}
         />
       )}
     </>

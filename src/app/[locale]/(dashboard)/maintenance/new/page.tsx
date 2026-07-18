@@ -66,7 +66,7 @@ export default function NewServiceRequestPage() {
                 <PropertySelect
                   id="property_id"
                   value={field.value as number | null | undefined}
-                  onChange={field.onChange}
+                  onChange={(v) => field.onChange(v)}
                   aria-invalid={invalid}
                 />
               )}
@@ -76,7 +76,7 @@ export default function NewServiceRequestPage() {
                 <TenantSelect
                   id="tenant_id"
                   value={field.value as number | null | undefined}
-                  onChange={field.onChange}
+                  onChange={(v) => field.onChange(v)}
                   aria-invalid={invalid}
                 />
               )}

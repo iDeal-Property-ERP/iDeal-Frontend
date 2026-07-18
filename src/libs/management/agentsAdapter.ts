@@ -93,8 +93,8 @@ export async function getAgentKpis(): Promise<AgentKpis> {
   const dealsYtd = sample.items.reduce((sum, agent) => sum + agent.deals_ytd, 0);
   let commissionPaid = 0;
   for (const agent of sample.items) {
-    const revenue = Number.parseFloat(agent.total_revenue) || 0;
-    const rate = Number.parseFloat(agent.commission_rate) || 0;
+    const revenue = Number(agent.total_revenue) || 0;
+    const rate = Number(agent.commission_rate) || 0;
     commissionPaid += (revenue * rate) / 100;
   }
   const activeThisMonth = sample.items.filter((agent) => agent.is_active).length;

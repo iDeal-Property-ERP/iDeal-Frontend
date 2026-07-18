@@ -2,7 +2,7 @@
 
 import type { ColumnDef } from '@tanstack/react-table';
 import { useTranslations } from 'next-intl';
-import { useState, useEffect, useCallback } from 'react';
+import { startTransition, useState, useEffect, useCallback } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/DataTable';
@@ -34,7 +34,6 @@ export default function MaintenancePage() {
   const [statusFilter, setStatusFilter] = useState('');
 
   const fetchData = useCallback(async (p: number, status: string) => {
-    setLoading(true);
     try {
       const query: Record<string, string | number> = { page: p };
       if (status) {
@@ -52,9 +51,16 @@ export default function MaintenancePage() {
     }
   }, []);
 
+  const onPageChange = (p: number) => {
+    setPage(p);
+    setLoading(true);
+  };
+
   useEffect(() => {
-    fetchData(page, statusFilter).catch(() => {
-      void 0;
+    startTransition(() => {
+      fetchData(page, statusFilter).catch(() => {
+        void 0;
+      });
     });
   }, [page, statusFilter, fetchData]);
 
@@ -126,7 +132,7 @@ export default function MaintenancePage() {
           rowHref={(item) => `/maintenance/${item.id}`}
           page={page}
           totalPages={totalPages}
-          onPageChange={setPage}
+          onPageChange={onPageChange}
         />
       )}
     </>

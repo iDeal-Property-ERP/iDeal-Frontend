@@ -8,5 +8,5 @@ export default async function TenantLayout(props: {
   setRequestLocale(locale);
   await getTranslations({ locale, namespace: 'Dashboard' as const });
 
-  return <>{props.children}</>;
+  return await props.children;
 }

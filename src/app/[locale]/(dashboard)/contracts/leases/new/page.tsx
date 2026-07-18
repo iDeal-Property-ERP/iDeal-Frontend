@@ -77,7 +77,7 @@ export default function NewLeasePage() {
                 <PropertySelect
                   id="property_id"
                   value={field.value as number | null | undefined}
-                  onChange={field.onChange}
+                  onChange={(v) => field.onChange(v)}
                   aria-invalid={invalid}
                 />
               )}
@@ -92,7 +92,7 @@ export default function NewLeasePage() {
                 <AgreementSelect
                   id="owner_agreement_id"
                   value={field.value as number | null | undefined}
-                  onChange={field.onChange}
+                  onChange={(v) => field.onChange(v)}
                   aria-invalid={invalid}
                 />
               )}
@@ -102,7 +102,7 @@ export default function NewLeasePage() {
                 <TenantSelect
                   id="tenant_id"
                   value={field.value as number | null | undefined}
-                  onChange={field.onChange}
+                  onChange={(v) => field.onChange(v)}
                   aria-invalid={invalid}
                 />
               )}

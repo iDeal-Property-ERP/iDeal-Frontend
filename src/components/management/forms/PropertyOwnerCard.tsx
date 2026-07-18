@@ -46,12 +46,13 @@ export function PropertyOwnerCard(props: PropertyOwnerCardProps) {
   return (
     <div className="rounded-[16px] border border-border bg-card p-5 shadow-sm">
       <p className="text-[11px] font-semibold tracking-[0.4px] text-muted-foreground uppercase">
-        {t('form_owner')}
+        {t('form_owner')} <span className="text-danger">*</span>
       </p>
       <div className="mt-3">
-        <EntityField control={control} name="owner_id" label="" required>
+        <EntityField control={control} name="owner_id" label="">
           {(field, invalid) => {
             const hasOwner = field.value !== null && field.value !== undefined;
+            const handleOwnerChange = field.onChange;
             // Resting state: a linked owner we can label (edit mode) and not
             // actively changing. Otherwise fall back to the combobox.
             if (hasOwner && initialLabel && !editing) {
@@ -82,7 +83,7 @@ export function PropertyOwnerCard(props: PropertyOwnerCardProps) {
               <OwnerSelect
                 id="owner_id"
                 value={field.value as number | null | undefined}
-                onChange={field.onChange}
+                onChange={handleOwnerChange}
                 initialLabel={initialLabel}
                 aria-invalid={invalid}
                 placeholder={t('form_owner_placeholder')}

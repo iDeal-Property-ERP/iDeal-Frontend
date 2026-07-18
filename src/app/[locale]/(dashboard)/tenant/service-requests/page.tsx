@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Loader2Icon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useCallback, useEffect, useState } from 'react';
+import { startTransition, useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Badge } from '@/components/ui/badge';
@@ -52,7 +52,6 @@ export default function TenantServiceRequestsPage() {
   });
 
   const fetchData = useCallback(async (p: number) => {
-    setLoading(true);
     try {
       const res = await apiFetch<PaginatedData<TenantServiceRequestOutput>>(
         '/tenant/service-requests/',
@@ -68,8 +67,10 @@ export default function TenantServiceRequestsPage() {
   }, []);
 
   useEffect(() => {
-    fetchData(page).catch(() => {
-      void 0;
+    startTransition(() => {
+      fetchData(page).catch(() => {
+        void 0;
+      });
     });
   }, [page, fetchData]);
 
@@ -137,7 +138,7 @@ export default function TenantServiceRequestsPage() {
                 <PropertySelect
                   id="property_id"
                   value={field.value as number | null | undefined}
-                  onChange={field.onChange}
+                  onChange={(v) => field.onChange(v)}
                   aria-invalid={invalid}
                 />
               )}
@@ -179,7 +180,10 @@ export default function TenantServiceRequestsPage() {
           data={data}
           page={page}
           totalPages={totalPages}
-          onPageChange={setPage}
+          onPageChange={(p) => {
+            setLoading(true);
+            setPage(p);
+          }}
         />
       )}
     </>

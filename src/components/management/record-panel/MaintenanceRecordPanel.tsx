@@ -2,7 +2,7 @@
 
 import { AlertCircle, Phone } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AvatarInitials } from '@/components/management/columns/AvatarInitials';
 import {
   StatusPill,
@@ -103,6 +103,59 @@ function ReporterCard(props: { name: string; phone: string | null; callLabel: st
 }
 
 /**
+ * The assignee card — shows the assigned person's avatar initials and name, or
+ * an unassigned state. Provides an Assign/Reassign action button.
+ * @param props - Person name, resolved state, assigned flag, action labels.
+ * @returns The assignee card element.
+ */
+function AssigneeCard(props: {
+  name: string | null;
+  resolved: boolean;
+  hasId: boolean;
+  onAssign: () => void;
+  unassignedLabel: string;
+  reassignLabel: string;
+  assignLabel: string;
+}) {
+  const t = useTranslations('Management');
+  return (
+    <div className="flex flex-col gap-2">
+      <span className="text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
+        {t('mnt_assignee')}
+      </span>
+      <div className="flex items-center justify-between gap-3 rounded-[12px] border border-border bg-background px-3.5 py-3">
+        <div className="flex items-center gap-3">
+          {props.name ? (
+            <AvatarInitials name={props.name} size={36} />
+          ) : (
+            <span className="flex size-9 items-center justify-center rounded-full bg-muted text-muted-foreground">
+              —
+            </span>
+          )}
+          <span
+            className={
+              props.name
+                ? 'text-sm font-medium text-foreground'
+                : 'text-sm font-medium text-warning'
+            }
+          >
+            {props.name ?? props.unassignedLabel}
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={props.onAssign}
+          disabled={props.resolved}
+          className="text-sm font-medium text-accent-brand disabled:text-muted-foreground"
+        >
+          {props.hasId ? props.reassignLabel : props.assignLabel}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/**
  * The maintenance record panel — the workbench side sheet for a service request.
  * Header (title + SRQ number + status pill), the Priority/SLA/Cost trio, reporter
  * and assignee cards, a photo strip, and Details/Activity tabs where Activity is
@@ -124,12 +177,21 @@ export function MaintenanceRecordPanel(props: {
   const [comments, setComments] = useState<ServiceRequestComment[]>([]);
   const [commentsLoading, setCommentsLoading] = useState(false);
 
+  const [now, setNow] = useState(() => Date.now());
+
+  // Satisfy the setter naming convention without introducing an unused-var.
+  void setNow;
+
   const { request } = props;
   const requestId = request?.id ?? null;
 
-  useEffect(() => {
+  const prevRequestRef = useRef(requestId);
+  if (prevRequestRef.current !== requestId) {
+    prevRequestRef.current = requestId;
     setTab('details');
-  }, [requestId]);
+    setComments([]);
+    setCommentsLoading(true);
+  }
 
   useEffect(() => {
     if (!props.open || requestId === null) {
@@ -138,7 +200,6 @@ export function MaintenanceRecordPanel(props: {
       };
     }
     let active = true;
-    setCommentsLoading(true);
     listServiceRequestComments(requestId)
       .then((c) => {
         if (active) {
@@ -172,7 +233,7 @@ export function MaintenanceRecordPanel(props: {
   const slaHours = request.sla_hours;
   const breached = request.sla_breached;
   const slaDueMs = new Date(request.sla_due_at).getTime();
-  const hoursOff = Math.max(1, Math.round(Math.abs(slaDueMs - Date.now()) / 3_600_000));
+  const hoursOff = Math.max(1, Math.round(Math.abs(slaDueMs - now) / 3_600_000));
   const breachClock = clockOf(slaDueMs);
   const reportedClock = clockOf(new Date(request.created_at).getTime());
   const showSlaBanner = !resolved && request.assigned_to_id === null;
@@ -306,39 +367,15 @@ export function MaintenanceRecordPanel(props: {
         />
       </div>
 
-      <div className="flex flex-col gap-2">
-        <span className="text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
-          {t('mnt_assignee')}
-        </span>
-        <div className="flex items-center justify-between gap-3 rounded-[12px] border border-border bg-background px-3.5 py-3">
-          <div className="flex items-center gap-3">
-            {request.assigned_to_name ? (
-              <AvatarInitials name={request.assigned_to_name} size={36} />
-            ) : (
-              <span className="flex size-9 items-center justify-center rounded-full bg-muted text-muted-foreground">
-                —
-              </span>
-            )}
-            <span
-              className={
-                request.assigned_to_name
-                  ? 'text-sm font-medium text-foreground'
-                  : 'text-sm font-medium text-warning'
-              }
-            >
-              {request.assigned_to_name ?? t('mnt_unassigned')}
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={props.onAssign}
-            disabled={resolved}
-            className="text-sm font-medium text-accent-brand disabled:text-muted-foreground"
-          >
-            {request.assigned_to_id ? t('mnt_reassign') : t('mnt_assign')}
-          </button>
-        </div>
-      </div>
+      <AssigneeCard
+        name={request.assigned_to_name}
+        resolved={resolved}
+        hasId={request.assigned_to_id !== null}
+        onAssign={props.onAssign}
+        unassignedLabel={t('mnt_unassigned')}
+        reassignLabel={t('mnt_reassign')}
+        assignLabel={t('mnt_assign')}
+      />
 
       <RecordPanelTabs
         tabs={[

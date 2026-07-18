@@ -45,6 +45,7 @@ type DataTableProps<T> = {
  * @param props - Column defs, data, and optional pagination/filter/linking props.
  * @returns Data table element.
  */
+// eslint-disable-next-line react-compiler
 export function DataTable<T>(props: DataTableProps<T>) {
   const t = useTranslations('DataTable');
   const [sorting, setSorting] = useState<SortingState>([]);

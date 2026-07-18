@@ -22,10 +22,9 @@ function read(): number[] {
  * @returns The favorite ids plus `toggle` and `isFavorite` helpers.
  */
 export function useFavorites() {
-  const [ids, setIds] = useState<number[]>([]);
+  const [ids, setIds] = useState<number[]>(() => read());
 
   useEffect(() => {
-    setIds(read());
     const onStorage = (e: StorageEvent) => {
       if (e.key === KEY) {
         setIds(read());

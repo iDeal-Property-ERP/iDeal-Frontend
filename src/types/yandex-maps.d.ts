@@ -49,6 +49,18 @@ type YmapsMap = {
 
 type YmapsLayout = object;
 
+type YmapsGeocodeObject = {
+  geometry: {
+    getCoordinates: () => number[];
+  };
+};
+
+type YmapsGeocodeResult = {
+  geoObjects: {
+    get: (index: number) => YmapsGeocodeObject | undefined;
+  };
+};
+
 type Ymaps = {
   ready: (callback: () => void) => void;
   Map: new (
@@ -62,6 +74,7 @@ type Ymaps = {
     options?: Record<string, unknown>,
   ) => YmapsPlacemark;
   Clusterer: new (options?: Record<string, unknown>) => YmapsClusterer;
+  geocode: (request: string) => PromiseLike<YmapsGeocodeResult>;
   templateLayoutFactory: {
     createClass: (template: string) => YmapsLayout;
   };

@@ -185,10 +185,10 @@ function filterAndSortLeases(
       return b.end_date.localeCompare(a.end_date);
     }
     if (sort === 'rent_high') {
-      return Number.parseFloat(b.monthly_rent) - Number.parseFloat(a.monthly_rent);
+      return Number(b.monthly_rent) - Number(a.monthly_rent);
     }
     if (sort === 'rent_low') {
-      return Number.parseFloat(a.monthly_rent) - Number.parseFloat(b.monthly_rent);
+      return Number(a.monthly_rent) - Number(b.monthly_rent);
     }
     return b.created_at.localeCompare(a.created_at);
   });
@@ -431,7 +431,7 @@ export default function ManagementLeasesPage() {
           title={t('error_title')}
           message={t('lease_error')}
           retryLabel={t('retry')}
-          onRetry={resource.refetch}
+          onRetry={() => resource.refetch()}
         />
       );
     }
@@ -444,7 +444,7 @@ export default function ManagementLeasesPage() {
           title={t('no_matches')}
           description={t('no_matches_desc')}
           clearLabel={t('clear_filters')}
-          onClear={clearAll}
+          onClear={() => clearAll()}
         />
       ) : (
         <EmptyState
@@ -466,10 +466,10 @@ export default function ManagementLeasesPage() {
         rows={rows}
         getRowId={(row) => row.id}
         isSelected={selection.isSelected}
-        onToggleRow={selection.toggle}
+        onToggleRow={(...args) => selection.toggle(...args)}
         allChecked={selection.allChecked}
         someChecked={selection.someChecked}
-        onToggleAll={selection.toggleAll}
+        onToggleAll={(...args) => selection.toggleAll(...args)}
         onOpenRecord={setSelected}
         activeId={selected?.id ?? null}
         dense={Boolean(selected)}
@@ -494,18 +494,22 @@ export default function ManagementLeasesPage() {
 
   const dialogs = (
     <>
-      <NewLeaseDialog open={newOpen} onOpenChange={setNewOpen} onSuccess={resource.refetch} />
+      <NewLeaseDialog
+        open={newOpen}
+        onOpenChange={setNewOpen}
+        onSuccess={() => resource.refetch()}
+      />
       <RenewLeaseDialog
         lease={renewTarget}
         open={Boolean(renewTarget)}
         onOpenChange={(open) => !open && setRenewTarget(null)}
-        onSuccess={resource.refetch}
+        onSuccess={() => resource.refetch()}
       />
       <TerminateLeaseDialog
         lease={terminateTarget}
         open={Boolean(terminateTarget)}
         onOpenChange={(open) => !open && setTerminateTarget(null)}
-        onSuccess={resource.refetch}
+        onSuccess={() => resource.refetch()}
       />
     </>
   );
@@ -635,7 +639,7 @@ export default function ManagementLeasesPage() {
             <WorkbenchPagination
               page={resource.page}
               totalPages={resource.totalPages}
-              onPageChange={resource.setPage}
+              onPageChange={(p) => resource.setPage(p)}
               summary={t('lease_pagination', {
                 from: (resource.page - 1) * 20 + 1,
                 to: (resource.page - 1) * 20 + rows.length,
@@ -650,7 +654,7 @@ export default function ManagementLeasesPage() {
           <BulkSelectionBar
             open={selection.count > 0}
             countLabel={t('bulk_selected', { count: selection.count })}
-            onClear={selection.clear}
+            onClear={() => selection.clear()}
             clearLabel={t('bulk_clear')}
             actions={
               <button

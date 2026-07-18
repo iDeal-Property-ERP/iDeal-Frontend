@@ -58,6 +58,21 @@ export type VerificationVisit = {
   notes: string;
 };
 
+export type OneOffDealDetail = {
+  id: number;
+  seller_name: string;
+  seller_phone: string;
+  seller_email: string | null;
+  channel: 'marketplace' | 'off_market';
+  status: 'draft' | 'active' | 'paused' | 'closed_won' | 'closed_lost' | 'archived';
+  commission_type: 'none' | 'fixed' | 'percentage';
+  commission_fixed_amount: string | null;
+  commission_percentage: string | null;
+  commission_currency: Currency;
+  close_date: string | null;
+  receipt_recorded: boolean;
+};
+
 /**
  * The management property detail shape. Publish-required fields are nullable
  * because a DRAFT can be saved partially; includes photos, verification, and the
@@ -74,6 +89,7 @@ export type PropertyDetail = {
   floor: number | null;
   total_floors: number | null;
   owner: OwnerBrief | null;
+  engagement_type: 'managed' | 'one_off';
   status: PropertyStatus | 'draft' | 'pending_review';
   is_verified: boolean;
   score: string;
@@ -91,6 +107,7 @@ export type PropertyDetail = {
   vacant_days: number;
   photos: PropertyPhoto[];
   verification: VerificationVisit | null;
+  one_off_deal: OneOffDealDetail | null;
   created_at: string;
   updated_at: string;
 };

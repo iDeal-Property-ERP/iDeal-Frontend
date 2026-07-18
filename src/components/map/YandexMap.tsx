@@ -56,9 +56,15 @@ export function YandexMap(props: YandexMapProps) {
   const clustererRef = useRef<YmapsClusterer | null>(null);
   const pointsByIdRef = useRef<Map<number, MapPoint>>(new Map());
   const onMarkerClickRef = useRef(props.onMarkerClick);
-  onMarkerClickRef.current = props.onMarkerClick;
   const onBoundsChangeRef = useRef(props.onBoundsChange);
-  onBoundsChangeRef.current = props.onBoundsChange;
+
+  useEffect(() => {
+    onMarkerClickRef.current = props.onMarkerClick;
+  }, [props.onMarkerClick]);
+
+  useEffect(() => {
+    onBoundsChangeRef.current = props.onBoundsChange;
+  }, [props.onBoundsChange]);
 
   const apiKey = Env.NEXT_PUBLIC_YANDEX_MAPS_API_KEY;
 

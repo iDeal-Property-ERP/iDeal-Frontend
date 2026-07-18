@@ -1,6 +1,6 @@
 'use client';
 
-import { Building2, DollarSign, HandCoins, PieChart, Plus, TrendingUp, Wrench } from 'lucide-react';
+import { DollarSign, HandCoins, PieChart, Plus, TrendingUp, Wrench } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import type { BarGroup } from '@/components/management/charts/GroupedBarChart';
@@ -9,7 +9,7 @@ import { NeedsAttention } from '@/components/management/dashboard/NeedsAttention
 import { OccupancyPanel } from '@/components/management/dashboard/OccupancyPanel';
 import { PropertiesPreview } from '@/components/management/dashboard/PropertiesPreview';
 import { RevenuePayoutsPanel } from '@/components/management/dashboard/RevenuePayoutsPanel';
-import { formatMoney, formatMonthLabel } from '@/components/management/format';
+import { formatCurrency, formatMoney, formatMonthLabel } from '@/components/management/format';
 import type { KpiItem } from '@/components/management/KpiStrip';
 import { KpiStrip } from '@/components/management/KpiStrip';
 import { ManagementPageHeader } from '@/components/management/ManagementPageHeader';
@@ -185,7 +185,7 @@ export default function ManagementDashboardPage() {
   const { dashboard, pnl, properties } = data;
   const { kpi, occupancy } = dashboard;
 
-  const marginChange = Number.parseFloat(kpi.net_profit.change) || 0;
+  const marginChange = Number(kpi.net_profit.change) || 0;
 
   const kpiItems: KpiItem[] = [
     {
@@ -222,18 +222,23 @@ export default function ManagementDashboardPage() {
       sublabel: marginChange !== 0 ? t('kpi_vs_last_month') : undefined,
     },
     {
-      id: 'vacancy',
-      label: t('kpi_vacancy_cost'),
-      value: formatMoney(kpi.vacant.loss_per_day),
-      icon: Building2,
-      sublabel: `${kpi.vacant.value} ${t('occ_vacant').toLowerCase()}`,
+      id: 'brokerage',
+      label: t('kpi_brokerage_received'),
+      value: formatCurrency(dashboard.brokerage.received_uzs, 'UZS'),
+      icon: HandCoins,
+      delta: t('kpi_brokerage_expected', {
+        amount: formatCurrency(dashboard.brokerage.unpaid_uzs, 'UZS'),
+      }),
+      deltaDirection: 'up',
+      deltaTone: 'muted',
+      sublabel: t('kpi_brokerage_closed', { count: dashboard.brokerage.closed_count }),
     },
   ];
 
   const barData: BarGroup[] = (pnl?.monthly ?? []).slice(-9).map((month) => ({
     label: formatMonthLabel(month.month),
-    primary: Number.parseFloat(month.revenue) || 0,
-    secondary: Number.parseFloat(month.owner_payouts) || 0,
+    primary: Number(month.revenue) || 0,
+    secondary: Number(month.owner_payouts) || 0,
   }));
 
   const statusLabel = (status: string): string => {

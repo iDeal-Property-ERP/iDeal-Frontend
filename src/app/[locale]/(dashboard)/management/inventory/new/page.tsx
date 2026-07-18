@@ -75,7 +75,7 @@ export default function NewInventoryActPage() {
                 <PropertySelect
                   id="property_id"
                   value={field.value as number | null | undefined}
-                  onChange={field.onChange}
+                  onChange={(v) => field.onChange(v)}
                   aria-invalid={invalid}
                 />
               )}
@@ -85,7 +85,7 @@ export default function NewInventoryActPage() {
                 <LeaseSelect
                   id="lease_id"
                   value={field.value as number | null | undefined}
-                  onChange={field.onChange}
+                  onChange={(v) => field.onChange(v)}
                   aria-invalid={invalid}
                 />
               )}

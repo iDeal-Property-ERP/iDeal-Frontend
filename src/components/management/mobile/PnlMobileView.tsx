@@ -76,7 +76,7 @@ function MonthlyBarRow(props: { month: string; fraction: number; amount: string 
  * @returns The expenses row.
  */
 function ExpenseRow(props: { label: string; share: string; amount: string }) {
-  const pct = Math.min(Number.parseFloat(props.share) || 0, 100);
+  const pct = Math.min(Number(props.share) || 0, 100);
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between text-sm">
@@ -104,7 +104,7 @@ export function PnlMobileView(props: PnlMobileViewProps) {
   const { t } = props;
   const { monthly } = props.data;
   const expenses = props.data.breakdown?.expenses ?? [];
-  const maxRevenue = Math.max(...monthly.map((row) => Number.parseFloat(row.revenue) || 0), 1);
+  const maxRevenue = Math.max(...monthly.map((row) => Number(row.revenue) || 0), 1);
 
   return (
     <div className="flex flex-col gap-5">
@@ -153,7 +153,7 @@ export function PnlMobileView(props: PnlMobileViewProps) {
             <MonthlyBarRow
               key={row.month}
               month={row.month}
-              fraction={(Number.parseFloat(row.revenue) || 0) / maxRevenue}
+              fraction={(Number(row.revenue) || 0) / maxRevenue}
               amount={props.money(row.revenue)}
             />
           ))}

@@ -328,10 +328,10 @@ export default function ManagementMaintenancePage() {
         rows={rows}
         getRowId={(row) => row.id}
         isSelected={selection.isSelected}
-        onToggleRow={selection.toggle}
+        onToggleRow={(...args) => selection.toggle(...args)}
         allChecked={selection.allChecked}
         someChecked={selection.someChecked}
-        onToggleAll={selection.toggleAll}
+        onToggleAll={(...args) => selection.toggleAll(...args)}
         onOpenRecord={setSelected}
         activeId={selected?.id ?? null}
         rowActions={rowActions}
@@ -387,7 +387,7 @@ export default function ManagementMaintenancePage() {
       <ErrorState
         title={t('mnt_error')}
         message={resource.error}
-        onRetry={resource.refetch}
+        onRetry={() => resource.refetch()}
         retryLabel={t('retry')}
       />
     );
@@ -471,7 +471,7 @@ export default function ManagementMaintenancePage() {
             <WorkbenchPagination
               page={resource.page}
               totalPages={resource.totalPages}
-              onPageChange={resource.setPage}
+              onPageChange={(p) => resource.setPage(p)}
               summary={t('payment_pagination', {
                 from: (resource.page - 1) * 20 + 1,
                 to: (resource.page - 1) * 20 + rows.length,

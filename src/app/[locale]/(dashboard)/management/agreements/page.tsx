@@ -220,9 +220,7 @@ export default function ManagementAgreementsPage() {
   };
   const filtered = commissionFilter
     ? resource.data.filter((row) =>
-        (COMMISSION_BUCKETS[commissionFilter] ?? (() => true))(
-          Number.parseFloat(row.commission_rate),
-        ),
+        (COMMISSION_BUCKETS[commissionFilter] ?? (() => true))(Number(row.commission_rate)),
       )
     : resource.data;
   const rows = filtered.toSorted((a, b) => {
@@ -233,10 +231,10 @@ export default function ManagementAgreementsPage() {
       return b.end_date.localeCompare(a.end_date);
     }
     if (sort === 'commission_high') {
-      return Number.parseFloat(b.commission_rate) - Number.parseFloat(a.commission_rate);
+      return Number(b.commission_rate) - Number(a.commission_rate);
     }
     if (sort === 'commission_low') {
-      return Number.parseFloat(a.commission_rate) - Number.parseFloat(b.commission_rate);
+      return Number(a.commission_rate) - Number(b.commission_rate);
     }
     return b.created_at.localeCompare(a.created_at);
   });
@@ -412,7 +410,7 @@ export default function ManagementAgreementsPage() {
           title={t('error_title')}
           message={t('agr_error')}
           retryLabel={t('retry')}
-          onRetry={resource.refetch}
+          onRetry={() => resource.refetch()}
         />
       );
     }
@@ -425,7 +423,7 @@ export default function ManagementAgreementsPage() {
           title={t('no_matches')}
           description={t('no_matches_desc')}
           clearLabel={t('clear_filters')}
-          onClear={clearAll}
+          onClear={() => clearAll()}
         />
       ) : (
         <EmptyState
@@ -447,10 +445,10 @@ export default function ManagementAgreementsPage() {
         rows={rows}
         getRowId={(row) => row.id}
         isSelected={selection.isSelected}
-        onToggleRow={selection.toggle}
+        onToggleRow={(...args) => selection.toggle(...args)}
         allChecked={selection.allChecked}
         someChecked={selection.someChecked}
-        onToggleAll={selection.toggleAll}
+        onToggleAll={(...args) => selection.toggleAll(...args)}
         onOpenRecord={setSelected}
         activeId={selected?.id ?? null}
         dense={Boolean(selected)}
@@ -475,18 +473,22 @@ export default function ManagementAgreementsPage() {
 
   const dialogs = (
     <>
-      <NewAgreementDialog open={newOpen} onOpenChange={setNewOpen} onSuccess={resource.refetch} />
+      <NewAgreementDialog
+        open={newOpen}
+        onOpenChange={setNewOpen}
+        onSuccess={() => resource.refetch()}
+      />
       <RenewAgreementDialog
         agreement={renewTarget}
         open={Boolean(renewTarget)}
         onOpenChange={(open) => !open && setRenewTarget(null)}
-        onSuccess={resource.refetch}
+        onSuccess={() => resource.refetch()}
       />
       <TerminateAgreementDialog
         agreement={terminateTarget}
         open={Boolean(terminateTarget)}
         onOpenChange={(open) => !open && setTerminateTarget(null)}
-        onSuccess={resource.refetch}
+        onSuccess={() => resource.refetch()}
       />
     </>
   );
@@ -610,7 +612,7 @@ export default function ManagementAgreementsPage() {
             <WorkbenchPagination
               page={resource.page}
               totalPages={resource.totalPages}
-              onPageChange={resource.setPage}
+              onPageChange={(p) => resource.setPage(p)}
               summary={t('agr_pagination', {
                 from: (resource.page - 1) * 20 + 1,
                 to: (resource.page - 1) * 20 + rows.length,
@@ -625,7 +627,7 @@ export default function ManagementAgreementsPage() {
           <BulkSelectionBar
             open={selection.count > 0}
             countLabel={t('bulk_selected', { count: selection.count })}
-            onClear={selection.clear}
+            onClear={() => selection.clear()}
             clearLabel={t('bulk_clear')}
             actions={
               <button

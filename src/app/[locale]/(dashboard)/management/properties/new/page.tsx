@@ -1,5 +1,6 @@
 'use client';
 
+import { useSearchParams } from 'next/navigation';
 import { PropertyForm } from '@/components/management/forms/PropertyForm';
 
 /**
@@ -8,5 +9,11 @@ import { PropertyForm } from '@/components/management/forms/PropertyForm';
  * @returns The create-property page.
  */
 export default function NewManagementPropertyPage() {
-  return <PropertyForm mode="create" />;
+  const searchParams = useSearchParams();
+  return (
+    <PropertyForm
+      mode="create"
+      initialEngagement={searchParams.get('engagement') === 'one_off' ? 'one_off' : 'managed'}
+    />
+  );
 }

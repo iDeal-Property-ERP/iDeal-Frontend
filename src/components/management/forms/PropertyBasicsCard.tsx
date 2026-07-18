@@ -16,8 +16,9 @@ type PropertyBasicsCardProps = {
 };
 
 /**
- * The Basics section: name, district, address, rooms/area/floor/tariff. Mirrors
- * the Figma create-form layout (full-width name, then the two paired rows).
+ * The Basics section: name, district, address, rooms, area, both floor values,
+ * and tariff. Mirrors the Figma create-form layout (full-width name, then the
+ * paired rows).
  * @param props - Form control, translator, and district options.
  * @returns The Basics section card.
  */
@@ -53,7 +54,7 @@ export function PropertyBasicsCard(props: PropertyBasicsCardProps) {
           />
           <TextField control={control} name="address" label={t('form_address')} required />
         </div>
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-5 lg:grid-cols-5">
           <TextField
             control={control}
             name="rooms"
@@ -73,17 +74,27 @@ export function PropertyBasicsCard(props: PropertyBasicsCardProps) {
           <TextField
             control={control}
             name="floor"
-            label={t('form_floor')}
+            label={t('form_apartment_floor')}
             type="number"
             required
           />
-          <SelectField
+          <TextField
             control={control}
-            name="tariff"
-            label={t('form_tariff')}
-            options={tariffOptions}
-            placeholder={t('form_tariff')}
+            name="total_floors"
+            label={t('form_total_floors')}
+            type="number"
+            inputMode="numeric"
+            required
           />
+          <div className="col-span-2 lg:col-span-1">
+            <SelectField
+              control={control}
+              name="tariff"
+              label={t('form_tariff')}
+              options={tariffOptions}
+              placeholder={t('form_tariff')}
+            />
+          </div>
         </div>
         <TextareaField
           control={control}

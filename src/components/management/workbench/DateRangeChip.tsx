@@ -85,24 +85,17 @@ export function DateRangeChip(props: {
           <CalendarDays className="size-4" />
           {triggerLabel}
           {hasValue ? (
-            <span
-              role="button"
-              tabIndex={0}
+            <button
+              type="button"
               aria-label={props.clearLabel}
               className="ml-0.5 rounded-full p-0.5 hover:bg-primary/10"
               onClick={(event) => {
                 event.stopPropagation();
                 props.onChange({});
               }}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                  event.stopPropagation();
-                  props.onChange({});
-                }
-              }}
             >
               <X className="size-3.5" />
-            </span>
+            </button>
           ) : null}
         </button>
       </PopoverTrigger>

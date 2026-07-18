@@ -9,6 +9,7 @@ import { z } from 'zod';
  */
 
 export const managementPropertyDraftSchema = z.object({
+  engagement_type: z.enum(['managed', 'one_off']).optional(),
   name: z.string().optional(),
   address: z.string().optional(),
   district_id: z.string().optional(),
@@ -27,6 +28,14 @@ export const managementPropertyDraftSchema = z.object({
   description: z.string().optional(),
   map_lat: z.string().optional(),
   map_lon: z.string().optional(),
+  seller_name: z.string().optional(),
+  seller_phone: z.string().optional(),
+  seller_email: z.string().optional(),
+  channel: z.enum(['marketplace', 'off_market']).optional(),
+  commission_type: z.enum(['none', 'fixed', 'percentage']).optional(),
+  commission_fixed_amount: z.string().optional(),
+  commission_percentage: z.string().optional(),
+  commission_currency: z.enum(['USD', 'UZS']).optional(),
 });
 
 const requiredString = (message: string) => z.string().trim().min(1, message);
@@ -39,11 +48,48 @@ export const managementPropertyPublishSchema = z.object({
   rooms: requiredString('Rooms is required'),
   area_sqm: requiredString('Area is required'),
   floor: requiredString('Floor is required'),
+  total_floors: requiredString('Building floors is required'),
   tariff: z.string().optional(),
   ask_price: requiredString('Ask price is required'),
   owner_guaranteed_price: requiredString('Owner guaranteed price is required'),
   tenant_charge_price: requiredString('Tenant charge is required'),
 });
+
+/** Activation requirements for a one-off deal. The Marketplace photo/visit gate
+ * is intentionally enforced by the backend because it relies on saved assets. */
+export const managementOneOffActivateSchema = z
+  .object({
+    name: requiredString('Property name is required'),
+    address: requiredString('Address is required'),
+    district_id: requiredString('District is required'),
+    rooms: requiredString('Rooms is required'),
+    area_sqm: requiredString('Area is required'),
+    floor: requiredString('Floor is required'),
+    total_floors: requiredString('Building floors is required'),
+    ask_price: requiredString('Ask price is required'),
+    seller_name: requiredString('Seller name is required'),
+    seller_phone: requiredString('Seller phone is required'),
+    channel: z.enum(['marketplace', 'off_market']),
+    commission_type: z.enum(['none', 'fixed', 'percentage']),
+    commission_fixed_amount: z.string().optional(),
+    commission_percentage: z.string().optional(),
+  })
+  .superRefine((value, context) => {
+    if (value.commission_type === 'fixed' && !value.commission_fixed_amount?.trim()) {
+      context.addIssue({
+        code: 'custom',
+        path: ['commission_fixed_amount'],
+        message: 'Commission amount is required',
+      });
+    }
+    if (value.commission_type === 'percentage' && !value.commission_percentage?.trim()) {
+      context.addIssue({
+        code: 'custom',
+        path: ['commission_percentage'],
+        message: 'Commission percentage is required',
+      });
+    }
+  });
 
 export type ManagementPropertyFormData = z.infer<typeof managementPropertyDraftSchema>;
 

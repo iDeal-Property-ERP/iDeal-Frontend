@@ -1,17 +1,24 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import type { ReactNode } from 'react';
 import { apiFetch, SESSION_EXPIRED_EVENT } from '@/libs/api';
 import { logger } from '@/libs/Logger';
 // Re-exported from the framework-agnostic module so the Edge middleware can share
 // the same maps (a 'use client' module can't be imported there).
-import { roleDashboardMap, roleRouteMap } from '@/libs/roles';
 import type { AuthUser, LoginPayload } from '@/types/auth';
 import type { Role } from '@/types/enums';
 
-export { roleDashboardMap, roleRouteMap };
+export { roleDashboardMap, roleRouteMap } from '@/libs/roles';
 
 type AuthContextValue = {
   user: AuthUser | null;
@@ -32,8 +39,11 @@ export function AuthProvider(props: { children: ReactNode }) {
   // Mirrors `user` for the (non-React) session-expired event handler, and guards
   // against firing the forced logout more than once per expiry.
   const userRef = useRef<AuthUser | null>(null);
-  userRef.current = user;
   const expiringRef = useRef(false);
+
+  useEffect(() => {
+    userRef.current = user;
+  });
 
   const fetchUser = useCallback(async () => {
     try {
@@ -46,10 +56,29 @@ export function AuthProvider(props: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    fetchUser().finally(() => {
-      setIsLoading(false);
-    });
-  }, [fetchUser]);
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const data = await apiFetch<AuthUser>('/users/me/');
+        if (!cancelled) {
+          setUser(data);
+          expiringRef.current = false;
+        }
+      } catch {
+        if (!cancelled) {
+          setUser(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      }
+    };
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // When any API call 401s after a failed refresh, the session is dead. Clear the
   // user and send them to /login — but only if they were actually signed in, so
@@ -88,20 +117,19 @@ export function AuthProvider(props: { children: ReactNode }) {
     router.push('/login');
   }, [router]);
 
-  return (
-    <AuthContext
-      value={{
-        user,
-        isLoading,
-        isAuthenticated: user !== null,
-        login,
-        logout,
-        refreshUser: fetchUser,
-      }}
-    >
-      {props.children}
-    </AuthContext>
+  const value = useMemo(
+    () => ({
+      user,
+      isLoading,
+      isAuthenticated: user !== null,
+      login,
+      logout,
+      refreshUser: fetchUser,
+    }),
+    [user, isLoading, login, logout, fetchUser],
   );
+
+  return <AuthContext value={value}>{props.children}</AuthContext>;
 }
 
 export function useAuth(): AuthContextValue {

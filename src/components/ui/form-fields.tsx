@@ -38,6 +38,7 @@ function TextField<TForm extends FieldValues, TTransformed = TForm>(
     step?: string;
     inputMode?: 'text' | 'numeric' | 'decimal' | 'email' | 'tel';
     autoComplete?: string;
+    disabled?: boolean;
   },
 ) {
   const { control, name, label, description, required, className, ...inputProps } = props;
@@ -87,9 +88,11 @@ function SelectField<TForm extends FieldValues, TTransformed = TForm>(
   props: BaseFieldProps<TForm, TTransformed> & {
     options: { value: string; label: string }[];
     placeholder?: string;
+    disabled?: boolean;
   },
 ) {
-  const { control, name, label, description, required, className, options, placeholder } = props;
+  const { control, name, label, description, required, className, options, placeholder, disabled } =
+    props;
   return (
     <FormField
       control={control}
@@ -97,7 +100,11 @@ function SelectField<TForm extends FieldValues, TTransformed = TForm>(
       render={({ field }) => (
         <FormItem className={className}>
           <FormLabel required={required}>{label}</FormLabel>
-          <Select value={field.value ?? ''} onValueChange={field.onChange}>
+          <Select
+            value={field.value ?? ''}
+            onValueChange={(v) => field.onChange(v)}
+            disabled={disabled}
+          >
             <FormControl>
               <SelectTrigger>
                 <SelectValue placeholder={placeholder ?? 'Select…'} />
@@ -134,7 +141,7 @@ function DateField<TForm extends FieldValues, TTransformed = TForm>(
           <FormControl>
             <DatePicker
               value={field.value ?? ''}
-              onChange={field.onChange}
+              onChange={(v) => field.onChange(v)}
               placeholder={placeholder}
               aria-invalid={!!fieldState.error}
             />

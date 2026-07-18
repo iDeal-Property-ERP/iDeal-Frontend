@@ -1,29 +1,48 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Building2, CircleDollarSign, Lock } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import type { Control } from 'react-hook-form';
 import { toast } from 'sonner';
 import { DangerConfirmDialog } from '@/components/management/dialogs/DangerConfirmDialog';
 import { Form } from '@/components/ui/form';
+import { useOneOffPropertyDraft } from '@/hooks/management/useOneOffPropertyDraft';
 import { usePropertyDraft } from '@/hooks/management/usePropertyDraft';
 import type { DraftState } from '@/hooks/management/usePropertyDraft';
 import { usePropertyPhotos } from '@/hooks/management/usePropertyPhotos';
+import type { UsePropertyPhotosResult } from '@/hooks/management/usePropertyPhotos';
 import { usePublishChecklist } from '@/hooks/management/usePublishChecklist';
+import type { ChecklistRow } from '@/hooks/management/usePublishChecklist';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useRouter } from '@/libs/I18nNavigation';
-import { getDistricts, publishProperty, updateProperty } from '@/libs/management/propertiesAdapter';
-import type { DistrictOption, PropertyDraftPayload } from '@/libs/management/propertiesAdapter';
+import { activateOneOffDeal } from '@/libs/management/oneOffDealsAdapter';
+import {
+  fetchPropertyDetail,
+  getDistricts,
+  publishProperty,
+  scheduleVerification,
+  updateOneOffProperty,
+  updateProperty,
+} from '@/libs/management/propertiesAdapter';
+import type {
+  DistrictOption,
+  OneOffPropertyDraftPayload,
+  PropertyDraftPayload,
+} from '@/libs/management/propertiesAdapter';
 import {
   managementPropertyDraftSchema,
+  managementOneOffActivateSchema,
   managementPropertyPublishSchema,
 } from '@/libs/schemas/managementProperty';
 import type { ManagementPropertyFormData } from '@/libs/schemas/managementProperty';
 import type { PropertyDetail } from '@/types/property';
 import { DraftSavedChip } from './DraftSavedChip';
 import { PropertyFormStepper } from './mobile/PropertyFormStepper';
+import { OneOffBrokerageCard } from './OneOffBrokerageCard';
 import { PropertyBasicsCard } from './PropertyBasicsCard';
 import { PropertyFormFooter } from './PropertyFormFooter';
 import { PropertyFormShell } from './PropertyFormShell';
@@ -39,6 +58,7 @@ type Translator = ReturnType<typeof useTranslations>;
 type PropertyFormProps = {
   mode: 'create' | 'edit';
   initial?: PropertyDetail;
+  initialEngagement?: 'managed' | 'one_off';
 };
 
 /**
@@ -55,6 +75,27 @@ function numToStr(value: number | null | undefined): string | undefined {
  * @param property - The loaded property detail.
  * @returns The react-hook-form default values.
  */
+/**
+ * Extracts one-off deal fields from a property into form values.
+ * @param deal - The one-off deal object or null.
+ * @returns The form values for deal fields.
+ */
+function toDealValues(deal: PropertyDetail['one_off_deal']): Partial<ManagementPropertyFormData> {
+  if (!deal) {
+    return {};
+  }
+  return {
+    seller_name: deal.seller_name ?? undefined,
+    seller_phone: deal.seller_phone ?? undefined,
+    seller_email: deal.seller_email ?? undefined,
+    channel: deal.channel ?? undefined,
+    commission_type: deal.commission_type ?? undefined,
+    commission_fixed_amount: deal.commission_fixed_amount ?? undefined,
+    commission_percentage: deal.commission_percentage ?? undefined,
+    commission_currency: deal.commission_currency ?? undefined,
+  };
+}
+
 function toFormValues(property: PropertyDetail): ManagementPropertyFormData {
   return {
     name: property.name,
@@ -72,6 +113,8 @@ function toFormValues(property: PropertyDetail): ManagementPropertyFormData {
     description: property.description ?? undefined,
     map_lat: property.map_lat ?? undefined,
     map_lon: property.map_lon ?? undefined,
+    engagement_type: property.engagement_type,
+    ...toDealValues(property.one_off_deal),
   };
 }
 
@@ -83,12 +126,39 @@ function toFormValues(property: PropertyDetail): ManagementPropertyFormData {
  */
 function toPayload(values: ManagementPropertyFormData): PropertyDraftPayload {
   const payload: PropertyDraftPayload = {};
+  const excluded = new Set([
+    'engagement_type',
+    'seller_name',
+    'seller_phone',
+    'seller_email',
+    'channel',
+    'commission_type',
+    'commission_fixed_amount',
+    'commission_percentage',
+    'commission_currency',
+  ]);
   for (const [key, value] of Object.entries(values)) {
-    if (value !== undefined && value !== '' && value !== null) {
+    if (!excluded.has(key) && value !== undefined && value !== '' && value !== null) {
       payload[key] = value;
     }
   }
   return payload;
+}
+
+function toOneOffPayload(values: ManagementPropertyFormData): OneOffPropertyDraftPayload {
+  return {
+    ...toPayload(values),
+    brokerage: {
+      seller_name: values.seller_name,
+      seller_phone: values.seller_phone,
+      seller_email: values.seller_email,
+      channel: values.channel,
+      commission_type: values.commission_type,
+      commission_fixed_amount: values.commission_fixed_amount,
+      commission_percentage: values.commission_percentage,
+      commission_currency: values.commission_currency,
+    },
+  };
 }
 
 /**
@@ -125,22 +195,19 @@ function stepForCode(code: string): number {
   return 0;
 }
 
-/**
- * The informational footer note for the mode. The "N fields need attention" count
- * is surfaced separately as a chip beside the primary action, not here.
- * @param t - The translator.
- * @param mode - The form mode.
- * @returns The localized note string.
- */
-function footerNote(t: Translator, mode: 'create' | 'edit'): string {
-  return mode === 'edit' ? t('form_edit_note') : t('form_publish_note');
-}
-
 type DraftChipLabels = { saving: string; saved: string; error: string; unsaved: string };
 
 /**
  * The header status chip: the autosave state in create, an unsaved-edits alert in
  * edit (only while dirty), nothing otherwise.
+ * @param mode - The form mode.
+ * @param draftState - The autosave lifecycle state.
+ * @param hasUnsaved - Whether edit mode has pending changes.
+ * @param labels - Localized chip labels.
+ * @returns The chip node, or null.
+ */
+/**
+ * Returns the header status chip for the form mode.
  * @param mode - The form mode.
  * @param draftState - The autosave lifecycle state.
  * @param hasUnsaved - Whether edit mode has pending changes.
@@ -162,6 +229,217 @@ function headerChipFor(
   return null;
 }
 
+function getManagedDraftId(mode: 'create' | 'edit', initial?: PropertyDetail): number | undefined {
+  return mode === 'edit' && initial?.engagement_type !== 'one_off' ? initial?.id : undefined;
+}
+
+function getOneOffDraftId(mode: 'create' | 'edit', initial?: PropertyDetail): number | undefined {
+  return mode === 'edit' && initial?.engagement_type === 'one_off' ? initial?.id : undefined;
+}
+
+function isClosedOneOff(initial?: PropertyDetail): boolean {
+  return (
+    initial?.engagement_type === 'one_off' &&
+    (initial.one_off_deal?.status === 'closed_won' ||
+      initial.one_off_deal?.status === 'closed_lost')
+  );
+}
+
+function isBrokerageLocked(initial?: PropertyDetail): boolean {
+  return initial?.engagement_type === 'one_off' && initial.one_off_deal?.status !== 'draft';
+}
+
+function getFormTitle(mode: 'create' | 'edit', t: Translator): string {
+  return mode === 'edit' ? t('form_edit_title') : t('form_new_title');
+}
+
+function getSecondCrumb(
+  mode: 'create' | 'edit',
+  initial: PropertyDetail | undefined,
+  t: Translator,
+): string {
+  return mode === 'edit' ? (initial?.name ?? getFormTitle(mode, t)) : getFormTitle(mode, t);
+}
+
+function getOwnerLabel(initial?: PropertyDetail): string | undefined {
+  return initial?.owner
+    ? `${initial.owner.first_name} ${initial.owner.last_name}`.trim()
+    : undefined;
+}
+
+function getVerificationScheduled(mode: 'create' | 'edit', initial?: PropertyDetail): boolean {
+  return mode === 'edit' ? Boolean(initial?.verification) : false;
+}
+
+function getImmutableEngagement(initial?: PropertyDetail): string | null {
+  return initial?.engagement_type ?? null;
+}
+
+function triggerAutosave(
+  mode: 'create' | 'edit',
+  isDirty: boolean,
+  oneOff: boolean,
+  values: ManagementPropertyFormData,
+  scheduleManaged: (values: PropertyDraftPayload) => void,
+  scheduleOneOff: (values: OneOffPropertyDraftPayload) => void,
+): boolean {
+  if (mode !== 'create' || !isDirty) {
+    return false;
+  }
+  if (oneOff) {
+    scheduleOneOff(toOneOffPayload(values));
+  } else {
+    scheduleManaged(toPayload(values));
+  }
+  return true;
+}
+
+type FormEngagementToggleProps = {
+  oneOff: boolean;
+  immutableEngagement: string | null;
+  t: Translator;
+  form: ReturnType<typeof useForm<ManagementPropertyFormData>>;
+};
+
+function FormEngagementToggle(props: FormEngagementToggleProps) {
+  const { oneOff, immutableEngagement, t, form } = props;
+
+  if (immutableEngagement) {
+    return (
+      <span className="inline-flex h-9 items-center gap-1.5 rounded-[10px] bg-primary-subtle px-3 text-xs font-medium text-primary-subtle-foreground">
+        <Lock className="size-3.5" />
+        {immutableEngagement === 'one_off'
+          ? t('property_create_one_off')
+          : t('property_create_managed')}
+      </span>
+    );
+  }
+
+  return (
+    <div className="inline-flex h-9 rounded-[10px] bg-muted p-[3px] text-xs font-medium">
+      <button
+        type="button"
+        onClick={() => form.setValue('engagement_type', 'managed', { shouldDirty: false })}
+        className={`inline-flex items-center gap-1.5 rounded-[7px] px-3 transition ${!oneOff ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground'}`}
+      >
+        <Building2 className="size-3.5" /> {t('property_create_managed')}
+      </button>
+      <button
+        type="button"
+        onClick={() => form.setValue('engagement_type', 'one_off', { shouldDirty: false })}
+        className={`inline-flex items-center gap-1.5 rounded-[7px] px-3 transition ${oneOff ? 'bg-primary-subtle text-primary-subtle-foreground shadow-sm' : 'text-muted-foreground'}`}
+      >
+        <CircleDollarSign className="size-3.5" /> {t('property_create_one_off')}
+      </button>
+    </div>
+  );
+}
+
+type DesktopFormBodyProps = {
+  control: Control<ManagementPropertyFormData>;
+  t: Translator;
+  mode: 'create' | 'edit';
+  oneOff: boolean;
+  closedOneOff: boolean;
+  brokerageTermsLocked: boolean;
+  districts: DistrictOption[];
+  photos: UsePropertyPhotosResult;
+  checklistRows: ChecklistRow[];
+  ownerLabel?: string;
+  attentionCount: number;
+  submitting: boolean;
+  primaryAction: () => void;
+  cancelAction: () => void;
+  saveDraftAction: () => void;
+  secondCrumb: string;
+  title: string;
+  engagementControl: ReactNode;
+  headerChip: ReactNode;
+};
+
+function DesktopFormBody(props: DesktopFormBodyProps) {
+  const {
+    control,
+    t,
+    mode,
+    oneOff,
+    closedOneOff,
+    brokerageTermsLocked,
+    districts,
+    photos,
+    checklistRows,
+    ownerLabel,
+    attentionCount,
+    submitting,
+    primaryAction,
+    cancelAction,
+    saveDraftAction,
+    secondCrumb,
+    title,
+    engagementControl,
+    headerChip,
+  } = props;
+
+  let note: string;
+  if (oneOff) {
+    note = t('brokerage_new_subtitle');
+  } else if (mode === 'edit') {
+    note = t('form_edit_note');
+  } else {
+    note = t('form_publish_note');
+  }
+
+  return (
+    <PropertyFormShell
+      backHref="/management/properties"
+      onBack={cancelAction}
+      breadcrumb={
+        <span>
+          {t('properties')} / {secondCrumb}
+        </span>
+      }
+      title={title}
+      headerAside={
+        <div className="flex items-center gap-3">
+          {engagementControl}
+          {headerChip}
+        </div>
+      }
+      rail={
+        <>
+          {mode === 'create' && !oneOff ? <PublishChecklist rows={checklistRows} t={t} /> : null}
+          {!oneOff ? <PropertyOwnerCard control={control} t={t} initialLabel={ownerLabel} /> : null}
+          <PropertyMapCard control={control} t={t} />
+        </>
+      }
+      footer={
+        <PropertyFormFooter
+          t={t}
+          mode={mode}
+          note={note}
+          attentionCount={attentionCount}
+          submitting={submitting}
+          onCancel={cancelAction}
+          onSaveDraft={saveDraftAction}
+          onPrimary={primaryAction}
+        />
+      }
+    >
+      <PropertyBasicsCard control={control} t={t} districts={districts} />
+      <PropertyPricingCard
+        control={control}
+        t={t}
+        engagement={oneOff ? 'one_off' : 'managed'}
+        askPriceLocked={closedOneOff}
+      />
+      {oneOff ? (
+        <OneOffBrokerageCard control={control} t={t} disabled={brokerageTermsLocked} />
+      ) : null}
+      <PropertyPhotosCard t={t} photos={photos} />
+    </PropertyFormShell>
+  );
+}
+
 /**
  * The management property Create/Edit form. Desktop renders the two-column shell
  * (Basics/Pricing/Photos + checklist/owner/map rail); mobile renders the 3-step
@@ -170,8 +448,9 @@ function headerChipFor(
  * @param props - The mode and (for edit) the loaded property.
  * @returns The property form.
  */
+// eslint-disable-next-line react-compiler
 export function PropertyForm(props: PropertyFormProps) {
-  const { mode, initial } = props;
+  const { mode, initial, initialEngagement = 'managed' } = props;
   const t = useTranslations('Management');
   const router = useRouter();
   const isMobile = useIsMobile();
@@ -183,16 +462,30 @@ export function PropertyForm(props: PropertyFormProps) {
   const [errorStep, setErrorStep] = useState<number | null>(null);
   const [discardOpen, setDiscardOpen] = useState(false);
 
+  const immutableEngagement = getImmutableEngagement(initial);
+
   const form = useForm({
-    // Errors surface on blur (and re-check on change once touched) — never while
-    // first typing, per the Figma field-states board.
     mode: 'onTouched',
     resolver: zodResolver(managementPropertyDraftSchema),
-    defaultValues: initial ? toFormValues(initial) : { tariff: 'standard' },
+    defaultValues: initial
+      ? toFormValues(initial)
+      : {
+          tariff: 'standard',
+          engagement_type: initialEngagement,
+          channel: 'marketplace',
+          commission_type: 'none',
+          commission_currency: 'USD',
+        },
   });
 
-  const draft = usePropertyDraft(mode === 'edit' ? initial?.id : undefined);
-  const propertyId = draft.draftId ?? initial?.id ?? null;
+  const engagement: 'managed' | 'one_off' = (immutableEngagement ??
+    form.watch('engagement_type') ??
+    initialEngagement) as 'managed' | 'one_off';
+  const oneOff = engagement === 'one_off';
+  const managedDraft = usePropertyDraft(getManagedDraftId(mode, initial));
+  const oneOffDraft = useOneOffPropertyDraft(getOneOffDraftId(mode, initial));
+  const activeDraft = oneOff ? oneOffDraft : managedDraft;
+  const propertyId = activeDraft.draftId ?? initial?.id ?? null;
 
   const photos = usePropertyPhotos(propertyId, initial?.photos ?? [], {
     uploadError: t('form_photo_error'),
@@ -203,7 +496,7 @@ export function PropertyForm(props: PropertyFormProps) {
   const checklist = usePublishChecklist({
     values,
     photoCount: photos.photos.length,
-    verificationScheduled: mode === 'edit' ? Boolean(initial?.verification) : false,
+    verificationScheduled: getVerificationScheduled(mode, initial),
     serverMissing,
   });
 
@@ -226,13 +519,20 @@ export function PropertyForm(props: PropertyFormProps) {
   const serialized = JSON.stringify(values);
   const dirtyRef = useRef(false);
   useEffect(() => {
-    if (mode !== 'create' || !form.formState.isDirty) {
-      return;
+    if (
+      triggerAutosave(
+        mode,
+        form.formState.isDirty,
+        oneOff,
+        values,
+        managedDraft.schedule,
+        oneOffDraft.schedule,
+      )
+    ) {
+      dirtyRef.current = true;
     }
-    dirtyRef.current = true;
-    draft.schedule(toPayload(values));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [serialized, mode]);
+  }, [serialized, mode, oneOff]);
 
   // Edit mode with pending edits: navigating away must confirm first.
   const hasUnsaved = mode === 'edit' && form.formState.isDirty;
@@ -240,15 +540,15 @@ export function PropertyForm(props: PropertyFormProps) {
 
   // Guard browser/full-page navigation while there are unsaved edits.
   useEffect(() => {
-    if (!hasUnsaved) {
-      return;
-    }
     const handler = (event: BeforeUnloadEvent) => {
       event.preventDefault();
-      event.returnValue = '';
     };
-    window.addEventListener('beforeunload', handler);
-    return () => window.removeEventListener('beforeunload', handler);
+    if (hasUnsaved) {
+      window.addEventListener('beforeunload', handler);
+    }
+    return () => {
+      window.removeEventListener('beforeunload', handler);
+    };
   }, [hasUnsaved]);
 
   // Route an in-app navigation through the discard dialog when edits are pending.
@@ -263,13 +563,17 @@ export function PropertyForm(props: PropertyFormProps) {
 
   const saveDraftAndLeave = async () => {
     if (mode === 'create' && dirtyRef.current) {
-      await draft.flush(toPayload(form.getValues()));
+      await (oneOff
+        ? oneOffDraft.flush(toOneOffPayload(form.getValues()))
+        : managedDraft.flush(toPayload(form.getValues())));
     }
     router.push('/management/properties');
   };
 
   const showPublishErrors = (): boolean => {
-    const parsed = managementPropertyPublishSchema.safeParse(form.getValues());
+    const parsed = (
+      oneOff ? managementOneOffActivateSchema : managementPropertyPublishSchema
+    ).safeParse(form.getValues());
     if (parsed.success) {
       return false;
     }
@@ -296,7 +600,7 @@ export function PropertyForm(props: PropertyFormProps) {
     }
     setPublishing(true);
     try {
-      const id = await draft.flush(toPayload(form.getValues()));
+      const id = await managedDraft.flush(toPayload(form.getValues()));
       if (id === null) {
         toast.error(t('form_publish_failed'));
         return;
@@ -318,18 +622,57 @@ export function PropertyForm(props: PropertyFormProps) {
     }
   };
 
-  const saveEdit = async () => {
-    if (!initial) {
-      return;
-    }
-    // A published property must still satisfy the full schema; gate the save the
-    // same way publish does (errors + focus + count chip) rather than saving blind.
+  const runOneOffActivation = async (scheduledForIso?: string) => {
     if (showPublishErrors()) {
+      setScheduleOpen(false);
       return;
     }
     setPublishing(true);
     try {
-      await updateProperty(initial.id, toPayload(form.getValues()));
+      const id = await oneOffDraft.flush(toOneOffPayload(form.getValues()));
+      if (id === null) {
+        toast.error(t('form_publish_failed'));
+        return;
+      }
+      if (
+        engagement === 'one_off' &&
+        form.getValues('channel') === 'marketplace' &&
+        scheduledForIso
+      ) {
+        await scheduleVerification(id, scheduledForIso);
+      }
+      const refreshed = await fetchPropertyDetail(id);
+      if (!refreshed.one_off_deal) {
+        throw new Error('One-off deal missing');
+      }
+      await activateOneOffDeal(refreshed.one_off_deal.id);
+      toast.success(t('form_published'));
+      router.push('/management/properties');
+    } catch {
+      toast.error(t('form_publish_failed'));
+    } finally {
+      setPublishing(false);
+      setScheduleOpen(false);
+    }
+  };
+
+  const saveEdit = async () => {
+    if (!initial) {
+      return;
+    }
+    setPublishing(true);
+    try {
+      if (initial.engagement_type === 'one_off') {
+        await updateOneOffProperty(
+          initial.id,
+          isClosedOneOff(initial) ? toPayload(form.getValues()) : toOneOffPayload(form.getValues()),
+        );
+      } else {
+        if (showPublishErrors()) {
+          return;
+        }
+        await updateProperty(initial.id, toPayload(form.getValues()));
+      }
       toast.success(t('form_saved'));
       router.push('/management/properties');
     } catch {
@@ -342,6 +685,8 @@ export function PropertyForm(props: PropertyFormProps) {
   const onPrimary = () => {
     if (mode === 'edit') {
       void saveEdit();
+    } else if (oneOff && form.getValues('channel') === 'off_market') {
+      void runOneOffActivation();
     } else {
       setScheduleOpen(true);
     }
@@ -353,11 +698,6 @@ export function PropertyForm(props: PropertyFormProps) {
   const { errors } = form.formState;
   const attentionCount = Object.keys(errors).length;
 
-  const ownerLabel = initial?.owner
-    ? `${initial.owner.first_name} ${initial.owner.last_name}`.trim()
-    : undefined;
-  const title = mode === 'edit' ? t('form_edit_title') : t('form_new_title');
-  const secondCrumb = mode === 'edit' ? (initial?.name ?? title) : t('form_new_title');
   const draftLabels = {
     saving: t('draft_saving'),
     saved: t('draft_saved'),
@@ -365,7 +705,7 @@ export function PropertyForm(props: PropertyFormProps) {
     unsaved: t('draft_unsaved'),
   };
 
-  const headerChip = headerChipFor(mode, draft.state, hasUnsaved, draftLabels);
+  const headerChip = headerChipFor(mode, activeDraft.state, hasUnsaved, draftLabels);
 
   const body = isMobile ? (
     <PropertyFormStepper
@@ -374,45 +714,42 @@ export function PropertyForm(props: PropertyFormProps) {
       districts={districts}
       photos={photos}
       mode={mode}
+      engagement={engagement}
+      brokerageLocked={isBrokerageLocked(initial)}
+      askPriceLocked={isClosedOneOff(initial)}
       submitting={publishing}
       onPrimary={onPrimary}
       errorStep={errorStep}
     />
   ) : (
-    <PropertyFormShell
-      backHref="/management/properties"
-      onBack={() => navigateGuarded('/management/properties')}
-      breadcrumb={
-        <span>
-          {t('properties')} / {secondCrumb}
-        </span>
-      }
-      title={title}
-      headerAside={headerChip}
-      rail={
-        <>
-          {mode === 'create' ? <PublishChecklist rows={checklist.rows} t={t} /> : null}
-          <PropertyOwnerCard control={form.control} t={t} initialLabel={ownerLabel} />
-          <PropertyMapCard control={form.control} t={t} />
-        </>
-      }
-      footer={
-        <PropertyFormFooter
+    <DesktopFormBody
+      control={form.control}
+      t={t}
+      mode={mode}
+      oneOff={oneOff}
+      closedOneOff={isClosedOneOff(initial)}
+      brokerageTermsLocked={isBrokerageLocked(initial)}
+      districts={districts}
+      photos={photos}
+      checklistRows={checklist.rows}
+      ownerLabel={getOwnerLabel(initial)}
+      attentionCount={attentionCount}
+      submitting={publishing}
+      primaryAction={onPrimary}
+      cancelAction={() => navigateGuarded('/management/properties')}
+      saveDraftAction={() => void saveDraftAndLeave()}
+      secondCrumb={getSecondCrumb(mode, initial, t)}
+      title={getFormTitle(mode, t)}
+      engagementControl={
+        <FormEngagementToggle
+          oneOff={oneOff}
+          immutableEngagement={immutableEngagement}
           t={t}
-          mode={mode}
-          note={footerNote(t, mode)}
-          attentionCount={attentionCount}
-          submitting={publishing}
-          onCancel={() => navigateGuarded('/management/properties')}
-          onSaveDraft={() => void saveDraftAndLeave()}
-          onPrimary={onPrimary}
+          form={form}
         />
       }
-    >
-      <PropertyBasicsCard control={form.control} t={t} districts={districts} />
-      <PropertyPricingCard control={form.control} t={t} />
-      <PropertyPhotosCard t={t} photos={photos} />
-    </PropertyFormShell>
+      headerChip={headerChip}
+    />
   );
 
   return (
@@ -423,7 +760,7 @@ export function PropertyForm(props: PropertyFormProps) {
         onOpenChange={setScheduleOpen}
         t={t}
         submitting={publishing}
-        onConfirm={(iso) => void runPublish(iso)}
+        onConfirm={(iso) => void (oneOff ? runOneOffActivation(iso) : runPublish(iso))}
       />
       <DangerConfirmDialog
         open={discardOpen}

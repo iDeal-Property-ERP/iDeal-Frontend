@@ -5,7 +5,7 @@
  * @returns The formatted amount, e.g. "$64,200".
  */
 export function formatMoney(amount: string | number, currency = '$'): string {
-  const value = typeof amount === 'string' ? Number.parseFloat(amount) : amount;
+  const value = typeof amount === 'string' ? Number(amount) : amount;
   if (Number.isNaN(value)) {
     return `${currency}0`;
   }
@@ -20,7 +20,7 @@ export function formatMoney(amount: string | number, currency = '$'): string {
  */
 export function formatCurrency(amount: string | number, currency: string): string {
   if (currency === 'UZS') {
-    const value = typeof amount === 'string' ? Number.parseFloat(amount) : amount;
+    const value = typeof amount === 'string' ? Number(amount) : amount;
     return `${Number.isNaN(value) ? 0 : Math.round(value).toLocaleString('en-US')} UZS`;
   }
   return formatMoney(amount, '$');
@@ -50,7 +50,7 @@ const MONTH_NAMES = [
 export function formatMonthLabel(month: string): string {
   const [year, monthPart] = month.split('-');
   if (year?.length === 4 && monthPart && /^\d{2}$/u.test(monthPart)) {
-    const monthIndex = Number.parseInt(monthPart, 10) - 1;
+    const monthIndex = Number(monthPart) - 1;
     return MONTH_NAMES[monthIndex] ?? month;
   }
   return month.length > 3 ? month.slice(0, 3) : month;

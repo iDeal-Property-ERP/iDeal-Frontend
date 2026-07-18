@@ -29,7 +29,7 @@ type Fetcher<T> = (args: { page: number; query: QueryParams }) => Promise<Pagina
 export function usePaginatedResource<T>(fetcher: Fetcher<T>, options: Options = {}) {
   const [data, setData] = useState<T[]>([]);
   const [page, setPage] = useState(1);
-  const [query, setQueryState] = useState<QueryParams>(options.initialQuery ?? {});
+  const [query, setQuery] = useState<QueryParams>(options.initialQuery ?? {});
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
@@ -40,17 +40,22 @@ export function usePaginatedResource<T>(fetcher: Fetcher<T>, options: Options = 
   // stays keyed on primitives (page / serialized query / reload) — no identity
   // churn, no exhaustive-deps escape hatch.
   const fetcherRef = useRef(fetcher);
-  fetcherRef.current = fetcher;
   const queryRef = useRef(query);
-  queryRef.current = query;
+
+  useEffect(() => {
+    fetcherRef.current = fetcher;
+  });
+  useEffect(() => {
+    queryRef.current = query;
+  });
 
   const queryKey = JSON.stringify(query);
 
   useEffect(() => {
     let active = true;
-    setIsLoading(true);
-    setLoadError(null);
     const load = async () => {
+      setIsLoading(true);
+      setLoadError(null);
       try {
         const result = await fetcherRef.current({ page, query: queryRef.current });
         if (active) {
@@ -78,8 +83,8 @@ export function usePaginatedResource<T>(fetcher: Fetcher<T>, options: Options = 
    * Replaces the whole query and resets to page 1.
    * @param next - The new query params.
    */
-  function setQuery(next: QueryParams) {
-    setQueryState(next);
+  function applyQuery(next: QueryParams) {
+    setQuery(next);
     setPage(1);
   }
 
@@ -88,7 +93,7 @@ export function usePaginatedResource<T>(fetcher: Fetcher<T>, options: Options = 
    * @param patch - The query params to merge in (undefined clears a key).
    */
   function patchQuery(patch: QueryParams) {
-    setQueryState((prev) => ({ ...prev, ...patch }));
+    setQuery((prev) => ({ ...prev, ...patch }));
     setPage(1);
   }
 
@@ -101,7 +106,7 @@ export function usePaginatedResource<T>(fetcher: Fetcher<T>, options: Options = 
     total,
     totalPages,
     query,
-    setQuery,
+    setQuery: applyQuery,
     patchQuery,
     refetch: () => setReloadKey((key) => key + 1),
   };

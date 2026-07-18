@@ -35,7 +35,6 @@ export function ServiceCard(props: {
   meta: string;
   onClick?: () => void;
 }) {
-  const Icon = serviceTypeIcon(props.item.service_type);
   return (
     <button
       type="button"
@@ -46,7 +45,7 @@ export function ServiceCard(props: {
       )}
     >
       <span className="flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-primary-subtle text-primary-subtle-foreground">
-        <Icon className="size-4" />
+        {serviceTypeIcon(props.item.service_type)({ className: 'size-4' })}
       </span>
       <span className="flex min-w-0 flex-col">
         <span className="truncate text-sm font-medium text-foreground">{props.item.name}</span>

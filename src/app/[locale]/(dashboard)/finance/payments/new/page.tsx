@@ -88,7 +88,7 @@ export default function NewPaymentPage() {
                 <LeaseSelect
                   id="lease_id"
                   value={field.value as number | null | undefined}
-                  onChange={field.onChange}
+                  onChange={(v) => field.onChange(v)}
                   aria-invalid={invalid}
                 />
               )}
@@ -98,7 +98,7 @@ export default function NewPaymentPage() {
                 <TenantSelect
                   id="tenant_id"
                   value={field.value as number | null | undefined}
-                  onChange={field.onChange}
+                  onChange={(v) => field.onChange(v)}
                   aria-invalid={invalid}
                 />
               )}
@@ -108,7 +108,7 @@ export default function NewPaymentPage() {
                 <UserSelect
                   id="paid_by_id"
                   value={field.value as number | null | undefined}
-                  onChange={field.onChange}
+                  onChange={(v) => field.onChange(v)}
                   aria-invalid={invalid}
                 />
               )}

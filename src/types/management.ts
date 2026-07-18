@@ -165,6 +165,7 @@ export type ManagementPropertyOutput = {
   total_floors: number | null;
   owner_id: number | null;
   owner_name: string | null;
+  engagement_type: 'managed' | 'one_off';
   status: string;
   tariff: string;
   ask_price: string | null;
@@ -187,6 +188,81 @@ export type ManagementPropertyOutput = {
   cover_image_url: string | null;
   created_at: string;
   updated_at: string;
+};
+
+export type OneOffDealStatus =
+  | 'draft'
+  | 'active'
+  | 'paused'
+  | 'closed_won'
+  | 'closed_lost'
+  | 'archived';
+export type OneOffChannel = 'marketplace' | 'off_market';
+export type BrokerageCommissionType = 'none' | 'fixed' | 'percentage';
+
+export type OneOffCommissionReceipt = {
+  id: number;
+  amount: string;
+  currency: 'USD' | 'UZS';
+  received_date: string;
+  method: string;
+  reference: string;
+  recorded_by_id: number;
+  recorded_by_name: string;
+  attachments: {
+    id: number;
+    filename: string;
+    url: string;
+    content_type: string;
+    size_bytes: number;
+    created_at: string;
+  }[];
+  created_at: string;
+};
+
+export type OneOffDeal = {
+  id: number;
+  property_id: number;
+  property_name: string;
+  property_address: string;
+  status: OneOffDealStatus;
+  channel: OneOffChannel;
+  seller_name: string;
+  seller_phone: string;
+  seller_email: string | null;
+  renter_name: string | null;
+  renter_phone: string | null;
+  renter_email: string | null;
+  commission_type: BrokerageCommissionType;
+  commission_fixed_amount: string | null;
+  commission_percentage: string | null;
+  commission_currency: 'USD' | 'UZS';
+  agreed_monthly_rent: string | null;
+  agreed_currency: 'USD' | 'UZS';
+  close_date: string | null;
+  close_notes: string;
+  evidence: {
+    filename: string;
+    url: string;
+    content_type?: string | null;
+    size_bytes?: number | null;
+  }[];
+  commission_amount: string | null;
+  commission_uzs_amount: string | null;
+  commission_conversion_rate: string | null;
+  receipt: OneOffCommissionReceipt | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type BrokerageCommissionStats = {
+  expected_uzs: string;
+  received_uzs: string;
+  unpaid_uzs: string;
+  free_deals: number;
+  close_rate: string;
+  average_days_to_close: number;
+  counts: { active: number; won: number; closed: number; all: number };
 };
 
 /**
@@ -430,6 +506,12 @@ export type ManagementDashboardOutput = {
   kpi: DashboardKpi;
   recent_payments: RecentPaymentItem[];
   occupancy: OccupancyItem;
+  brokerage: {
+    expected_uzs: string;
+    received_uzs: string;
+    unpaid_uzs: string;
+    closed_count: number;
+  };
   maintenance_requests: MaintenanceRequestItem[];
 };
 

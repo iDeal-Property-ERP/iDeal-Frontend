@@ -9,7 +9,7 @@ import {
   SquareArrowOutUpRight,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { StatusPill, propertyStatusTone } from '@/components/management/columns/StatusPill';
 import { formatMoney } from '@/components/management/format';
 import { EmptyState } from '@/components/management/states/EmptyState';
@@ -20,11 +20,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { apiFetch } from '@/libs/api';
 import { Link } from '@/libs/I18nNavigation';
+import { listAgreements } from '@/libs/management/agreementsAdapter';
 import { PROPERTY_STATUSES } from '@/libs/management/propertiesAdapter';
 import { cn } from '@/libs/utils';
-import type { PaginatedData } from '@/types/api';
 import type { ManagementAgreementOutput, ManagementPropertyOutput } from '@/types/management';
 import type { ActivityEvent } from './ActivityTimeline';
 import { ActivityTimeline } from './ActivityTimeline';
@@ -46,7 +45,7 @@ const TARIFF_PILL: Record<string, string> = {
  * @returns The parsed number, or 0.
  */
 function parseAmount(value: string | null): number {
-  return Number.parseFloat(value ?? '') || 0;
+  return Number(value ?? '') || 0;
 }
 
 /**
@@ -93,100 +92,21 @@ function initialsOf(name: string): string {
 }
 
 /**
- * The Property instance of the record panel (archetype D) — fills the reusable
- * RecordPanel with a property's header, hero, pricing trio, vacancy alert, owner
- * agreement, tabs, and derived activity, plus a sticky Edit / Change status
- * footer. Wired to real endpoints; the owner agreement is fetched per property.
- * @param props - The property, open/close state, and status/edit callbacks.
- * @returns The property record panel element.
+ * The header slot for the property record panel — title, status pill, meta line,
+ * tariff badge, and action buttons (open-full + close).
+ * @param props - Property data, meta line strings, labelers, and close handler.
+ * @returns The header element.
  */
-export function PropertyRecordPanel(props: {
-  property: ManagementPropertyOutput | null;
-  open: boolean;
-  onClose: () => void;
-  onChangeStatus: (status: string) => void;
+function PropertyRecordPanelHeader(props: {
+  property: ManagementPropertyOutput;
+  metaLine: string;
   statusLabel: (status: string) => string;
   tariffLabel: (tariff: string) => string;
+  onClose: () => void;
 }) {
+  const { property, metaLine, statusLabel, tariffLabel, onClose } = props;
   const t = useTranslations('Management');
-  const { property } = props;
-  const [agreement, setAgreement] = useState<ManagementAgreementOutput | null>(null);
-  const [activeTab, setActiveTab] = useState('overview');
-
-  useEffect(() => {
-    setActiveTab('overview');
-    setAgreement(null);
-    let active = true;
-    const load = async () => {
-      if (!property) {
-        return;
-      }
-      try {
-        const res = await apiFetch<PaginatedData<ManagementAgreementOutput>>(
-          '/management/agreements/',
-          { query: { page: 1, property_id: property.id } },
-        );
-        if (active) {
-          setAgreement(res.page.object_list[0] ?? null);
-        }
-      } catch {
-        // Agreement is supplementary — a missing one simply hides the card.
-      }
-    };
-    void load();
-    return () => {
-      active = false;
-    };
-  }, [property]);
-
-  if (!property) {
-    return null;
-  }
-
-  const currency = property.ask_currency === 'UZS' ? "so'm " : '$';
-  const price = (amount: string | null) => formatMoney(amount ?? '0', currency);
-  const isVacant = /vacant|available/iu.test(property.status);
-
-  const tenantCharge = parseAmount(property.tenant_charge_price);
-  const ownerGuaranteed = parseAmount(property.owner_guaranteed_price);
-  const margin = tenantCharge - ownerGuaranteed;
-  const marginPct = tenantCharge ? Math.round((margin / tenantCharge) * 100) : 0;
-
-  const dailyLoss = tenantCharge / 30;
-  const accrued = dailyLoss * (property.vacant_days ?? 0);
-  const metaLine = metaLineOf(t, property);
-
-  const tabs = [
-    { id: 'overview', label: t('tab_overview') },
-    { id: 'payments', label: t('tab_payments') },
-    { id: 'maintenance', label: t('tab_maintenance') },
-    { id: 'inventory', label: t('tab_inventory') },
-    { id: 'activity', label: t('tab_activity') },
-  ];
-
-  const activity: ActivityEvent[] = [];
-  if (isVacant && property.vacant_since) {
-    activity.push({
-      id: 'vacant',
-      title: t('activity_vacant'),
-      time: shortDate(property.vacant_since),
-      tone: 'warning',
-    });
-  }
-  activity.push({
-    id: 'updated',
-    title: t('activity_updated'),
-    time: shortDate(property.updated_at),
-    tone: 'accent',
-  });
-  activity.push({
-    id: 'created',
-    title: t('activity_listed'),
-    time: shortDate(property.created_at),
-    tone: 'muted',
-  });
-
-  const header = (
+  return (
     <div className="flex items-start justify-between gap-3">
       <div className="flex min-w-0 flex-col gap-1">
         <div className="flex items-center gap-2.5">
@@ -195,7 +115,7 @@ export function PropertyRecordPanel(props: {
           </h2>
           <StatusPill
             tone={propertyStatusTone(property.status)}
-            label={props.statusLabel(property.status)}
+            label={statusLabel(property.status)}
           />
         </div>
         <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
@@ -206,7 +126,7 @@ export function PropertyRecordPanel(props: {
               TARIFF_PILL[property.tariff] ?? 'bg-muted text-muted-foreground',
             )}
           >
-            {props.tariffLabel(property.tariff)}
+            {tariffLabel(property.tariff)}
           </span>
         </div>
       </div>
@@ -222,15 +142,29 @@ export function PropertyRecordPanel(props: {
           size="icon-sm"
           className="max-lg:hidden"
           aria-label={t('record_close')}
-          onClick={props.onClose}
+          onClick={onClose}
         >
           <PanelRightClose className="size-4" />
         </Button>
       </div>
     </div>
   );
+}
 
-  const footer = (
+/**
+ * The footer slot for the property record panel — edit button, change-status
+ * dropdown, and more-actions menu.
+ * @param props - Property data and status change callbacks.
+ * @returns The footer element.
+ */
+function PropertyRecordPanelFooter(props: {
+  property: ManagementPropertyOutput;
+  onChangeStatus: (status: string) => void;
+  statusLabel: (status: string) => string;
+}) {
+  const { property, onChangeStatus, statusLabel } = props;
+  const t = useTranslations('Management');
+  return (
     <div className="flex items-center justify-between gap-2">
       <div className="flex items-center gap-2.5">
         <Button asChild className="h-10 gap-2 rounded-[10px] px-4 text-[15px] shadow-sm">
@@ -254,9 +188,9 @@ export function PropertyRecordPanel(props: {
               <DropdownMenuItem
                 key={status}
                 disabled={status === property.status}
-                onSelect={() => props.onChangeStatus(status)}
+                onSelect={() => onChangeStatus(status)}
               >
-                <StatusPill tone={propertyStatusTone(status)} label={props.statusLabel(status)} />
+                <StatusPill tone={propertyStatusTone(status)} label={statusLabel(status)} />
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
@@ -284,15 +218,47 @@ export function PropertyRecordPanel(props: {
       </DropdownMenu>
     </div>
   );
+}
 
+/**
+ * The body content for the property record panel — hero image, pricing trio,
+ * vacancy alert, owner agreement card, tabs, and activity timeline.
+ * @param props - Property data, derived values, and tab state.
+ * @returns The body element.
+ */
+function PropertyRecordPanelBody(props: {
+  property: ManagementPropertyOutput;
+  agreement: ManagementAgreementOutput | null;
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
+  currency: string;
+  price: (amount: string | null) => string;
+  isVacant: boolean;
+  margin: number;
+  marginPct: number;
+  dailyLoss: number;
+  accrued: number;
+  tabs: { id: string; label: string }[];
+  activity: ActivityEvent[];
+}) {
+  const {
+    property,
+    agreement,
+    activeTab,
+    setActiveTab,
+    currency,
+    price,
+    isVacant,
+    margin,
+    marginPct,
+    dailyLoss,
+    accrued,
+    tabs,
+    activity,
+  } = props;
+  const t = useTranslations('Management');
   return (
-    <RecordPanel
-      open={props.open}
-      onClose={props.onClose}
-      title={t('record_type_property')}
-      header={header}
-      footer={footer}
-    >
+    <>
       <div className="flex h-[180px] w-full items-center justify-center overflow-hidden rounded-[12px] bg-muted text-muted-foreground">
         {property.cover_image_url ? (
           // eslint-disable-next-line @next/next/no-img-element -- remote media host; next/image adds no value in a side panel
@@ -370,6 +336,149 @@ export function PropertyRecordPanel(props: {
           className="py-10"
         />
       )}
+    </>
+  );
+}
+
+/**
+ * The Property instance of the record panel (archetype D) — fills the reusable
+ * RecordPanel with a property's header, hero, pricing trio, vacancy alert, owner
+ * agreement, tabs, and derived activity, plus a sticky Edit / Change status
+ * footer. Wired to real endpoints; the owner agreement is fetched per property.
+ * @param props - The property, open/close state, and status/edit callbacks.
+ * @returns The property record panel element.
+ */
+export function PropertyRecordPanel(props: {
+  property: ManagementPropertyOutput | null;
+  open: boolean;
+  onClose: () => void;
+  onChangeStatus: (status: string) => void;
+  statusLabel: (status: string) => string;
+  tariffLabel: (tariff: string) => string;
+}) {
+  const t = useTranslations('Management');
+  const { property } = props;
+  const [agreement, setAgreement] = useState<ManagementAgreementOutput | null>(null);
+  const [activeTab, setActiveTab] = useState('overview');
+
+  const prevPropertyRef = useRef(property?.id ?? null);
+  if (prevPropertyRef.current !== (property?.id ?? null)) {
+    prevPropertyRef.current = property?.id ?? null;
+    setActiveTab('overview');
+    setAgreement(null);
+  }
+
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      if (!property) {
+        return;
+      }
+      try {
+        const res = await listAgreements({ page: 1, propertyId: property.id });
+        if (active) {
+          setAgreement(res.items[0] ?? null);
+        }
+      } catch {
+        // Agreement is supplementary — a missing one simply hides the card.
+      }
+    };
+    void load();
+    return () => {
+      active = false;
+    };
+  }, [property]);
+
+  if (!property) {
+    return null;
+  }
+
+  const currency = property.ask_currency === 'UZS' ? "so'm " : '$';
+  const price = (amount: string | null) => formatMoney(amount ?? '0', currency);
+  const isVacant = /vacant|available/iu.test(property.status);
+
+  const tenantCharge = parseAmount(property.tenant_charge_price);
+  const ownerGuaranteed = parseAmount(property.owner_guaranteed_price);
+  const margin = tenantCharge - ownerGuaranteed;
+  const marginPct = tenantCharge ? Math.round((margin / tenantCharge) * 100) : 0;
+
+  const dailyLoss = tenantCharge / 30;
+  const accrued = dailyLoss * (property.vacant_days ?? 0);
+  const metaLine = metaLineOf(t, property);
+
+  const tabs = [
+    { id: 'overview', label: t('tab_overview') },
+    { id: 'payments', label: t('tab_payments') },
+    { id: 'maintenance', label: t('tab_maintenance') },
+    { id: 'inventory', label: t('tab_inventory') },
+    { id: 'activity', label: t('tab_activity') },
+  ];
+
+  const activity: ActivityEvent[] = [];
+  if (isVacant && property.vacant_since) {
+    activity.push({
+      id: 'vacant',
+      title: t('activity_vacant'),
+      time: shortDate(property.vacant_since),
+      tone: 'warning',
+    });
+  }
+  activity.push(
+    {
+      id: 'updated',
+      title: t('activity_updated'),
+      time: shortDate(property.updated_at),
+      tone: 'accent',
+    },
+    {
+      id: 'created',
+      title: t('activity_listed'),
+      time: shortDate(property.created_at),
+      tone: 'muted',
+    },
+  );
+
+  const header = (
+    <PropertyRecordPanelHeader
+      property={property}
+      metaLine={metaLine}
+      statusLabel={props.statusLabel}
+      tariffLabel={props.tariffLabel}
+      onClose={props.onClose}
+    />
+  );
+
+  const footer = (
+    <PropertyRecordPanelFooter
+      property={property}
+      onChangeStatus={props.onChangeStatus}
+      statusLabel={props.statusLabel}
+    />
+  );
+
+  return (
+    <RecordPanel
+      open={props.open}
+      onClose={props.onClose}
+      title={t('record_type_property')}
+      header={header}
+      footer={footer}
+    >
+      <PropertyRecordPanelBody
+        property={property}
+        agreement={agreement}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        currency={currency}
+        price={price}
+        isVacant={isVacant}
+        margin={margin}
+        marginPct={marginPct}
+        dailyLoss={dailyLoss}
+        accrued={accrued}
+        tabs={tabs}
+        activity={activity}
+      />
     </RecordPanel>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import { MethodSegmented } from '@/components/management/MethodSegmented';
 import { Button } from '@/components/ui/button';
@@ -49,29 +49,15 @@ export function CatalogItemDialog(props: {
 }) {
   const t = useTranslations('Management');
   const { item } = props;
-  const [name, setName] = useState('');
-  const [serviceType, setServiceType] = useState('cleaning');
-  const [partner, setPartner] = useState('');
-  const [price, setPrice] = useState('');
-  const [commission, setCommission] = useState('');
-  const [cashback, setCashback] = useState('');
-  const [description, setDescription] = useState('');
-  const [isActive, setIsActive] = useState(true);
+  const [name, setName] = useState(() => item?.name ?? '');
+  const [serviceType, setServiceType] = useState<string>(() => item?.service_type ?? 'cleaning');
+  const [partner, setPartner] = useState(() => item?.partner_name ?? '');
+  const [price, setPrice] = useState(() => item?.base_price ?? '');
+  const [commission, setCommission] = useState(() => item?.commission_rate ?? '');
+  const [cashback, setCashback] = useState(() => item?.cashback_rate ?? '');
+  const [description, setDescription] = useState(() => item?.description ?? '');
+  const [isActive, setIsActive] = useState(() => item?.is_active ?? true);
   const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    if (!props.open) {
-      return;
-    }
-    setName(item?.name ?? '');
-    setServiceType(item?.service_type ?? 'cleaning');
-    setPartner(item?.partner_name ?? '');
-    setPrice(item?.base_price ?? '');
-    setCommission(item?.commission_rate ?? '');
-    setCashback(item?.cashback_rate ?? '');
-    setDescription(item?.description ?? '');
-    setIsActive(item?.is_active ?? true);
-  }, [props.open, item]);
 
   const submit = async () => {
     if (!name || !price) {
@@ -102,7 +88,11 @@ export function CatalogItemDialog(props: {
   };
 
   return (
-    <Dialog open={props.open} onOpenChange={props.onOpenChange}>
+    <Dialog
+      key={`${props.item?.id ?? 'new'}-${props.open ? '1' : '0'}`}
+      open={props.open}
+      onOpenChange={props.onOpenChange}
+    >
       <DialogContent className="sm:max-w-[440px]">
         <DialogHeader>
           <DialogTitle>{item ? t('svc_item_edit_title') : t('svc_item_add_title')}</DialogTitle>

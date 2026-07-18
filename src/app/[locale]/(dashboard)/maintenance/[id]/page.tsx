@@ -146,7 +146,7 @@ export default function ServiceRequestDetailPage(props: { params: Promise<{ id: 
                     <StaffSelect
                       id="assigned_to_id"
                       value={field.value as number | null | undefined}
-                      onChange={field.onChange}
+                      onChange={(v) => field.onChange(v)}
                       aria-invalid={invalid}
                     />
                   )}

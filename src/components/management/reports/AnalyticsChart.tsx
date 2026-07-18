@@ -18,7 +18,7 @@ export function AnalyticsChart(props: {
     ...props.actual.map((a) => ({ ...a, projected: false })),
     ...props.projected.map((p) => ({ ...p, projected: true })),
   ];
-  const maxVal = Math.max(...bars.map((b) => Number.parseFloat(b.revenue) || 0), 1);
+  const maxVal = Math.max(...bars.map((b) => Number(b.revenue) || 0), 1);
   const lastActual = props.actual.at(-1)?.month;
   const lastProjected = props.projected.at(-1)?.month;
   const firstMonth = bars[0]?.month;
@@ -33,7 +33,7 @@ export function AnalyticsChart(props: {
       />
       <div className="flex items-end gap-2" style={{ height: 160 }}>
         {bars.map((bar) => {
-          const value = Number.parseFloat(bar.revenue) || 0;
+          const value = Number(bar.revenue) || 0;
           return (
             <div
               key={`${bar.month}-${bar.projected ? 'p' : 'a'}`}

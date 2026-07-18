@@ -2,7 +2,7 @@
 
 import { Banknote, Download, Landmark, TrendingUp, Wallet } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
+import { startTransition, useEffect, useState } from 'react';
 import { ExportDialog } from '@/components/management/dialogs/ExportDialog';
 import type { ExportScope } from '@/components/management/dialogs/ExportDialog';
 import { ManagementPageHeader } from '@/components/management/ManagementPageHeader';
@@ -40,7 +40,7 @@ const YEARS = [CURRENT_YEAR, CURRENT_YEAR - 1, CURRENT_YEAR - 2];
  * @returns The formatted `"1,234 UZS"` string.
  */
 function formatUzs(amount: string): string {
-  return `${Math.round(Number.parseFloat(amount) || 0).toLocaleString('en-US')} UZS`;
+  return `${Math.round(Number(amount) || 0).toLocaleString('en-US')} UZS`;
 }
 
 /**
@@ -50,8 +50,8 @@ function formatUzs(amount: string): string {
  * @returns The rounded percentage, or 0 when `whole` is 0.
  */
 function percentOf(part: string, whole: string): number {
-  const w = Number.parseFloat(whole);
-  return w > 0 ? Math.round((Number.parseFloat(part) / w) * 100) : 0;
+  const w = Number(whole);
+  return w > 0 ? Math.round((Number(part) / w) * 100) : 0;
 }
 
 export default function PnlPage() {
@@ -68,31 +68,33 @@ export default function PnlPage() {
 
   useEffect(() => {
     let active = true;
-    setIsLoading(true);
-    setError(null);
-    getPnl({ year, currency, sources })
-      .then((result) => {
-        if (active) {
-          setData(result);
-        }
-      })
-      .catch((caughtError: unknown) => {
-        if (active) {
-          setError(caughtError instanceof Error ? caughtError.message : t('pnl_error'));
-        }
-      })
-      .finally(() => {
-        if (active) {
-          setIsLoading(false);
-        }
-      });
+    startTransition(() => {
+      setIsLoading(true);
+      setError(null);
+      getPnl({ year, currency, sources })
+        .then((result) => {
+          if (active) {
+            setData(result);
+          }
+        })
+        .catch((caughtError: unknown) => {
+          if (active) {
+            setError(caughtError instanceof Error ? caughtError.message : t('pnl_error'));
+          }
+        })
+        .finally(() => {
+          if (active) {
+            setIsLoading(false);
+          }
+        });
+    });
     return () => {
       active = false;
     };
   }, [year, currency, sources, t]);
 
   const money = (amount: string): string => {
-    const n = Number.parseFloat(amount);
+    const n = Number(amount);
     const rounded = Number.isNaN(n) ? 0 : Math.round(n);
     const formatted = rounded.toLocaleString('en-US');
     return currency === 'UZS' ? `${formatted} UZS` : `$${formatted}`;
