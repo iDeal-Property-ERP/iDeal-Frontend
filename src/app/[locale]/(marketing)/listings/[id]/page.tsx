@@ -209,7 +209,7 @@ export default async function ListingDetailPage(props: {
           <div className="hidden grid-cols-2 gap-3 md:grid md:grid-cols-4">
             <SpecCard
               icon={<Bed className="size-[19px]" />}
-              label={t('bedrooms')}
+              label={t('rooms')}
               value={t('rooms_value', { count: specs.rooms })}
             />
             <SpecCard

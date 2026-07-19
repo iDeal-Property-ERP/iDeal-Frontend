@@ -497,6 +497,7 @@ export function PropertyForm(props: PropertyFormProps) {
     values,
     photoCount: photos.photos.length,
     verificationScheduled: getVerificationScheduled(mode, initial),
+    engagementType: engagement,
     serverMissing,
   });
 
@@ -634,11 +635,9 @@ export function PropertyForm(props: PropertyFormProps) {
         toast.error(t('form_publish_failed'));
         return;
       }
-      if (
-        engagement === 'one_off' &&
-        form.getValues('channel') === 'marketplace' &&
-        scheduledForIso
-      ) {
+      // One-off properties skip verification scheduling — only managed
+      // properties use verification visits.
+      if (!oneOff && form.getValues('channel') === 'marketplace' && scheduledForIso) {
         await scheduleVerification(id, scheduledForIso);
       }
       const refreshed = await fetchPropertyDetail(id);
@@ -685,7 +684,7 @@ export function PropertyForm(props: PropertyFormProps) {
   const onPrimary = () => {
     if (mode === 'edit') {
       void saveEdit();
-    } else if (oneOff && form.getValues('channel') === 'off_market') {
+    } else if (oneOff) {
       void runOneOffActivation();
     } else {
       setScheduleOpen(true);
@@ -760,7 +759,7 @@ export function PropertyForm(props: PropertyFormProps) {
         onOpenChange={setScheduleOpen}
         t={t}
         submitting={publishing}
-        onConfirm={(iso) => void (oneOff ? runOneOffActivation(iso) : runPublish(iso))}
+        onConfirm={(iso) => void (oneOff ? runOneOffActivation() : runPublish(iso))}
       />
       <DangerConfirmDialog
         open={discardOpen}

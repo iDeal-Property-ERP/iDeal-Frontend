@@ -89,6 +89,7 @@ export async function closeOneOffDealWon(
     agreed_currency: 'USD' | 'UZS';
     close_date: string;
     notes?: string;
+    keep_property_active?: boolean;
   },
 ): Promise<OneOffDeal> {
   return await apiFetch<OneOffDeal>(`/management/one-off-deals/${id}/close-won/`, {
@@ -106,7 +107,7 @@ export async function closeOneOffDealWon(
  */
 export async function closeOneOffDealLost(
   id: number,
-  payload: { close_date: string; notes?: string },
+  payload: { close_date: string; notes?: string; keep_property_active?: boolean },
 ): Promise<OneOffDeal> {
   return await apiFetch<OneOffDeal>(`/management/one-off-deals/${id}/close-lost/`, {
     method: 'POST',
@@ -165,4 +166,16 @@ export async function uploadOneOffReceiptAttachments(
  */
 export async function getBrokerageCommissionStats(): Promise<BrokerageCommissionStats> {
   return await apiFetch<BrokerageCommissionStats>('/management/brokerage-commissions/stats/');
+}
+
+/**
+ * Deletes a one-off deal.
+ *
+ * @param id The deal ID.
+ * @returns A promise that resolves when deleted.
+ */
+export async function deleteOneOffDeal(id: number): Promise<void> {
+  await apiFetch(`/management/one-off-deals/${id}/`, {
+    method: 'DELETE',
+  });
 }

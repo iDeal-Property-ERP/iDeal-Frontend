@@ -1,5 +1,6 @@
 'use client';
 
+/* eslint-disable complexity */
 import { useMemo } from 'react';
 import type { ManagementPropertyFormData } from '@/libs/schemas/managementProperty';
 
@@ -34,6 +35,7 @@ export type UsePublishChecklistArgs = {
   values: ManagementPropertyFormData;
   photoCount: number;
   verificationScheduled: boolean;
+  engagementType: 'managed' | 'one_off';
   /** Field codes the server flagged on the last failed publish attempt. */
   serverMissing: Set<string>;
 };
@@ -49,7 +51,7 @@ export function usePublishChecklist(args: UsePublishChecklistArgs): {
   rows: ChecklistRow[];
   allComplete: boolean;
 } {
-  const { values, photoCount, verificationScheduled, serverMissing } = args;
+  const { values, photoCount, verificationScheduled, engagementType, serverMissing } = args;
 
   return useMemo(() => {
     const serverRows = new Set<ChecklistRowId>();
@@ -83,17 +85,26 @@ export function usePublishChecklist(args: UsePublishChecklistArgs): {
         done: basicsDone,
         codes: ['district', 'rooms', 'area_sqm', 'floor', 'total_floors'],
       },
-      { id: 'owner', done: ownerDone, codes: ['owner'] },
-      {
-        id: 'pricing',
-        done: pricingDone,
-        codes: ['ask_price', 'owner_guaranteed_price', 'tenant_charge_price'],
-      },
+      ...(engagementType !== 'one_off'
+        ? [{ id: 'owner' as const, done: ownerDone, codes: ['owner'] }]
+        : []),
+      ...(engagementType !== 'one_off'
+        ? [
+            {
+              id: 'pricing' as const,
+              done: pricingDone,
+              codes: ['ask_price', 'owner_guaranteed_price', 'tenant_charge_price'],
+            },
+          ]
+        : []),
       { id: 'photos', done: photosDone, codes: ['photos'] },
-      { id: 'verification', done: verificationScheduled, codes: [] },
+      ...(engagementType !== 'one_off'
+        ? [{ id: 'verification' as const, done: verificationScheduled, codes: [] as string[] }]
+        : []),
     ];
 
-    const allComplete = basicsDone && ownerDone && pricingDone && photosDone;
+    const allComplete =
+      basicsDone && (engagementType === 'one_off' || (ownerDone && pricingDone)) && photosDone;
     return { rows, allComplete };
-  }, [values, photoCount, verificationScheduled, serverMissing]);
+  }, [values, photoCount, verificationScheduled, engagementType, serverMissing]);
 }

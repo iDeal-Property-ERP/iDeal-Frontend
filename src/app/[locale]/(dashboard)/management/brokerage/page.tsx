@@ -14,12 +14,23 @@ import {
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { DangerConfirmDialog } from '@/components/management/dialogs/DangerConfirmDialog';
 import { ManagementPageContainer } from '@/components/management/ManagementPageContainer';
 import { ManagementPageHeader } from '@/components/management/ManagementPageHeader';
+import { BulkSelectionBar } from '@/components/management/workbench/BulkSelectionBar';
+import { WorkbenchTable } from '@/components/management/workbench/WorkbenchTable';
+import type { WorkbenchColumn } from '@/components/management/workbench/WorkbenchTable';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -29,6 +40,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useRowSelection } from '@/hooks/management/useRowSelection';
+import { useRouter } from '@/libs/I18nNavigation';
 import {
   getBrokerageCommissionStats,
   listOneOffDeals,
@@ -36,6 +49,7 @@ import {
   closeOneOffDealWon,
   recordOneOffReceipt,
   uploadOneOffReceiptAttachments,
+  deleteOneOffDeal,
 } from '@/libs/management/oneOffDealsAdapter';
 import type { BrokerageCommissionStats, OneOffDeal } from '@/types/management';
 
@@ -65,101 +79,6 @@ function commissionLabel(deal: OneOffDeal, t: ReturnType<typeof useTranslations>
   return '—';
 }
 
-function receiptCell(
-  deal: OneOffDeal,
-  t: ReturnType<typeof useTranslations>,
-  onReceipt: (deal: OneOffDeal) => void,
-): React.ReactNode {
-  if (deal.receipt) {
-    return <span className="text-xs text-muted-foreground">{deal.receipt.method}</span>;
-  }
-  if (deal.status === 'closed_won') {
-    return (
-      <Button
-        variant="outline"
-        size="sm"
-        className="h-7 rounded-md px-2 text-xs"
-        onClick={() => onReceipt(deal)}
-      >
-        {t('brokerage_receipt')}
-      </Button>
-    );
-  }
-  return <Badge variant="warning">{t('brokerage_pending_badge')}</Badge>;
-}
-
-function actionCell(
-  deal: OneOffDeal,
-  t: ReturnType<typeof useTranslations>,
-  onClose: (deal: OneOffDeal) => void,
-): React.ReactNode {
-  if (deal.status === 'active' || deal.status === 'paused') {
-    return (
-      <Button size="sm" onClick={() => onClose(deal)}>
-        {t('brokerage_close_deal')}
-      </Button>
-    );
-  }
-  return (
-    <Button variant="ghost" size="icon" className="size-7">
-      <MoreHorizontal className="size-4" />
-    </Button>
-  );
-}
-
-function renderDealTable(
-  loading: boolean,
-  deals: OneOffDeal[],
-  t: ReturnType<typeof useTranslations>,
-  onReceipt: (deal: OneOffDeal) => void,
-  onClose: (deal: OneOffDeal) => void,
-): React.ReactNode {
-  if (loading) {
-    return <div className="p-6 text-sm text-muted-foreground">{t('loading')}</div>;
-  }
-  if (deals.length === 0) {
-    return (
-      <div className="flex flex-col items-center gap-2 px-6 py-16 text-center">
-        <CircleDollarSign className="size-8 text-muted-foreground" />
-        <h2 className="font-semibold text-foreground">{t('brokerage_no_deals')}</h2>
-        <p className="max-w-md text-sm text-muted-foreground">{t('brokerage_no_deals_desc')}</p>
-      </div>
-    );
-  }
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[760px] text-left text-sm">
-        <thead className="border-b bg-muted/50 text-xs font-medium text-muted-foreground">
-          <tr>
-            <th className="w-10 px-4 py-3" />
-            <th className="px-3 py-3">{t('brokerage_deal')}</th>
-            <th className="px-3 py-3">{t('brokerage_property')}</th>
-            <th className="px-3 py-3">{t('brokerage_closed_date')}</th>
-            <th className="px-3 py-3">{t('brokerage_amount')}</th>
-            <th className="px-5 py-3">{t('brokerage_receipt')}</th>
-            <th className="w-10 px-4 py-3" />
-          </tr>
-        </thead>
-        <tbody>
-          {deals.map((deal) => (
-            <tr key={deal.id} className="h-14 border-b last:border-0 hover:bg-primary-subtle/40">
-              <td className="px-4 py-2">
-                <span className="grid size-4 place-items-center rounded border border-border" />
-              </td>
-              <td className="px-3 py-2 font-medium text-foreground">{deal.seller_name}</td>
-              <td className="px-3 py-2 font-medium text-foreground">{deal.property_name}</td>
-              <td className="px-3 py-2 text-muted-foreground">{deal.close_date ?? '—'}</td>
-              <td className="px-3 py-2 font-medium text-foreground">{commissionLabel(deal, t)}</td>
-              <td className="px-5 py-2">{receiptCell(deal, t, onReceipt)}</td>
-              <td className="px-4 py-2 text-right">{actionCell(deal, t, onClose)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
 /**
  * Renders the finance workbench for staff-operated one-off brokerage revenue.
  *
@@ -172,6 +91,7 @@ export default function BrokerageCommissionsPage() {
   const [loading, setLoading] = useState(true);
   const [receiptTarget, setReceiptTarget] = useState<OneOffDeal | null>(null);
   const [closeTarget, setCloseTarget] = useState<OneOffDeal | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<OneOffDeal | null>(null);
   const [closeOutcome, setCloseOutcome] = useState<'won' | 'lost'>('won');
   const [renterName, setRenterName] = useState('');
   const [renterPhone, setRenterPhone] = useState('');
@@ -186,6 +106,13 @@ export default function BrokerageCommissionsPage() {
   const [receiptFiles, setReceiptFiles] = useState<File[]>([]);
   const [savingReceipt, setSavingReceipt] = useState(false);
   const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'received'>('all');
+
+  const router = useRouter();
+  const pageIds = deals.map((d) => d.id);
+  const selection = useRowSelection(pageIds);
+  const [keepPropertyActive, setKeepPropertyActive] = useState(false);
+  const handleToggleRow = selection.toggle;
+  const handleToggleAll = selection.toggleAll;
 
   const load = async () => {
     setLoading(true);
@@ -260,8 +187,13 @@ export default function BrokerageCommissionsPage() {
               agreed_currency: closeTarget.commission_currency,
               close_date: closeDate,
               notes: closeNotes,
+              keep_property_active: keepPropertyActive,
             })
-          : await closeOneOffDealLost(closeTarget.id, { close_date: closeDate, notes: closeNotes });
+          : await closeOneOffDealLost(closeTarget.id, {
+              close_date: closeDate,
+              notes: closeNotes,
+              keep_property_active: keepPropertyActive,
+            });
       setCloseTarget(null);
       if (closed.status === 'closed_won') {
         openReceipt(closed);
@@ -326,7 +258,81 @@ export default function BrokerageCommissionsPage() {
     },
   ];
 
-  const dealTable = renderDealTable(loading, deals, t, openReceipt, openClose);
+  const columns: WorkbenchColumn<OneOffDeal>[] = [
+    {
+      id: 'deal',
+      header: t('brokerage_deal'),
+      cell: (row) => <span className="font-medium text-foreground">{row.seller_name}</span>,
+    },
+    {
+      id: 'property',
+      header: t('brokerage_property'),
+      cell: (row) => <span className="font-medium text-foreground">{row.property_name}</span>,
+    },
+    {
+      id: 'close_date',
+      header: t('brokerage_closed_date'),
+      cell: (row) => <span className="text-muted-foreground">{row.close_date ?? '—'}</span>,
+    },
+    {
+      id: 'amount',
+      header: t('brokerage_amount'),
+      cell: (row) => <span className="font-medium text-foreground">{commissionLabel(row, t)}</span>,
+    },
+    {
+      id: 'receipt',
+      header: t('brokerage_receipt'),
+      cell: (row) => {
+        if (row.receipt) {
+          return <span className="text-xs text-muted-foreground">{row.receipt.method}</span>;
+        }
+        if (row.status === 'closed_won') {
+          return (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 rounded-md px-2 text-xs"
+              onClick={() => openReceipt(row)}
+            >
+              {t('brokerage_receipt')}
+            </Button>
+          );
+        }
+        return <Badge variant="warning">{t('brokerage_pending_badge')}</Badge>;
+      },
+    },
+  ];
+
+  const rowActions = (row: OneOffDeal) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="size-8">
+          <MoreHorizontal className="size-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuItem onClick={() => router.push(`/management/brokerage/${row.id}`)}>
+          {t('action_details')}
+        </DropdownMenuItem>
+        {(row.status === 'active' || row.status === 'paused') && (
+          <>
+            <DropdownMenuItem onClick={() => router.push(`/management/brokerage/${row.id}/edit`)}>
+              {t('action_edit')}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => openClose(row)}>
+              {t('brokerage_close_deal')}
+            </DropdownMenuItem>
+          </>
+        )}
+        <DropdownMenuItem
+          className="text-danger focus:bg-danger/10 focus:text-danger"
+          onClick={() => setDeleteTarget(row)}
+        >
+          {t('action_delete')}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 
   return (
     <ManagementPageContainer>
@@ -415,7 +421,76 @@ export default function BrokerageCommissionsPage() {
             <ChevronDown className="size-3.5" />
           </Button>
         </div>
-        <Card className="overflow-hidden rounded-2xl py-0">{dealTable}</Card>
+
+        <Card className="overflow-hidden rounded-2xl py-0">
+          {(() => {
+            if (loading) {
+              return <div className="p-6 text-sm text-muted-foreground">{t('loading')}</div>;
+            }
+            if (deals.length === 0) {
+              return (
+                <div className="flex flex-col items-center gap-2 px-6 py-16 text-center">
+                  <CircleDollarSign className="size-8 text-muted-foreground" />
+                  <h2 className="font-semibold text-foreground">{t('brokerage_no_deals')}</h2>
+                  <p className="max-w-md text-sm text-muted-foreground">
+                    {t('brokerage_no_deals_desc')}
+                  </p>
+                </div>
+              );
+            }
+            return (
+              <div className="relative">
+                <BulkSelectionBar
+                  open={selection.count > 0}
+                  countLabel={t('bulk_selected', { count: selection.count })}
+                  onClear={() => selection.clear()}
+                  clearLabel={t('bulk_clear')}
+                  actions={
+                    <button
+                      type="button"
+                      className="flex h-9 items-center rounded-full px-3 text-sm font-medium text-danger transition-colors hover:bg-danger/10 focus-visible:ring-2 focus-visible:ring-danger/60 focus-visible:outline-none"
+                      onClick={() => {
+                        void (async () => {
+                          try {
+                            await Promise.all(
+                              [...selection.selected].map(async (id) => {
+                                await deleteOneOffDeal(Number(id));
+                              }),
+                            );
+                            toast.success(t('archive_success'));
+                            selection.clear();
+                            await load();
+                          } catch {
+                            toast.error(t('archive_failed'));
+                          }
+                        })();
+                      }}
+                    >
+                      <CheckCircle2 className="mr-2 size-4" />
+                      {t('action_delete')}
+                    </button>
+                  }
+                />
+                <WorkbenchTable
+                  columns={columns}
+                  rows={deals}
+                  getRowId={(row) => row.id}
+                  isSelected={selection.isSelected}
+                  onToggleRow={handleToggleRow}
+                  allChecked={selection.allChecked}
+                  someChecked={selection.someChecked}
+                  onToggleAll={handleToggleAll}
+                  onOpenRecord={(row) => router.push(`/management/brokerage/${row.id}`)}
+                  rowActions={rowActions}
+                  labels={{
+                    selectAll: t('select_all'),
+                    selectRow: t('select_row'),
+                  }}
+                />
+              </div>
+            );
+          })()}
+        </Card>
       </div>
       <Dialog
         open={receiptTarget !== null}
@@ -550,6 +625,16 @@ export default function BrokerageCommissionsPage() {
                 onChange={(event) => setCloseNotes(event.target.value)}
               />
             </div>
+            <div className="flex items-center justify-between rounded-lg border border-border p-3">
+              <div className="space-y-0.5">
+                <Label>{t('brokerage_keep_active')}</Label>
+                <p className="text-xs text-muted-foreground">{t('brokerage_keep_active_desc')}</p>
+              </div>
+              <Checkbox
+                checked={keepPropertyActive}
+                onCheckedChange={(checked) => setKeepPropertyActive(checked === true)}
+              />
+            </div>
             <Button
               disabled={
                 savingClose ||
@@ -563,6 +648,27 @@ export default function BrokerageCommissionsPage() {
           </div>
         </DialogContent>
       </Dialog>
+      <DangerConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title={t('action_delete')}
+        description={t('brokerage_delete_desc')}
+        confirmLabel={t('action_delete')}
+        cancelLabel={t('action_cancel')}
+        onConfirm={async () => {
+          if (!deleteTarget) {
+            return;
+          }
+          try {
+            await deleteOneOffDeal(deleteTarget.id);
+            toast.success(t('archive_success'));
+            setDeleteTarget(null);
+            await load();
+          } catch {
+            toast.error(t('archive_failed'));
+          }
+        }}
+      />
     </ManagementPageContainer>
   );
 }

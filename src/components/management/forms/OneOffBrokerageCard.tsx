@@ -43,7 +43,7 @@ export function OneOffBrokerageCard(props: OneOffBrokerageCardProps) {
         <TextField
           control={control}
           name="seller_email"
-          label={t('brokerage_seller')}
+          label={t('brokerage_seller_email')}
           type="email"
           disabled={disabled}
         />

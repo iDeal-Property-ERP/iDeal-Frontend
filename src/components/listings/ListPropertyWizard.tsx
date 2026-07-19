@@ -1,11 +1,19 @@
 'use client';
 
-import { Building2, Check, ChevronDown, Loader2, Plus } from 'lucide-react';
+import { Building2, Check, Loader2, Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import { Fragment, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button, buttonVariants } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useAuth } from '@/libs/auth';
 import { Link } from '@/libs/I18nNavigation';
 import { fetchAmenities, fetchDistricts, formatPrice } from '@/libs/marketplace';
@@ -17,11 +25,12 @@ import {
   updateOwnerListing,
   uploadOwnerListingPhotos,
 } from '@/libs/ownerListings';
+import { submitPublicListing } from '@/libs/publicListings';
 import { cn } from '@/libs/utils';
 import type { Currency, Furnishing, PropertyType } from '@/types/enums';
 import type { AmenityOption, DistrictOption, OwnerListing } from '@/types/marketplace';
 
-const STEPS = ['details', 'photos', 'pricing', 'review'] as const;
+const STEPS = ['details', 'photos', 'pricing', 'contact', 'review'] as const;
 const PROPERTY_TYPES: PropertyType[] = ['apartment', 'house', 'studio', 'room'];
 const FURNISHINGS: Furnishing[] = ['furnished', 'semi_furnished', 'unfurnished'];
 const PRICE_INCLUDES = ['utilities', 'water', 'internet', 'gas', 'cleaning', 'parking'] as const;
@@ -39,11 +48,19 @@ type DetailsForm = {
   name: string;
   district_id: string;
   rooms: string;
-  bathrooms: string;
+  floor: string;
+  total_floors: string;
   area_sqm: string;
   furnishing: Furnishing;
   description: string;
   amenities: string[];
+};
+
+type ContactForm = {
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
 };
 
 type PricingForm = {
@@ -85,20 +102,23 @@ function FieldBlock({ label, children }: { label: string; children: React.ReactN
 function FilledSelect(props: {
   value: string;
   onChange: (value: string) => void;
-  children: React.ReactNode;
+  options: { value: string; label: string | React.ReactNode }[];
+  placeholder?: string;
 }) {
-  const { value, onChange, children } = props;
+  const { value, onChange, options, placeholder } = props;
   return (
-    <div className="relative">
-      <select
-        className={cn(FILLED, 'cursor-pointer appearance-none pr-10')}
-        onChange={(e) => onChange(e.target.value)}
-        value={value}
-      >
-        {children}
-      </select>
-      <ChevronDown className="pointer-events-none absolute top-1/2 right-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
-    </div>
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger className={cn(FILLED, 'data-[size=default]:h-[50px]')}>
+        <SelectValue placeholder={placeholder} />
+      </SelectTrigger>
+      <SelectContent>
+        {options.map((opt) => (
+          <SelectItem key={opt.value} value={opt.value}>
+            {opt.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }
 
@@ -141,8 +161,8 @@ function Stepper({ step, t }: { step: number; t: TFn }) {
   return (
     <ol className="hidden items-center gap-3 lg:flex">
       {STEPS.map((s, i) => {
-        const done = i < step || step === 4;
-        const active = i === step && step !== 4;
+        const done = i < step || step === 5;
+        const active = i === step && step !== 5;
         return (
           <Fragment key={s}>
             <li className="flex shrink-0 items-center gap-2.5">
@@ -177,7 +197,7 @@ function Stepper({ step, t }: { step: number; t: TFn }) {
 }
 
 function MobileProgress({ step, t }: { step: number; t: TFn }) {
-  if (step === 4) {
+  if (step === 5) {
     return null;
   }
   const total = STEPS.length;
@@ -233,13 +253,8 @@ function DetailsStep(props: {
         <FilledSelect
           onChange={(v) => setDetails((d) => ({ ...d, property_type: v as PropertyType }))}
           value={details.property_type}
-        >
-          {PROPERTY_TYPES.map((pt) => (
-            <option key={pt} value={pt}>
-              {t(`type_${pt}`)}
-            </option>
-          ))}
-        </FilledSelect>
+          options={PROPERTY_TYPES.map((pt) => ({ value: pt, label: t(`type_${pt}`) }))}
+        />
       </WizField>
       <WizField label={t('listing_title')}>
         <input
@@ -252,39 +267,33 @@ function DetailsStep(props: {
         <FilledSelect
           onChange={(v) => setDetails((d) => ({ ...d, district_id: v }))}
           value={details.district_id}
-        >
-          <option value="">{t('select_district')}</option>
-          {districts.map((d) => (
-            <option key={d.id} value={d.id}>
-              {d.name}, {d.city}
-            </option>
-          ))}
-        </FilledSelect>
+          placeholder={t('select_district')}
+          options={districts.map((d) => ({ value: String(d.id), label: `${d.name}, ${d.city}` }))}
+        />
       </WizField>
       <div className="grid grid-cols-3 gap-3 lg:gap-4">
-        <WizField label={t('bedrooms')}>
+        <WizField label={t('rooms')}>
           <FilledSelect
             onChange={(v) => setDetails((d) => ({ ...d, rooms: v }))}
             value={details.rooms}
-          >
-            {['1', '2', '3', '4', '5', '6'].map((n) => (
-              <option key={n} value={n}>
-                {n}
-              </option>
-            ))}
-          </FilledSelect>
+            options={['1', '2', '3', '4', '5', '6'].map((n) => ({ value: n, label: n }))}
+          />
         </WizField>
-        <WizField label={t('bathrooms')}>
-          <FilledSelect
-            onChange={(v) => setDetails((d) => ({ ...d, bathrooms: v }))}
-            value={details.bathrooms}
-          >
-            {['1', '2', '3', '4'].map((n) => (
-              <option key={n} value={n}>
-                {n}
-              </option>
-            ))}
-          </FilledSelect>
+        <WizField label={t('floor')}>
+          <input
+            className={FILLED}
+            inputMode="numeric"
+            onChange={(e) => setDetails((d) => ({ ...d, floor: e.target.value }))}
+            value={details.floor}
+          />
+        </WizField>
+        <WizField label={t('total_floors')}>
+          <input
+            className={FILLED}
+            inputMode="numeric"
+            onChange={(e) => setDetails((d) => ({ ...d, total_floors: e.target.value }))}
+            value={details.total_floors}
+          />
         </WizField>
         <WizField label={t('area')}>
           <input
@@ -448,10 +457,11 @@ function PricingStep(props: {
           <FilledSelect
             onChange={(v) => setPricing((p) => ({ ...p, currency: v }))}
             value={pricing.currency}
-          >
-            <option value="USD">USD</option>
-            <option value="UZS">UZS</option>
-          </FilledSelect>
+            options={[
+              { value: 'USD', label: 'USD' },
+              { value: 'UZS', label: 'UZS' },
+            ]}
+          />
         </WizField>
         <WizField label={t('deposit')}>
           <input
@@ -466,13 +476,8 @@ function PricingStep(props: {
             <FilledSelect
               onChange={(v) => setPricing((p) => ({ ...p, minimum_stay: Number(v) }))}
               value={String(pricing.minimum_stay)}
-            >
-              {MIN_STAYS.map((m) => (
-                <option key={m} value={m}>
-                  {t(`stay_${m}`)}
-                </option>
-              ))}
-            </FilledSelect>
+              options={MIN_STAYS.map((m) => ({ value: String(m), label: t(`stay_${m}`) }))}
+            />
           </WizField>
         </div>
       </div>
@@ -515,6 +520,64 @@ function ReviewRow(props: {
   );
 }
 
+function ContactStep(props: {
+  contact: ContactForm;
+  setContact: React.Dispatch<React.SetStateAction<ContactForm>>;
+  isAuthenticated: boolean;
+  t: TFn;
+}) {
+  const { contact, setContact, isAuthenticated, t } = props;
+  return (
+    <div className="space-y-6">
+      <StepHeading
+        subtitle={t('contact_details_subtitle') || 'How should renters contact you?'}
+        title={t('contact_details_title')}
+      />
+      <div className={cn(CARD, 'p-5 space-y-4')}>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <WizField label={t('first_name')}>
+            <input
+              className={FILLED}
+              disabled={isAuthenticated}
+              onChange={(e) => setContact((c) => ({ ...c, first_name: e.target.value }))}
+              value={contact.first_name}
+            />
+          </WizField>
+          <WizField label={t('last_name')}>
+            <input
+              className={FILLED}
+              disabled={isAuthenticated}
+              onChange={(e) => setContact((c) => ({ ...c, last_name: e.target.value }))}
+              value={contact.last_name}
+            />
+          </WizField>
+          <WizField label={t('email')}>
+            <input
+              className={FILLED}
+              disabled={isAuthenticated}
+              onChange={(e) => setContact((c) => ({ ...c, email: e.target.value }))}
+              value={contact.email}
+            />
+          </WizField>
+          <WizField label={t('phone')}>
+            <input
+              className={FILLED}
+              disabled={isAuthenticated}
+              onChange={(e) => setContact((c) => ({ ...c, phone: e.target.value }))}
+              value={contact.phone}
+            />
+          </WizField>
+        </div>
+        {isAuthenticated && (
+          <p className="mt-2 text-[13px] text-muted-foreground">
+            * These details are pulled from your account and cannot be changed here.
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function ReviewStep(props: {
   draft: OwnerListing | null;
   acceptOffer: boolean;
@@ -523,6 +586,7 @@ function ReviewStep(props: {
   t: TFn;
 }) {
   const { draft, acceptOffer, setAcceptOffer, goTo, t } = props;
+
   if (!draft) {
     return <p className="text-muted-foreground">{t('save_details_first')}</p>;
   }
@@ -530,7 +594,7 @@ function ReviewStep(props: {
   const specs = t('review_specs', {
     type: t(`type_${draft.property_type}`),
     rooms: draft.rooms,
-    baths: draft.bathrooms,
+    floor: `${draft.floor}${draft.total_floors ? `/${draft.total_floors}` : ''}`,
     area: draft.area_sqm,
     furnishing: t(`furnishing_${draft.furnishing}`),
   });
@@ -564,18 +628,19 @@ function ReviewStep(props: {
           </p>
         </ReviewRow>
       </div>
+
       <div className="space-y-1 rounded-[14px] bg-primary-subtle p-4">
         <p className="text-[14px] font-semibold text-primary-subtle-foreground">
           {t('ready_title')}
         </p>
         <p className="text-[13px] text-muted-foreground">{t('ready_desc')}</p>
       </div>
+
       <label className="flex items-start gap-2.5 text-[13px] text-muted-foreground">
-        <input
+        <Checkbox
           checked={acceptOffer}
-          className="mt-0.5 size-4 accent-primary"
-          onChange={(e) => setAcceptOffer(e.target.checked)}
-          type="checkbox"
+          className="mt-0.5"
+          onCheckedChange={(checked) => setAcceptOffer(checked as boolean)}
         />
         {t('accept_offer')}
       </label>
@@ -693,6 +758,9 @@ function StepContent(props: {
   acceptOffer: boolean;
   setAcceptOffer: (v: boolean) => void;
   goTo: (step: number) => void;
+  contact: ContactForm;
+  setContact: React.Dispatch<React.SetStateAction<ContactForm>>;
+  isAuthenticated: boolean;
   t: TFn;
 }) {
   const p = props;
@@ -732,6 +800,16 @@ function StepContent(props: {
       />
     );
   }
+  if (p.step === 3) {
+    return (
+      <ContactStep
+        contact={p.contact}
+        setContact={p.setContact}
+        isAuthenticated={p.isAuthenticated}
+        t={p.t}
+      />
+    );
+  }
   return (
     <ReviewStep
       acceptOffer={p.acceptOffer}
@@ -746,7 +824,8 @@ function StepContent(props: {
 export function ListPropertyWizard() {
   // Cast to a loose signature: this component builds keys dynamically (`type_${pt}`, etc.).
   const t = useTranslations('ListProperty') as unknown as TFn;
-  const { user, isLoading, isAuthenticated } = useAuth();
+  const { user, isLoading, isAuthenticated: _isAuth } = useAuth();
+  const isAuthenticated = _isAuth && user?.role === 'owner';
 
   const [step, setStep] = useState(0);
   const [draft, setDraft] = useState<OwnerListing | null>(null);
@@ -758,8 +837,9 @@ export function ListPropertyWizard() {
     property_type: 'apartment',
     name: '',
     district_id: '',
-    rooms: '2',
-    bathrooms: '1',
+    rooms: '1',
+    floor: '',
+    total_floors: '',
     area_sqm: '',
     furnishing: 'furnished',
     description: '',
@@ -773,24 +853,40 @@ export function ListPropertyWizard() {
     price_includes: [],
   });
   const [acceptOffer, setAcceptOffer] = useState(false);
+  const [contact, setContact] = useState<ContactForm>({
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: '',
+  });
+  const [guestPhotos, setGuestPhotos] = useState<File[]>([]);
+  const [guestCaptions, setGuestCaptions] = useState<Record<number, string>>({});
 
   useEffect(() => {
     fetchDistricts().then(setDistricts);
     fetchAmenities().then(setAmenityOptions);
   }, []);
 
+  useEffect(() => {
+    if (user && !contact.email) {
+      // eslint-disable-next-line react-compiler/react-compiler
+      setContact((prev) => {
+        if (prev.email) {
+          return prev;
+        }
+        return {
+          first_name: user.first_name ?? '',
+          last_name: user.last_name ?? '',
+          email: user.email ?? '',
+          phone: user.phone ?? '',
+        };
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
   if (isLoading) {
     return <CenteredCard>{t('loading')}</CenteredCard>;
-  }
-  if (!isAuthenticated || user?.role !== 'owner') {
-    return (
-      <CenteredCard>
-        <p className="mb-4 text-muted-foreground">{t('owner_only')}</p>
-        <Link className={cn(buttonVariants())} href="/login">
-          {t('sign_in')}
-        </Link>
-      </CenteredCard>
-    );
   }
 
   const toggleAmenity = (slug: string) =>
@@ -800,6 +896,54 @@ export function ListPropertyWizard() {
         ? d.amenities.filter((s) => s !== slug)
         : [...d.amenities, slug],
     }));
+
+  function syncGuestDraft(
+    currentDetails: DetailsForm,
+    currentPricing: PricingForm,
+    photos: File[],
+    captions: Record<number, string>,
+  ) {
+    const photoObjects = photos.map((file, i) => ({
+      id: i,
+      image_url: URL.createObjectURL(file),
+      caption: captions[i] ?? null,
+      is_primary: i === 0,
+      sort_order: i,
+    }));
+    setDraft({
+      id: 0,
+      status: 'draft',
+      property_id: 0,
+      property_type: currentDetails.property_type,
+      name: currentDetails.name,
+      address: '',
+      district_id: Number(currentDetails.district_id) || 0,
+      district_name:
+        districts.find((d) => String(d.id) === currentDetails.district_id)?.name ?? null,
+      rooms: Number(currentDetails.rooms) || 0,
+      floor: Number(currentDetails.floor) || 0,
+      total_floors: Number(currentDetails.total_floors) || null,
+      area_sqm: Number(currentDetails.area_sqm) || 0,
+      furnishing: currentDetails.furnishing,
+      tariff: 'standard',
+      description: currentDetails.description,
+      amenities: amenityOptions.filter((a) => currentDetails.amenities.includes(a.slug)),
+      monthly_price: currentPricing.monthly_price,
+      deposit_amount: currentPricing.deposit_amount,
+      currency: currentPricing.currency as Currency,
+      minimum_stay: currentPricing.minimum_stay,
+      price_includes: currentPricing.price_includes,
+      photos: photoObjects,
+      completeness: {
+        has_5_photos: photos.length >= 5,
+        has_price: !!currentPricing.monthly_price && !!currentPricing.deposit_amount,
+        has_ownership: false,
+      },
+      rejection_reason: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+  }
 
   const togglePriceInclude = (slug: string) =>
     setPricing((p) => ({
@@ -821,12 +965,22 @@ export function ListPropertyWizard() {
         name: details.name,
         district_id: Number(details.district_id),
         rooms: Number(details.rooms),
-        bathrooms: Number(details.bathrooms),
+        floor: Number(details.floor) || 0,
+        total_floors: Number(details.total_floors) || null,
         area_sqm: Number(details.area_sqm),
         furnishing: details.furnishing,
         description: details.description || null,
         amenities: details.amenities,
       };
+      if (!isAuthenticated) {
+        syncGuestDraft(payload as unknown as DetailsForm, pricing, guestPhotos, guestCaptions);
+        toast.success(t('saved'));
+        setBusy(false);
+        if (advance) {
+          setStep(1);
+        }
+        return;
+      }
       const result = draft
         ? await updateOwnerListing(draft.id, payload)
         : await createOwnerListing(payload);
@@ -848,7 +1002,19 @@ export function ListPropertyWizard() {
     }
     setBusy(true);
     try {
+      if (!isAuthenticated) {
+        const newPhotos = [...guestPhotos, ...files];
+        setGuestPhotos(newPhotos);
+        syncGuestDraft(details, pricing, newPhotos, guestCaptions);
+        setBusy(false);
+        return;
+      }
       await uploadOwnerListingPhotos(draft.id, [...files]);
+      if (!isAuthenticated) {
+        toast.success(t('saved'));
+        setBusy(false);
+        return;
+      }
       const refreshed = await updateOwnerListing(draft.id, {});
       setDraft(refreshed);
     } catch {
@@ -862,7 +1028,18 @@ export function ListPropertyWizard() {
     if (!draft) {
       return;
     }
+    if (!isAuthenticated) {
+      const newPhotos = guestPhotos.filter((_, i) => i !== photoId);
+      setGuestPhotos(newPhotos);
+      syncGuestDraft(details, pricing, newPhotos, guestCaptions);
+      return;
+    }
     await deleteOwnerListingPhoto(draft.id, photoId);
+    if (!isAuthenticated) {
+      toast.success(t('saved'));
+      setBusy(false);
+      return;
+    }
     const refreshed = await updateOwnerListing(draft.id, {});
     setDraft(refreshed);
   }
@@ -873,6 +1050,12 @@ export function ListPropertyWizard() {
     }
     const photo = draft.photos.find((p) => p.id === photoId);
     if (!photo || (photo.caption ?? '') === caption) {
+      return;
+    }
+    if (!isAuthenticated) {
+      const newCaptions = { ...guestCaptions, [photoId]: caption };
+      setGuestCaptions(newCaptions);
+      syncGuestDraft(details, pricing, guestPhotos, newCaptions);
       return;
     }
     const refreshed = await reorderOwnerListingPhotos(draft.id, [
@@ -891,6 +1074,22 @@ export function ListPropertyWizard() {
     }
     setBusy(true);
     try {
+      if (!isAuthenticated) {
+        const p = {
+          monthly_price: pricing.monthly_price,
+          deposit_amount: pricing.deposit_amount,
+          currency: pricing.currency,
+          minimum_stay: pricing.minimum_stay,
+          price_includes: pricing.price_includes,
+        };
+        syncGuestDraft(details, p, guestPhotos, guestCaptions);
+        toast.success(t('saved'));
+        setBusy(false);
+        if (advance) {
+          setStep(3);
+        }
+        return;
+      }
       const result = await updateOwnerListing(draft.id, {
         monthly_price: pricing.monthly_price,
         deposit_amount: pricing.deposit_amount,
@@ -910,12 +1109,27 @@ export function ListPropertyWizard() {
     }
   }
 
+  function saveContact(advance: boolean) {
+    if (!isAuthenticated && (!contact.first_name || !contact.email || !contact.phone)) {
+      toast.error(t('error_required'));
+      return;
+    }
+    if (advance) {
+      setStep(4);
+    }
+  }
+
   async function saveAndStay() {
     if (!draft) {
       return;
     }
     setBusy(true);
     try {
+      if (!isAuthenticated) {
+        toast.success(t('saved'));
+        setBusy(false);
+        return;
+      }
       const refreshed = await updateOwnerListing(draft.id, {});
       setDraft(refreshed);
       toast.success(t('saved'));
@@ -927,7 +1141,7 @@ export function ListPropertyWizard() {
   }
 
   async function publish() {
-    if (!draft) {
+    if (!draft && isAuthenticated) {
       return;
     }
     if (!acceptOffer) {
@@ -936,9 +1150,44 @@ export function ListPropertyWizard() {
     }
     setBusy(true);
     try {
-      await submitOwnerListing(draft.id, true);
+      if (!isAuthenticated) {
+        if (!contact.first_name || !contact.email || !contact.phone) {
+          toast.error(t('error_required'));
+          setBusy(false);
+          return;
+        }
+        await submitPublicListing(
+          {
+            contact: {
+              first_name: contact.first_name,
+              last_name: contact.last_name || null,
+              email: contact.email,
+              phone: contact.phone,
+            },
+            property_type: details.property_type,
+            name: details.name,
+            district_id: Number(details.district_id),
+            rooms: Number(details.rooms),
+            floor: Number(details.floor) || 0,
+            total_floors: Number(details.total_floors) || null,
+            area_sqm: Number(details.area_sqm),
+            furnishing: details.furnishing,
+            description: details.description || null,
+            amenities: details.amenities,
+            monthly_price: pricing.monthly_price,
+            deposit_amount: pricing.deposit_amount,
+            currency: pricing.currency,
+            minimum_stay: pricing.minimum_stay,
+            price_includes: pricing.price_includes,
+          },
+          guestPhotos,
+        );
+      } else {
+        if (!draft) {return;}
+        await submitOwnerListing(draft.id, true);
+      }
       toast.success(t('published'));
-      setStep(4);
+      setStep(5);
     } catch {
       toast.error(t('error_incomplete'));
     } finally {
@@ -967,6 +1216,7 @@ export function ListPropertyWizard() {
       },
       primaryLabel: t('continue'),
     },
+    { saveDraft: saveAndStay, primary: () => saveContact(true), primaryLabel: t('continue') },
     { saveDraft: saveAndStay, primary: publish, primaryLabel: t('publish_listing') },
   ][step];
 
@@ -1017,7 +1267,7 @@ export function ListPropertyWizard() {
         <MobileProgress step={step} t={t} />
       </div>
 
-      {step === 4 ? (
+      {step === 5 ? (
         <CenteredCard>
           <Check className="mx-auto mb-3 size-10 rounded-full bg-success/10 p-2 text-success" />
           <h2 className="text-xl font-semibold text-foreground">{t('done_title')}</h2>
@@ -1034,10 +1284,12 @@ export function ListPropertyWizard() {
                 acceptOffer={acceptOffer}
                 amenityOptions={amenityOptions}
                 busy={busy}
+                contact={contact}
                 details={details}
                 districts={districts}
                 draft={draft}
                 goTo={setStep}
+                isAuthenticated={isAuthenticated}
                 onUpload={(files) => {
                   void onUpload(files);
                 }}
@@ -1045,6 +1297,7 @@ export function ListPropertyWizard() {
                 removePhoto={removePhoto}
                 setAcceptOffer={setAcceptOffer}
                 setCaption={setCaption}
+                setContact={setContact}
                 setDetails={setDetails}
                 setPricing={setPricing}
                 step={step}

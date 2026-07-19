@@ -22,7 +22,6 @@ export type PropertyBrief = {
   district_name: string | null;
   property_type: PropertyType;
   rooms: number;
-  bathrooms: number;
   area_sqm: number;
   floor: number;
   total_floors: number | null;
@@ -77,7 +76,6 @@ export type ListingDetail = ListingOutput & {
   specs: {
     property_type: PropertyType;
     rooms: number;
-    bathrooms: number;
     area_sqm: number;
     floor: number;
     total_floors: number | null;
@@ -218,7 +216,6 @@ export type OwnerListing = {
   district_id: number;
   district_name: string | null;
   rooms: number;
-  bathrooms: number;
   area_sqm: number;
   floor: number;
   total_floors: number | null;
@@ -248,7 +245,6 @@ export type OwnerListingCreatePayload = {
   address?: string | null;
   district_id: number;
   rooms: number;
-  bathrooms: number;
   area_sqm: number;
   floor?: number;
   total_floors?: number | null;
@@ -263,7 +259,6 @@ export type OwnerListingUpdatePayload = Partial<{
   address: string;
   district_id: number;
   rooms: number;
-  bathrooms: number;
   area_sqm: number;
   floor: number;
   total_floors: number | null;
