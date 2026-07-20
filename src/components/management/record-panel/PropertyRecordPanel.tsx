@@ -165,44 +165,42 @@ function PropertyRecordPanelFooter(props: {
   const { property, onChangeStatus, statusLabel } = props;
   const t = useTranslations('Management');
   return (
-    <div className="flex items-center justify-between gap-2">
-      <div className="flex items-center gap-2.5">
-        <Button asChild className="h-10 gap-2 rounded-[10px] px-4 text-[15px] shadow-sm">
-          <Link href={`/management/properties/${property.id}/edit`}>
-            <Pencil className="size-[15px]" />
-            {t('record_edit')}
-          </Link>
-        </Button>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              className="h-10 gap-2 rounded-[10px] px-4 text-[15px] shadow-none"
+    <div className="flex w-full items-center gap-2.5">
+      <Button asChild className="h-10 flex-1 gap-2 rounded-[10px] px-2 text-[15px] shadow-sm">
+        <Link href={`/management/properties/${property.id}/edit`}>
+          <Pencil className="size-[15px]" />
+          <span className="truncate">{t('record_edit')}</span>
+        </Link>
+      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="outline"
+            className="h-10 flex-1 gap-2 rounded-[10px] px-2 text-[15px] shadow-none"
+          >
+            <span className="truncate">{t('change_status')}</span>
+            <ChevronDown className="size-[15px]" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="w-52">
+          {PROPERTY_STATUSES.map((status) => (
+            <DropdownMenuItem
+              key={status}
+              disabled={status === property.status}
+              onSelect={() => onChangeStatus(status)}
             >
-              {t('change_status')}
-              <ChevronDown className="size-[15px]" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-52">
-            {PROPERTY_STATUSES.map((status) => (
-              <DropdownMenuItem
-                key={status}
-                disabled={status === property.status}
-                onSelect={() => onChangeStatus(status)}
-              >
-                <StatusPill tone={propertyStatusTone(status)} label={statusLabel(status)} />
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+              <StatusPill tone={propertyStatusTone(status)} label={statusLabel(status)} />
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
             variant="outline"
             size="icon"
             aria-label={t('row_more')}
-            className="size-10 rounded-[10px] shadow-none"
+            className="size-10 shrink-0 rounded-[10px] shadow-none"
           >
             <MoreHorizontal className="size-4" />
           </Button>
