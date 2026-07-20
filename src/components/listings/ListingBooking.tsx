@@ -121,7 +121,7 @@ export function ListingBooking(props: {
                 }
               />
               <a
-                href="tel:+998712000000"
+                href="tel:+998991299710"
                 aria-label="Call"
                 className="inline-flex size-[52px] shrink-0 items-center justify-center rounded-[12px] border border-border bg-card text-foreground transition hover:bg-muted"
               >
@@ -184,7 +184,7 @@ export function ListingBooking(props: {
           {isOneOff ? (
             <>
               <a
-                href="tel:+998712000000"
+                href="tel:+998991299710"
                 aria-label="Call"
                 className="inline-flex size-12 items-center justify-center rounded-xl border border-border bg-card text-foreground transition hover:bg-muted"
               >
