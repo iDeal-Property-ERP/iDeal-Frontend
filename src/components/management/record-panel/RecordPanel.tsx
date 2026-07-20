@@ -50,7 +50,9 @@ export function RecordPanel(props: {
         {props.header}
         {props.children}
       </div>
-      <div className="shrink-0 border-t border-border bg-card px-6 py-3.5">{props.footer}</div>
+      <div className="shrink-0 border-t border-border bg-card px-5 py-3 lg:px-6 lg:py-3.5">
+        {props.footer}
+      </div>
     </>
   );
 

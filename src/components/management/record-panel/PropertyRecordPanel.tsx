@@ -166,7 +166,10 @@ function PropertyRecordPanelFooter(props: {
   const t = useTranslations('Management');
   return (
     <div className="flex w-full items-center gap-2.5">
-      <Button asChild className="h-10 flex-1 gap-2 rounded-[10px] px-2 text-[15px] shadow-sm">
+      <Button
+        asChild
+        className="h-11 flex-1 gap-2 rounded-xl px-2 text-[15px] shadow-sm lg:h-10 lg:rounded-[10px]"
+      >
         <Link href={`/management/properties/${property.id}/edit`}>
           <Pencil className="size-[15px]" />
           <span className="truncate">{t('record_edit')}</span>
@@ -176,7 +179,7 @@ function PropertyRecordPanelFooter(props: {
         <DropdownMenuTrigger asChild>
           <Button
             variant="outline"
-            className="h-10 flex-1 gap-2 rounded-[10px] px-2 text-[15px] shadow-none"
+            className="h-11 flex-1 gap-2 rounded-xl px-2 text-[15px] shadow-none lg:h-10 lg:rounded-[10px]"
           >
             <span className="truncate">{t('change_status')}</span>
             <ChevronDown className="size-[15px]" />
@@ -200,7 +203,7 @@ function PropertyRecordPanelFooter(props: {
             variant="outline"
             size="icon"
             aria-label={t('row_more')}
-            className="size-10 shrink-0 rounded-[10px] shadow-none"
+            className="size-11 shrink-0 rounded-full shadow-none lg:size-10 lg:rounded-[10px]"
           >
             <MoreHorizontal className="size-4" />
           </Button>
