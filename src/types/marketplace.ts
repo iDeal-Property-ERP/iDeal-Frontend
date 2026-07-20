@@ -21,6 +21,7 @@ export type PropertyBrief = {
   district_id: number;
   district_name: string | null;
   property_type: PropertyType;
+  engagement_type: string;
   rooms: number;
   area_sqm: number;
   floor: number;

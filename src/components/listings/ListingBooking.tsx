@@ -1,6 +1,6 @@
 'use client';
 
-import { CalendarDays, Check, Clock, MessageCircle, ShieldCheck } from 'lucide-react';
+import { CalendarDays, Check, Clock, MessageCircle, ShieldCheck, Phone } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useMemo } from 'react';
 import { BookViewingModal } from '@/components/listings/BookViewingModal';
@@ -59,10 +59,12 @@ export function ListingBooking(props: {
   listingId: number;
   monthlyPrice: string | null;
   currency: Currency;
+  engagementType?: string;
 }) {
-  const { listingId, monthlyPrice, currency } = props;
+  const { listingId, monthlyPrice, currency, engagementType } = props;
   const t = useTranslations('ListingDetail');
   const locale = useLocale();
+  const isOneOff = engagementType === 'one_off';
   const price = formatWhole(monthlyPrice, currency);
   // Next-available slot for the preferred-date preview — computed from current date + locale.
   const slot = useMemo(() => {
@@ -104,25 +106,51 @@ export function ListingBooking(props: {
             <span className="text-[14px] text-muted-foreground">{t('all_inclusive')}</span>
           </div>
           <div className="h-px w-full bg-border" />
-          <BookViewingModal
-            listingId={listingId}
-            trigger={
-              <button
-                className="flex w-full items-center gap-2.5 rounded-[12px] border border-border bg-card px-3.5 py-3 text-left transition hover:bg-muted"
-                type="button"
+          {isOneOff ? (
+            <div className="flex items-center gap-2">
+              <InquiryModal
+                listingId={listingId}
+                trigger={
+                  <button
+                    className="flex h-[52px] flex-1 items-center justify-center gap-2 rounded-[12px] bg-primary text-[15px] font-medium text-primary-foreground transition hover:opacity-90"
+                    type="button"
+                  >
+                    <MessageCircle className="size-[17px]" />
+                    {t('message_ideal')}
+                  </button>
+                }
+              />
+              <a
+                href="tel:+998712000000"
+                aria-label="Call"
+                className="inline-flex size-[52px] shrink-0 items-center justify-center rounded-[12px] border border-border bg-card text-foreground transition hover:bg-muted"
               >
-                <CalendarDays className="size-[18px] shrink-0 text-muted-foreground" />
-                <span className="flex flex-col">
-                  <span className="text-[12px] leading-4 font-medium text-muted-foreground">
-                    {t('preferred_date')}
-                  </span>
-                  <span className="text-[14px] leading-5 text-foreground">{slot}</span>
-                </span>
-              </button>
-            }
-          />
-          <BookViewingModal listingId={listingId} trigger={bookButton} />
-          <InquiryModal listingId={listingId} trigger={messageButton} />
+                <Phone className="size-[20px]" />
+              </a>
+            </div>
+          ) : (
+            <>
+              <BookViewingModal
+                listingId={listingId}
+                trigger={
+                  <button
+                    className="flex w-full items-center gap-2.5 rounded-[12px] border border-border bg-card px-3.5 py-3 text-left transition hover:bg-muted"
+                    type="button"
+                  >
+                    <CalendarDays className="size-[18px] shrink-0 text-muted-foreground" />
+                    <span className="flex flex-col">
+                      <span className="text-[12px] leading-4 font-medium text-muted-foreground">
+                        {t('preferred_date')}
+                      </span>
+                      <span className="text-[14px] leading-5 text-foreground">{slot}</span>
+                    </span>
+                  </button>
+                }
+              />
+              <BookViewingModal listingId={listingId} trigger={bookButton} />
+              <InquiryModal listingId={listingId} trigger={messageButton} />
+            </>
+          )}
           <p className="text-center text-[12px] leading-4 text-muted-foreground">
             {t('book_footer')}
           </p>
@@ -153,29 +181,55 @@ export function ListingBooking(props: {
           <p className="truncate text-[12px] text-muted-foreground">{t('all_inclusive')}</p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <InquiryModal
-            listingId={listingId}
-            trigger={
-              <button
-                aria-label={t('message_ideal')}
+          {isOneOff ? (
+            <>
+              <a
+                href="tel:+998712000000"
+                aria-label="Call"
                 className="inline-flex size-12 items-center justify-center rounded-xl border border-border bg-card text-foreground transition hover:bg-muted"
-                type="button"
               >
-                <MessageCircle className="size-5" />
-              </button>
-            }
-          />
-          <BookViewingModal
-            listingId={listingId}
-            trigger={
-              <button
-                className="inline-flex h-12 items-center justify-center rounded-xl bg-primary px-5 text-[15px] font-medium text-primary-foreground transition hover:opacity-90"
-                type="button"
-              >
-                {t('book_viewing')}
-              </button>
-            }
-          />
+                <Phone className="size-5" />
+              </a>
+              <InquiryModal
+                listingId={listingId}
+                trigger={
+                  <button
+                    className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-[15px] font-medium text-primary-foreground transition hover:opacity-90"
+                    type="button"
+                  >
+                    <MessageCircle className="size-[17px]" />
+                    {t('message_ideal')}
+                  </button>
+                }
+              />
+            </>
+          ) : (
+            <>
+              <InquiryModal
+                listingId={listingId}
+                trigger={
+                  <button
+                    aria-label={t('message_ideal')}
+                    className="inline-flex size-12 items-center justify-center rounded-xl border border-border bg-card text-foreground transition hover:bg-muted"
+                    type="button"
+                  >
+                    <MessageCircle className="size-5" />
+                  </button>
+                }
+              />
+              <BookViewingModal
+                listingId={listingId}
+                trigger={
+                  <button
+                    className="inline-flex h-12 items-center justify-center rounded-xl bg-primary px-5 text-[15px] font-medium text-primary-foreground transition hover:opacity-90"
+                    type="button"
+                  >
+                    {t('book_viewing')}
+                  </button>
+                }
+              />
+            </>
+          )}
         </div>
       </div>
     </>

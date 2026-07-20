@@ -329,6 +329,7 @@ export default async function ListingDetailPage(props: {
         {/* Booking panel (desktop side card + mobile sticky bar) */}
         <ListingBooking
           currency={price_card.currency}
+          engagementType={property.engagement_type}
           listingId={listing.id}
           monthlyPrice={price_card.monthly_price}
         />
