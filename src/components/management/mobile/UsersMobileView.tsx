@@ -59,6 +59,7 @@ export function UsersMobileView(props: {
   record?: ReactNode;
   onCloseRecord: () => void;
   empty: ReactNode;
+  onInvite: () => void;
 }) {
   const { t } = props;
   return (
@@ -78,6 +79,7 @@ export function UsersMobileView(props: {
       record={props.record}
       onCloseRecord={props.onCloseRecord}
       backLabel={t('back')}
+      fab={{ label: t('usr_invite'), onClick: props.onInvite }}
     >
       {props.rows.map((user) => (
         <ModuleListCard

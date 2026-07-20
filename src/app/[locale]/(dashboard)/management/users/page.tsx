@@ -418,6 +418,7 @@ export default function ManagementUsersPage() {
           record={selected ? userRecord : undefined}
           onCloseRecord={() => setSelected(null)}
           empty={body}
+          onInvite={() => setInviteOpen(true)}
         />
         {dialogs}
       </>
