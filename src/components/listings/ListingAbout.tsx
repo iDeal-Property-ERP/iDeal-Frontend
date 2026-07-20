@@ -19,7 +19,7 @@ export function ListingAbout(props: { text: string }) {
       <h2 className="text-[18px] font-semibold text-foreground max-md:text-[16px]">{t('about')}</h2>
       <p
         className={cn(
-          'mt-2 leading-relaxed text-muted-foreground max-md:text-[14px] max-md:leading-[21px]',
+          'mt-2 whitespace-pre-wrap leading-relaxed text-muted-foreground max-md:text-[14px] max-md:leading-[21px]',
           !expanded && 'max-md:line-clamp-3',
         )}
       >

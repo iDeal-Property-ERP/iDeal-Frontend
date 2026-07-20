@@ -1183,7 +1183,9 @@ export function ListPropertyWizard() {
           guestPhotos,
         );
       } else {
-        if (!draft) {return;}
+        if (!draft) {
+          return;
+        }
         await submitOwnerListing(draft.id, true);
       }
       toast.success(t('published'));

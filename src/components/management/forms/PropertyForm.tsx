@@ -241,12 +241,13 @@ function isClosedOneOff(initial?: PropertyDetail): boolean {
   return (
     initial?.engagement_type === 'one_off' &&
     (initial.one_off_deal?.status === 'closed_won' ||
-      initial.one_off_deal?.status === 'closed_lost')
+      initial.one_off_deal?.status === 'closed_lost' ||
+      initial.one_off_deal?.status === 'archived')
   );
 }
 
 function isBrokerageLocked(initial?: PropertyDetail): boolean {
-  return initial?.engagement_type === 'one_off' && initial.one_off_deal?.status !== 'draft';
+  return isClosedOneOff(initial);
 }
 
 function getFormTitle(mode: 'create' | 'edit', t: Translator): string {
