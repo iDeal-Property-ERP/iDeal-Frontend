@@ -720,6 +720,14 @@ export function PropertyForm(props: PropertyFormProps) {
       submitting={publishing}
       onPrimary={onPrimary}
       errorStep={errorStep}
+      engagementControl={
+        <FormEngagementToggle
+          oneOff={oneOff}
+          immutableEngagement={immutableEngagement}
+          t={t}
+          form={form}
+        />
+      }
     />
   ) : (
     <DesktopFormBody

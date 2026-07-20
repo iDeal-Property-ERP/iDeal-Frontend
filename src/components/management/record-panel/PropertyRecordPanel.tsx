@@ -296,7 +296,9 @@ function PropertyRecordPanelBody(props: {
         ]}
       />
 
-      {isVacant ? (
+      {isVacant &&
+      property.engagement_type !== 'one_off' &&
+      !((property.vacant_days ?? 0) === 0 && dailyLoss === 0) ? (
         <VacancyAlert
           title={t('vacancy_title', { days: property.vacant_days ?? 0 })}
           detail={t('vacancy_detail', {
@@ -306,7 +308,7 @@ function PropertyRecordPanelBody(props: {
         />
       ) : null}
 
-      {agreement ? (
+      {property.engagement_type !== 'one_off' && agreement ? (
         <OwnerAgreementCard
           initials={initialsOf(property.owner_name ?? '—')}
           ownerLine={`${property.owner_name ?? '—'} ${t('owner_suffix')}`}
@@ -317,13 +319,15 @@ function PropertyRecordPanelBody(props: {
           })}
           statusLabel={/active/iu.test(agreement.status) ? t('agreement_active') : undefined}
         />
-      ) : (
+      ) : null}
+
+      {property.engagement_type !== 'one_off' && !agreement ? (
         <OwnerAgreementCard
           initials={initialsOf(property.owner_name ?? '—')}
           ownerLine={`${property.owner_name ?? '—'} ${t('owner_suffix')}`}
           detailLine={t('no_agreement')}
         />
-      )}
+      ) : null}
 
       <RecordPanelTabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
 

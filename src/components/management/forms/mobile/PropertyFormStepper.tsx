@@ -32,6 +32,8 @@ type PropertyFormStepperProps = {
   onPrimary: () => void;
   /** Set by the parent on a failed publish to jump to the first invalid step. */
   errorStep?: number | null;
+  /** The segmented control to toggle between Managed and One-off properties. */
+  engagementControl: React.ReactNode;
 };
 
 const STEP_COUNT = 3;
@@ -63,6 +65,7 @@ export function PropertyFormStepper(props: PropertyFormStepperProps) {
     submitting,
     onPrimary,
     errorStep,
+    engagementControl,
   } = props;
   const oneOff = engagement === 'one_off';
   const router = useRouter();
@@ -144,6 +147,7 @@ export function PropertyFormStepper(props: PropertyFormStepperProps) {
       <div className="mt-5 flex flex-1 flex-col gap-5">
         {step === 0 ? (
           <>
+            <div className="flex justify-center">{engagementControl}</div>
             <PropertyBasicsCard control={control} t={t} districts={districts} />
             {!oneOff ? (
               <PropertyOwnerCard control={control} t={t} />
