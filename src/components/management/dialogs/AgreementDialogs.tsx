@@ -61,11 +61,13 @@ export function NewAgreementDialog(props: {
   const [startDate, setStartDate] = useState(TODAY());
   const [endDate, setEndDate] = useState(addMonths(TODAY(), 12));
   const [commission, setCommission] = useState('');
+  const [grossFloor, setGrossFloor] = useState('');
+  const [payoutDay, setPayoutDay] = useState('25');
   const [terms, setTerms] = useState('');
   const [busy, setBusy] = useState(false);
 
   const submit = async () => {
-    if (!ownerId || !propertyId || !agreementNumber || !commission) {
+    if (!ownerId || !propertyId || !agreementNumber || !commission || !grossFloor) {
       toast.error(t('dialog_fill_required'));
       return;
     }
@@ -79,6 +81,9 @@ export function NewAgreementDialog(props: {
         start_date: startDate,
         end_date: endDate,
         commission_rate: commission,
+        gross_floor_amount: grossFloor,
+        currency: 'USD',
+        payout_day: Number(payoutDay),
         terms: terms || undefined,
       });
       toast.success(t('agr_created'));
@@ -127,6 +132,40 @@ export function NewAgreementDialog(props: {
                 onChange={(event) => setCommission(event.target.value)}
               />
             </div>
+          </div>
+          <div className="rounded-xl border border-primary/20 bg-primary/5 p-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="agr-floor">{t('field_gross_floor')} *</Label>
+                <Input
+                  id="agr-floor"
+                  inputMode="decimal"
+                  placeholder="500"
+                  value={grossFloor}
+                  onChange={(event) => setGrossFloor(event.target.value)}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="agr-payout-day">{t('field_payout_day')}</Label>
+                <Input
+                  id="agr-payout-day"
+                  inputMode="numeric"
+                  min="1"
+                  max="31"
+                  value={payoutDay}
+                  onChange={(event) => setPayoutDay(event.target.value)}
+                />
+              </div>
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              {t('settlement_preview', {
+                floor: grossFloor || '0',
+                commission: commission || '0',
+                payout: ((Number(grossFloor || 0) * (100 - Number(commission || 0))) / 100).toFixed(
+                  2,
+                ),
+              })}
+            </p>
           </div>
           <div className="grid grid-cols-3 gap-3">
             <div className="flex flex-col gap-1.5">

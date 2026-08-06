@@ -12,10 +12,6 @@ export type OwnerPropertyOutput = {
   tariff: string;
   ask_price: string;
   ask_currency: Currency;
-  owner_guaranteed_price: string;
-  owner_guaranteed_currency: Currency;
-  tenant_charge_price: string;
-  tenant_charge_currency: Currency;
   vacant_since: string | null;
   vacant_days: number;
   created_at: string;
@@ -26,7 +22,27 @@ export type OwnerEarningsOutput = {
   total_guaranteed: string;
   total_paid: string;
   total_pending: string;
+  total_above_guarantee: string;
+  next_payout_amount: string;
   currency: Currency;
+};
+
+export type OwnerSettlementOutput = {
+  id: number;
+  property_name: string;
+  period_start: string;
+  period_end: string;
+  gross_floor_amount: string;
+  commission_rate: string;
+  currency: Currency;
+  rent_received_amount: string;
+  settlement_base_amount: string;
+  commission_amount: string;
+  owner_payout_amount: string;
+  ideal_cash_exposure: string;
+  payout_status: string | null;
+  payout_amount: string | null;
+  payout_kind: string | null;
 };
 
 export type OwnerWhyOutput = {

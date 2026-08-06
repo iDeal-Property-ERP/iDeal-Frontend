@@ -1,7 +1,9 @@
 'use client';
 
+import { SearchX } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { ListingCard } from '@/components/listings/ListingCard';
+import { useListingParams } from '@/hooks/useListingParams';
 import { cn } from '@/libs/utils';
 import type { ListingOutput } from '@/types/marketplace';
 
@@ -10,6 +12,24 @@ const COLUMN_CLASS: Record<1 | 2 | 3, string> = {
   2: 'grid-cols-1 sm:grid-cols-2',
   3: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3',
 };
+
+const FILTER_KEYS = [
+  'district_id',
+  'start_date',
+  'end_date',
+  'flexibility_days',
+  'price_min',
+  'price_max',
+  'rooms_min',
+  'rooms_max',
+  'area_min',
+  'area_max',
+  'property_type',
+  'amenities',
+  'verified',
+  'furnishing',
+  'tariff',
+] as const;
 
 type ListingGridProps = {
   listings: ListingOutput[];
@@ -29,9 +49,35 @@ type ListingGridProps = {
 export function ListingGrid(props: ListingGridProps) {
   const { listings, columns, selectedId, onSelect, className } = props;
   const t = useTranslations('Listings');
+  const { set } = useListingParams();
 
   if (listings.length === 0) {
-    return <p className="py-16 text-center text-muted-foreground">{t('no_listings')}</p>;
+    const clearFilters = Object.fromEntries(FILTER_KEYS.map((key) => [key, undefined]));
+
+    return (
+      <div className="flex min-h-[360px] items-center justify-center px-3 py-10">
+        <div className="flex w-full max-w-xl flex-col items-center rounded-3xl border border-border bg-card px-6 py-8 text-center shadow-sm">
+          <div className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-primary-subtle text-primary-subtle-foreground">
+            <SearchX className="size-6" />
+          </div>
+          <h2 className="max-w-sm text-xl font-semibold text-foreground">
+            {t('empty_filtered_title')}
+          </h2>
+          <p className="mt-2 max-w-md text-sm text-muted-foreground">
+            {t('empty_filtered_subtitle')}
+          </p>
+          <div className="mt-5 flex flex-wrap justify-center gap-2">
+            <button
+              className="inline-flex min-h-10 items-center rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
+              onClick={() => set(clearFilters)}
+              type="button"
+            >
+              {t('clear_filters')}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

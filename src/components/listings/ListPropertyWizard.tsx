@@ -869,7 +869,6 @@ export function ListPropertyWizard() {
 
   useEffect(() => {
     if (user && !contact.email) {
-      // eslint-disable-next-line react-compiler/react-compiler
       setContact((prev) => {
         if (prev.email) {
           return prev;

@@ -51,8 +51,6 @@ export const managementPropertyPublishSchema = z.object({
   total_floors: requiredString('Building floors is required'),
   tariff: z.string().optional(),
   ask_price: requiredString('Ask price is required'),
-  owner_guaranteed_price: requiredString('Owner guaranteed price is required'),
-  tenant_charge_price: requiredString('Tenant charge is required'),
 });
 
 /** Activation requirements for a one-off deal. The Marketplace photo/visit gate

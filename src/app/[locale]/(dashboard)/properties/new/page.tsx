@@ -105,18 +105,6 @@ export default function NewPropertyPage() {
           </div>
           <div className="grid grid-cols-3 gap-4">
             <TextField control={form.control} name="ask_price" label="Ask Price" required />
-            <TextField
-              control={form.control}
-              name="owner_guaranteed_price"
-              label="Owner Guaranteed Price"
-              required
-            />
-            <TextField
-              control={form.control}
-              name="tenant_charge_price"
-              label="Tenant Charge Price"
-              required
-            />
           </div>
           <div className="grid grid-cols-4 gap-4">
             <SelectField

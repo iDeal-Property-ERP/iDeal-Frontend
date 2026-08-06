@@ -449,8 +449,8 @@ function DesktopFormBody(props: DesktopFormBodyProps) {
  * @param props - The mode and (for edit) the loaded property.
  * @returns The property form.
  */
-// eslint-disable-next-line react-compiler
 export function PropertyForm(props: PropertyFormProps) {
+  'use no memo';
   const { mode, initial, initialEngagement = 'managed' } = props;
   const t = useTranslations('Management');
   const router = useRouter();

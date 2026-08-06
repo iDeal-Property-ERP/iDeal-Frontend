@@ -18,6 +18,9 @@ const MAP_LIMIT = 200;
 
 type ListingsSearchParams = {
   district_id?: string;
+  start_date?: string;
+  end_date?: string;
+  flexibility_days?: string;
   price_min?: string;
   price_max?: string;
   rooms_min?: string;
@@ -39,6 +42,9 @@ type ListingsSearchParams = {
 function buildFilters(sp: ListingsSearchParams): ListingFilters {
   return {
     district_id: sp.district_id ?? '',
+    start_date: sp.start_date ?? '',
+    end_date: sp.end_date ?? '',
+    flexibility_days: sp.flexibility_days ?? '',
     price_min: sp.price_min ?? '',
     price_max: sp.price_max ?? '',
     rooms_min: sp.rooms_min ?? '',

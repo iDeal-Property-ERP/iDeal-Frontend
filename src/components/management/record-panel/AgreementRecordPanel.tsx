@@ -199,23 +199,14 @@ export function AgreementRecordPanel(props: {
             caption: t('agr_commission_caption'),
           },
           {
-            label: t('agr_owner_guaranteed'),
-            value:
-              agreement.owner_guaranteed_amount === null
-                ? '—'
-                : formatMoney(agreement.owner_guaranteed_amount),
-            caption: t('agr_owner_guaranteed_caption'),
+            label: t('field_gross_floor'),
+            value: formatMoney(agreement.gross_floor_amount, agreement.currency),
+            caption: t('settlement_floor_caption'),
           },
           {
-            label: t('agr_tenant_charge'),
-            value:
-              agreement.tenant_charge_amount === null
-                ? '—'
-                : formatMoney(agreement.tenant_charge_amount),
-            caption:
-              agreement.margin === null
-                ? t('agr_tenant_charge_caption')
-                : t('agr_margin_caption', { amount: formatMoney(agreement.margin) }),
+            label: t('field_payout_day'),
+            value: t('settlement_payout_day_value', { day: agreement.payout_day }),
+            caption: t('settlement_payout_day_caption'),
           },
         ]}
       />

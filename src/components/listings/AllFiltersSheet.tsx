@@ -1,8 +1,16 @@
 'use client';
 
-import { SlidersHorizontal } from 'lucide-react';
+import { format } from 'date-fns';
+import { ArrowLeft, CalendarDays, ChevronRight, SlidersHorizontal } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
+import type { DateRange } from 'react-day-picker';
+import {
+  DEFAULT_FLEXIBILITY_DAYS,
+  RentDatesEditor,
+  formatDateRangeLabel,
+  parseDateParam,
+} from '@/components/listings/MarketplaceDateRangePicker';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -25,6 +33,8 @@ const FURNISHINGS: Furnishing[] = ['furnished', 'semi_furnished', 'unfurnished']
 const TARIFFS: Tariff[] = ['standard', 'comfort', 'premium'];
 const PROPERTY_TYPES: PropertyType[] = ['apartment', 'house', 'studio', 'room'];
 
+type MobilePage = 'filters' | 'dates';
+
 type Draft = {
   district_id: string;
   price_min: string;
@@ -37,6 +47,9 @@ type Draft = {
   tariff: string;
   property_type: string;
   amenities: string[];
+  start_date: string;
+  end_date: string;
+  flexibility_days: string;
 };
 
 function Field(props: { label: string; children: React.ReactNode }) {
@@ -107,6 +120,7 @@ export function AllFiltersSheet(props: {
   const tx = t as unknown as (key: string) => string;
   const { get, set } = useListingParams();
   const [open, setOpen] = useState(false);
+  const [mobilePage, setMobilePage] = useState<MobilePage>('filters');
   // Mobile rises from the bottom (Figma); desktop keeps the right-side drawer.
   const isMobile = useIsMobile();
 
@@ -122,8 +136,29 @@ export function AllFiltersSheet(props: {
     tariff: get('tariff'),
     property_type: get('property_type'),
     amenities: get('amenities') ? get('amenities').split(',') : [],
+    start_date: get('start_date'),
+    end_date: get('end_date'),
+    flexibility_days: get('flexibility_days'),
   });
   const [draft, setDraft] = useState<Draft>(initial);
+  const [dateDraft, setDateDraft] = useState<DateRange | undefined>(() => {
+    const start = parseDateParam(get('start_date'));
+    const end = parseDateParam(get('end_date'));
+    return start && end ? { from: start, to: end } : undefined;
+  });
+  const [flexDraft, setFlexDraft] = useState(() =>
+    get('flexibility_days') ? Number(get('flexibility_days')) : DEFAULT_FLEXIBILITY_DAYS,
+  );
+
+  const resetDraftsFromUrl = () => {
+    const next = initial();
+    const start = parseDateParam(next.start_date);
+    const end = parseDateParam(next.end_date);
+    setDraft(next);
+    setDateDraft(start && end ? { from: start, to: end } : undefined);
+    setFlexDraft(next.flexibility_days ? Number(next.flexibility_days) : DEFAULT_FLEXIBILITY_DAYS);
+    setMobilePage('filters');
+  };
 
   const upd = (patch: Partial<Draft>) => setDraft((d) => ({ ...d, ...patch }));
   const toggleAmenity = (slug: string) =>
@@ -133,7 +168,10 @@ export function AllFiltersSheet(props: {
         : [...draft.amenities, slug],
     });
 
+  // The URL payload intentionally mirrors every discovery filter in one submit action.
+  // eslint-disable-next-line complexity
   const apply = () => {
+    const hasDateRange = Boolean(dateDraft?.from && dateDraft?.to);
     set({
       district_id: draft.district_id || undefined,
       price_min: draft.price_min || undefined,
@@ -146,11 +184,15 @@ export function AllFiltersSheet(props: {
       tariff: draft.tariff || undefined,
       property_type: draft.property_type || undefined,
       amenities: draft.amenities.length > 0 ? draft.amenities.join(',') : undefined,
+      start_date:
+        hasDateRange && dateDraft?.from ? format(dateDraft.from, 'yyyy-MM-dd') : undefined,
+      end_date: hasDateRange && dateDraft?.to ? format(dateDraft.to, 'yyyy-MM-dd') : undefined,
+      flexibility_days: hasDateRange ? String(flexDraft) : undefined,
     });
     setOpen(false);
   };
 
-  const clearAll = () =>
+  const clearAll = () => {
     setDraft({
       district_id: '',
       price_min: '',
@@ -163,7 +205,22 @@ export function AllFiltersSheet(props: {
       tariff: '',
       property_type: '',
       amenities: [],
+      start_date: '',
+      end_date: '',
+      flexibility_days: '',
     });
+    setDateDraft(undefined);
+    setFlexDraft(DEFAULT_FLEXIBILITY_DAYS);
+  };
+
+  const dateSummary =
+    dateDraft?.from && dateDraft?.to
+      ? formatDateRangeLabel(
+          format(dateDraft.from, 'yyyy-MM-dd'),
+          format(dateDraft.to, 'yyyy-MM-dd'),
+          t('sb_any_dates'),
+        )
+      : t('sb_any_dates');
 
   return (
     <Sheet
@@ -171,7 +228,7 @@ export function AllFiltersSheet(props: {
       onOpenChange={(o) => {
         setOpen(o);
         if (o) {
-          setDraft(initial());
+          resetDraftsFromUrl();
         }
       }}
     >
@@ -190,129 +247,220 @@ export function AllFiltersSheet(props: {
         className={cn('flex flex-col gap-0', isMobile ? '' : 'w-full overflow-y-auto sm:max-w-md')}
         side={isMobile ? 'bottom' : 'right'}
       >
-        <SheetHeader>
-          <SheetTitle>{t('all_filters')}</SheetTitle>
-        </SheetHeader>
+        {isMobile && mobilePage === 'dates' ? (
+          <>
+            <SheetHeader className="flex-row items-center gap-3">
+              <button
+                aria-label={t('back')}
+                className="flex size-10 items-center justify-center rounded-full text-primary transition hover:bg-muted"
+                onClick={() => setMobilePage('filters')}
+                type="button"
+              >
+                <ArrowLeft className="size-5" />
+              </button>
+              <SheetTitle className="text-2xl">{t('rent_dates')}</SheetTitle>
+            </SheetHeader>
 
-        <div className={cn('flex-1 space-y-6 px-4 py-4', isMobile && 'overflow-y-auto')}>
-          <Field label={t('filter_district')}>
-            <select
-              className={INPUT}
-              value={draft.district_id}
-              onChange={(e) => upd({ district_id: e.target.value })}
-            >
-              <option value="">{t('sb_anywhere')}</option>
-              {districts.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.name}
-                </option>
-              ))}
-            </select>
-          </Field>
-
-          <TwoCol label={t('filter_price')}>
-            <input
-              className={INPUT}
-              placeholder={t('range_min')}
-              type="number"
-              value={draft.price_min}
-              onChange={(e) => upd({ price_min: e.target.value })}
-            />
-            <input
-              className={INPUT}
-              placeholder={t('range_max')}
-              type="number"
-              value={draft.price_max}
-              onChange={(e) => upd({ price_max: e.target.value })}
-            />
-          </TwoCol>
-
-          <TwoCol label={t('filter_rooms')}>
-            <input
-              className={INPUT}
-              placeholder={t('range_min')}
-              type="number"
-              value={draft.rooms_min}
-              onChange={(e) => upd({ rooms_min: e.target.value })}
-            />
-            <input
-              className={INPUT}
-              placeholder={t('range_max')}
-              type="number"
-              value={draft.rooms_max}
-              onChange={(e) => upd({ rooms_max: e.target.value })}
-            />
-          </TwoCol>
-
-          <TwoCol label={t('filter_area')}>
-            <input
-              className={INPUT}
-              placeholder={t('range_min')}
-              type="number"
-              value={draft.area_min}
-              onChange={(e) => upd({ area_min: e.target.value })}
-            />
-            <input
-              className={INPUT}
-              placeholder={t('range_max')}
-              type="number"
-              value={draft.area_max}
-              onChange={(e) => upd({ area_max: e.target.value })}
-            />
-          </TwoCol>
-
-          <ChoiceGroup
-            label={t('filter_property_type')}
-            value={draft.property_type}
-            options={PROPERTY_TYPES.map((pt) => ({ value: pt, label: tx(`type_${pt}`) }))}
-            onChange={(v) => upd({ property_type: v })}
-          />
-          <ChoiceGroup
-            label={t('filter_furnishing')}
-            value={draft.furnishing}
-            options={FURNISHINGS.map((f) => ({ value: f, label: tx(`furnishing_${f}`) }))}
-            onChange={(v) => upd({ furnishing: v })}
-          />
-          <ChoiceGroup
-            label={t('filter_tariff')}
-            value={draft.tariff}
-            options={TARIFFS.map((tr) => ({ value: tr, label: tx(`tariff_${tr}`) }))}
-            onChange={(v) => upd({ tariff: v })}
-          />
-
-          <div>
-            <p className="mb-2 text-sm font-medium text-foreground">{t('filter_amenities')}</p>
-            <div className="flex flex-wrap gap-2">
-              {amenities.map((a) => {
-                const active = draft.amenities.includes(a.slug);
-                return (
-                  <button
-                    key={a.slug}
-                    type="button"
-                    onClick={() => toggleAmenity(a.slug)}
-                    className={cn(
-                      'rounded-full border px-3 py-1.5 text-sm transition',
-                      active
-                        ? 'border-primary bg-primary-subtle text-primary-subtle-foreground'
-                        : 'border-border text-muted-foreground hover:text-foreground',
-                    )}
-                  >
-                    {a.name}
-                  </button>
-                );
-              })}
+            <div className="flex-1 overflow-y-auto px-4 pb-4">
+              <RentDatesEditor
+                compactFlex
+                date={dateDraft}
+                flex={flexDraft}
+                numberOfMonths={1}
+                onDateChange={setDateDraft}
+                onFlexChange={setFlexDraft}
+              />
             </div>
-          </div>
-        </div>
 
-        <SheetFooter className="flex-row gap-2 border-t border-border">
-          <Button className="flex-1" onClick={clearAll} type="button" variant="outline">
-            {t('clear_all')}
-          </Button>
-          <Button className="flex-1" onClick={apply} type="button">
-            {t('apply')}
-          </Button>
-        </SheetFooter>
+            <SheetFooter className="flex-row gap-2 border-t border-border">
+              <Button
+                className="flex-1"
+                onClick={() => {
+                  setDateDraft(undefined);
+                  setFlexDraft(DEFAULT_FLEXIBILITY_DAYS);
+                }}
+                type="button"
+                variant="outline"
+              >
+                {t('sb_clear')}
+              </Button>
+              <Button
+                className="flex-1"
+                disabled={Boolean(dateDraft?.from && !dateDraft?.to)}
+                onClick={() => setMobilePage('filters')}
+                type="button"
+              >
+                {t('set_dates')}
+              </Button>
+            </SheetFooter>
+          </>
+        ) : (
+          <>
+            <SheetHeader>
+              <SheetTitle>{t('all_filters')}</SheetTitle>
+            </SheetHeader>
+
+            <div className={cn('flex-1 space-y-6 px-4 py-4', isMobile && 'overflow-y-auto')}>
+              {isMobile ? (
+                <div>
+                  <p className="mb-1.5 text-sm font-medium text-foreground">
+                    {t('preferred_rent_dates')}
+                  </p>
+                  <button
+                    className="flex min-h-16 w-full items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 text-left transition hover:bg-muted"
+                    onClick={() => setMobilePage('dates')}
+                    type="button"
+                  >
+                    <CalendarDays className="size-5 text-muted-foreground" />
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-base font-semibold text-foreground">
+                        {dateSummary}
+                      </span>
+                      <span className="block truncate text-sm text-muted-foreground">
+                        {dateDraft?.from && dateDraft?.to
+                          ? t('dates_with_flexibility', { flexibility: flexDraft })
+                          : t('date_filter_hint_short')}
+                      </span>
+                    </span>
+                    <ChevronRight className="size-5 text-primary" />
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  <p className="mb-2 text-sm font-medium text-foreground">
+                    {t('preferred_rent_dates')}
+                  </p>
+                  <RentDatesEditor
+                    compactFlex
+                    date={dateDraft}
+                    flex={flexDraft}
+                    numberOfMonths={1}
+                    onDateChange={setDateDraft}
+                    onFlexChange={setFlexDraft}
+                  />
+                </div>
+              )}
+
+              <Field label={t('filter_district')}>
+                <select
+                  className={INPUT}
+                  value={draft.district_id}
+                  onChange={(e) => upd({ district_id: e.target.value })}
+                >
+                  <option value="">{t('sb_anywhere')}</option>
+                  {districts.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.name}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+
+              <TwoCol label={t('filter_price')}>
+                <input
+                  className={INPUT}
+                  placeholder={t('range_min')}
+                  type="number"
+                  value={draft.price_min}
+                  onChange={(e) => upd({ price_min: e.target.value })}
+                />
+                <input
+                  className={INPUT}
+                  placeholder={t('range_max')}
+                  type="number"
+                  value={draft.price_max}
+                  onChange={(e) => upd({ price_max: e.target.value })}
+                />
+              </TwoCol>
+
+              <TwoCol label={t('filter_rooms')}>
+                <input
+                  className={INPUT}
+                  placeholder={t('range_min')}
+                  type="number"
+                  value={draft.rooms_min}
+                  onChange={(e) => upd({ rooms_min: e.target.value })}
+                />
+                <input
+                  className={INPUT}
+                  placeholder={t('range_max')}
+                  type="number"
+                  value={draft.rooms_max}
+                  onChange={(e) => upd({ rooms_max: e.target.value })}
+                />
+              </TwoCol>
+
+              <TwoCol label={t('filter_area')}>
+                <input
+                  className={INPUT}
+                  placeholder={t('range_min')}
+                  type="number"
+                  value={draft.area_min}
+                  onChange={(e) => upd({ area_min: e.target.value })}
+                />
+                <input
+                  className={INPUT}
+                  placeholder={t('range_max')}
+                  type="number"
+                  value={draft.area_max}
+                  onChange={(e) => upd({ area_max: e.target.value })}
+                />
+              </TwoCol>
+
+              <ChoiceGroup
+                label={t('filter_property_type')}
+                value={draft.property_type}
+                options={PROPERTY_TYPES.map((pt) => ({ value: pt, label: tx(`type_${pt}`) }))}
+                onChange={(v) => upd({ property_type: v })}
+              />
+              <ChoiceGroup
+                label={t('filter_furnishing')}
+                value={draft.furnishing}
+                options={FURNISHINGS.map((f) => ({ value: f, label: tx(`furnishing_${f}`) }))}
+                onChange={(v) => upd({ furnishing: v })}
+              />
+              <ChoiceGroup
+                label={t('filter_tariff')}
+                value={draft.tariff}
+                options={TARIFFS.map((tr) => ({ value: tr, label: tx(`tariff_${tr}`) }))}
+                onChange={(v) => upd({ tariff: v })}
+              />
+
+              <div>
+                <p className="mb-2 text-sm font-medium text-foreground">{t('filter_amenities')}</p>
+                <div className="flex flex-wrap gap-2">
+                  {amenities.map((a) => {
+                    const active = draft.amenities.includes(a.slug);
+                    return (
+                      <button
+                        key={a.slug}
+                        type="button"
+                        onClick={() => toggleAmenity(a.slug)}
+                        className={cn(
+                          'rounded-full border px-3 py-1.5 text-sm transition',
+                          active
+                            ? 'border-primary bg-primary-subtle text-primary-subtle-foreground'
+                            : 'border-border text-muted-foreground hover:text-foreground',
+                        )}
+                      >
+                        {a.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            <SheetFooter className="flex-row gap-2 border-t border-border">
+              <Button className="flex-1" onClick={clearAll} type="button" variant="outline">
+                {t('clear_all')}
+              </Button>
+              <Button className="flex-1" onClick={apply} type="button">
+                {t('apply')}
+              </Button>
+            </SheetFooter>
+          </>
+        )}
       </SheetContent>
     </Sheet>
   );

@@ -303,9 +303,15 @@ export type ManagementAgreementOutput = {
   end_date: string;
   status: string;
   commission_rate: string;
-  owner_guaranteed_amount: string | null;
-  tenant_charge_amount: string | null;
-  margin: string | null;
+  gross_floor_amount: string;
+  currency: string;
+  payout_day: number;
+  /** @deprecated Pricing now belongs to the agreement settlement terms. */
+  owner_guaranteed_amount?: string | null;
+  /** @deprecated Pricing now belongs to the agreement settlement terms. */
+  tenant_charge_amount?: string | null;
+  /** @deprecated Replaced by transparent commission and settlement fields. */
+  margin?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -323,6 +329,8 @@ export type ManagementPaymentOutput = {
   currency: string;
   payment_date: string;
   due_date: string;
+  rental_period: string | null;
+  kind: string;
   status: string;
   method: string;
   gateway_ref: string | null;
@@ -339,7 +347,10 @@ export type ManagementPayoutOutput = {
   property_id: number | null;
   property_name: string | null;
   property_address: string | null;
-  source_payment_id: number | null;
+  settlement_id: number | null;
+  kind: string;
+  /** @deprecated Payouts are now linked to settlements, not one payment. */
+  source_payment_id?: number | null;
   amount: string;
   currency: string;
   scheduled_date: string;
@@ -376,6 +387,8 @@ export type PaymentCreatePayload = {
   currency: string;
   payment_date: string;
   due_date: string;
+  rental_period?: string | null;
+  kind?: 'rent' | 'deposit' | 'other';
   status?: string;
   method: string;
   gateway_ref?: string | null;
@@ -732,6 +745,9 @@ export type AgreementCreatePayload = {
   start_date: string;
   end_date: string;
   commission_rate: string;
+  gross_floor_amount: string;
+  currency?: string;
+  payout_day?: number;
   terms?: string;
 };
 
@@ -739,6 +755,9 @@ export type AgreementRenewPayload = {
   new_start_date: string;
   new_end_date: string;
   commission_rate?: string;
+  gross_floor_amount?: string;
+  currency?: string;
+  payout_day?: number;
   agreement_number?: string;
   terms?: string;
 };

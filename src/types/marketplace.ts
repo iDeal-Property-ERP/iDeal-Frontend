@@ -136,6 +136,9 @@ export type ListingFilters = {
   sort?: string;
   q?: string;
   bbox?: string;
+  start_date?: string;
+  end_date?: string;
+  flexibility_days?: string;
 };
 
 /** Discovery layout mode, persisted in the URL as `?view=`. */

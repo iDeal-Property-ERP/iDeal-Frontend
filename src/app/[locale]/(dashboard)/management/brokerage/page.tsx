@@ -69,12 +69,12 @@ function formatUzbekSum(value: string): string {
   return new Intl.NumberFormat('uz-UZ', { maximumFractionDigits: 0 }).format(Number(value));
 }
 
-function commissionLabel(deal: OneOffDeal, t: ReturnType<typeof useTranslations>): string {
+function commissionLabel(deal: OneOffDeal, noneLabel: string): string {
   if (deal.commission_amount) {
     return `${deal.commission_amount} ${deal.commission_currency}`;
   }
   if (deal.commission_type === 'none') {
-    return t('brokerage_commission_none');
+    return noneLabel;
   }
   return '—';
 }
@@ -277,7 +277,11 @@ export default function BrokerageCommissionsPage() {
     {
       id: 'amount',
       header: t('brokerage_amount'),
-      cell: (row) => <span className="font-medium text-foreground">{commissionLabel(row, t)}</span>,
+      cell: (row) => (
+        <span className="font-medium text-foreground">
+          {commissionLabel(row, t('brokerage_commission_none'))}
+        </span>
+      ),
     },
     {
       id: 'receipt',

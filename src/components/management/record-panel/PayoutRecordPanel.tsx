@@ -82,8 +82,8 @@ export function PayoutRecordPanel(props: {
   const activity: ActivityEvent[] = [
     {
       id: 'accrued',
-      title: payout.source_payment_id
-        ? t('payout_activity_accrued', { id: payout.source_payment_id })
+      title: payout.settlement_id
+        ? t('payout_activity_settlement', { id: payout.settlement_id })
         : t('payout_activity_manual'),
       time: longDate(payout.created_at),
       tone: 'accent',
@@ -254,10 +254,10 @@ export function PayoutRecordPanel(props: {
         initials={initialsOf(payout.owner_name)}
         ownerLine={t('payout_owner_line', { name: payout.owner_name })}
         detailLine={
-          payout.source_payment_id
-            ? t('payout_source_line', {
+          payout.settlement_id
+            ? t('payout_settlement_line', {
                 agreement: payout.owner_agreement_id,
-                payment: payout.source_payment_id,
+                settlement: payout.settlement_id,
               })
             : t('payout_agreement_line', { agreement: payout.owner_agreement_id })
         }

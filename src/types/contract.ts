@@ -11,6 +11,9 @@ export type OwnerAgreementOutput = {
   status: AgreementStatus;
   terms: string | null;
   commission_rate: string;
+  gross_floor_amount: string;
+  currency: string;
+  payout_day: number;
   created_at: string;
   updated_at: string;
 };
@@ -25,6 +28,9 @@ export type OwnerAgreementCreatePayload = {
   status?: AgreementStatus;
   terms?: string | null;
   commission_rate: string;
+  gross_floor_amount: string;
+  currency?: string;
+  payout_day?: number;
 };
 
 export type LeaseOutput = {

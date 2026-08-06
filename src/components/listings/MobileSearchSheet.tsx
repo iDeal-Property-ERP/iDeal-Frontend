@@ -103,7 +103,13 @@ export function MobileSearchSheet(props: {
     }
     return rMax ? `${t('sb_up_to')} ${rMax}` : '';
   })();
-  const parts = [districtName, priceText, roomsText].filter(Boolean);
+  const sDate = get('start_date');
+  const eDate = get('end_date');
+  const dateText =
+    sDate && eDate
+      ? `${new Date(sDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}–${new Date(eDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`
+      : '';
+  const parts = [districtName, dateText, priceText, roomsText].filter(Boolean);
   const summary = parts.length > 0 ? parts.join(' · ') : t('search_placeholder');
 
   return (

@@ -56,6 +56,9 @@ const FILTER_KEYS = [
   'sort',
   'q',
   'bbox',
+  'start_date',
+  'end_date',
+  'flexibility_days',
 ] as const;
 
 /**

@@ -19,37 +19,15 @@ type RemovableChip = { key: string; label: string; clear: Record<string, undefin
  * Builds the active, removable filter chips (those not represented by a quick-toggle).
  * @param get - Reads a current URL param.
  * @param tx - Loose translator for dynamic keys.
- * @param rooms - The localized "rooms" word.
- * @param districts - Districts for resolving the district label.
  * @param amenities - Amenities for resolving amenity labels.
  * @returns The removable chip descriptors.
  */
 function buildRemovable(
   get: Get,
   tx: (key: string) => string,
-  rooms: string,
-  districts: DistrictOption[],
   amenities: AmenityOption[],
 ): RemovableChip[] {
   const out: RemovableChip[] = [];
-  const districtName = districts.find((d) => String(d.id) === get('district_id'))?.name;
-  if (districtName) {
-    out.push({ key: 'district', label: districtName, clear: { district_id: undefined } });
-  }
-  if (get('price_min') || get('price_max')) {
-    out.push({
-      key: 'price',
-      label: `$${get('price_min') || '0'} – $${get('price_max') || '∞'}`,
-      clear: { price_min: undefined, price_max: undefined },
-    });
-  }
-  if (get('rooms_min') || get('rooms_max')) {
-    out.push({
-      key: 'rooms',
-      label: `${get('rooms_min') || '1'}–${get('rooms_max') || '∞'} ${rooms}`,
-      clear: { rooms_min: undefined, rooms_max: undefined },
-    });
-  }
   if (get('area_min') || get('area_max')) {
     out.push({
       key: 'area',
@@ -90,7 +68,7 @@ export function DiscoveryFilterChips(props: {
 
   const toggle = (key: string, value: string) =>
     set({ [key]: get(key) === value ? undefined : value });
-  const removable = buildRemovable(get, tx, t('sb_rooms'), districts, amenities);
+  const removable = buildRemovable(get, tx, amenities);
 
   const removeAmenity = (slug: string) => {
     const next = (get('amenities') ? get('amenities').split(',') : []).filter((s) => s !== slug);

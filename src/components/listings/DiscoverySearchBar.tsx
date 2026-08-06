@@ -16,6 +16,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { useListingParams } from '@/hooks/useListingParams';
 import { cn } from '@/libs/utils';
 import type { DistrictOption } from '@/types/marketplace';
+import { MarketplaceDateRangePicker } from './MarketplaceDateRangePicker';
 
 const PRICE_STEPS = ['', '200', '300', '400', '500', '700', '1000', '1500', '2000'];
 const ROOM_STEPS = ['', '1', '2', '3', '4', '5'];
@@ -143,7 +144,12 @@ export function DiscoverySearchBar(props: { districts: DistrictOption[] }) {
         </PopoverContent>
       </Popover>
 
-      <span className="hidden h-8 w-px bg-border sm:block" />
+      <div className="hidden h-8 w-px bg-border sm:block" />
+
+      {/* Dates */}
+      <MarketplaceDateRangePicker />
+
+      <div className="hidden h-8 w-px bg-border sm:block" />
 
       {/* Price */}
       <Popover>
