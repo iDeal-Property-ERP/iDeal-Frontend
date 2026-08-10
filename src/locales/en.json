@@ -2212,6 +2212,7 @@
     "loading": "Loading conversations…",
     "empty": "No conversations in this view.",
     "select_prompt": "Select a conversation to see the thread.",
+    "select_prompt_title": "No conversation selected",
     "action_failed": "Couldn’t complete that action.",
     "cancel": "Cancel",
     "delete_title": "Purge this conversation?",

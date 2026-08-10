@@ -10,7 +10,7 @@ import {
   TriangleAlert,
 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ChatComposer } from '@/components/management/chats/ChatComposer';
 import { ChatMessageBubble } from '@/components/management/chats/ChatMessageBubble';
 import { Button } from '@/components/ui/button';
@@ -59,7 +59,7 @@ function latestMessageId(messages: ChatMessageOutput[]): number | null {
 
 /**
  * Renders the scrollback states and date-separated message bubbles.
- * @param props - Message state, labels, locale, and history callback.
+ * @param props - Message state, labels, locale, history, and media callbacks.
  * @returns The scrollback content.
  */
 function ThreadMessageList(props: {
@@ -74,6 +74,7 @@ function ThreadMessageList(props: {
   errorLabel: string;
   emptyLabel: string;
   olderLabel: string;
+  onMediaLoad: () => void;
 }) {
   const olderButton = props.hasMore ? (
     <Button
@@ -139,6 +140,7 @@ function ThreadMessageList(props: {
             ) : null}
             <ChatMessageBubble
               message={message}
+              onMediaLoad={props.onMediaLoad}
               peerLastReadMessageId={props.peerLastReadMessageId}
             />
           </div>
@@ -184,11 +186,18 @@ export function ChatThread(props: {
   const optimisticIdRef = useRef(-1);
   const preserveScrollRef = useRef<{ element: HTMLDivElement; height: number } | null>(null);
   const scrollToBottomRef = useRef(false);
+  const atBottomRef = useRef(true);
 
   messagesRef.current = messages;
   const conversationId = props.conversation.id;
   const initialLastMessageId = props.conversation.last_message_id;
   const { onConversationState, onConversationUpdate } = props;
+
+  const handleMediaLoad = useCallback(() => {
+    if (atBottomRef.current && scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, []);
 
   useEffect(() => {
     const token = requestTokenRef.current + 1;
@@ -246,6 +255,7 @@ export function ChatThread(props: {
         applyState(response.conversation);
         markRead(latestId);
         scrollToBottomRef.current = true;
+        atBottomRef.current = true;
       } catch {
         if (active && requestTokenRef.current === token) {
           setThreadError(t('thread_error'));
@@ -278,7 +288,9 @@ export function ChatThread(props: {
         }
         if (response.messages.length > 0) {
           setMessages((current) => mergeChatMessages(current, response.messages));
-          scrollToBottomRef.current = true;
+          if (atBottomRef.current) {
+            scrollToBottomRef.current = true;
+          }
           const latestId = latestMessageId(response.messages);
           if (
             latestId !== null &&
@@ -331,7 +343,7 @@ export function ChatThread(props: {
     };
   }, [conversationId, initialLastMessageId, onConversationState, onConversationUpdate, t]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (scrollToBottomRef.current && scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
       scrollToBottomRef.current = false;
@@ -341,7 +353,7 @@ export function ChatThread(props: {
       scrollRef.current.scrollTop += scrollRef.current.scrollHeight - preserved.height;
       preserveScrollRef.current = null;
     }
-  }, [messages.length]);
+  }, [messages]);
 
   const loadOlder = async () => {
     const [firstMessage] = messagesRef.current;
@@ -370,6 +382,7 @@ export function ChatThread(props: {
 
   const addOptimisticMessage = (message: ChatMessageOutput) => {
     setMessages((current) => mergeChatMessages(current, [message]));
+    atBottomRef.current = true;
     scrollToBottomRef.current = true;
   };
 
@@ -484,7 +497,7 @@ export function ChatThread(props: {
   const name = displayName(props.conversation, t('unknown_user'));
 
   return (
-    <div className="flex h-full min-h-[600px] flex-col overflow-hidden rounded-[16px] bg-card">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[16px] bg-card">
       <div className="flex shrink-0 items-center gap-2.5 border-b border-border px-3.5 py-3">
         {props.onBack ? (
           <Button
@@ -572,7 +585,15 @@ export function ChatThread(props: {
       ) : null}
 
       <div className="relative min-h-0 flex-1">
-        <div className="flex h-full flex-col gap-3 overflow-y-auto px-4 py-4" ref={scrollRef}>
+        <div
+          className="flex h-full flex-col gap-3 overflow-y-auto px-4 py-4"
+          onScroll={(event) => {
+            const element = event.currentTarget;
+            atBottomRef.current =
+              element.scrollHeight - element.scrollTop - element.clientHeight <= 64;
+          }}
+          ref={scrollRef}
+        >
           <ThreadMessageList
             emptyLabel={t('no_messages')}
             error={threadError}
@@ -584,6 +605,7 @@ export function ChatThread(props: {
             locale={locale}
             messages={messages}
             olderLabel={t('load_older')}
+            onMediaLoad={handleMediaLoad}
             peerLastReadMessageId={peerLastReadMessageId}
           />
         </div>

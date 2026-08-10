@@ -2212,6 +2212,7 @@
     "loading": "Suhbatlar yuklanmoqda…",
     "empty": "Bu ko‘rinishda suhbatlar yo‘q.",
     "select_prompt": "Suhbatni tanlab, yozishmalarni ko‘ring.",
+    "select_prompt_title": "Suhbat tanlanmagan",
     "action_failed": "Bu amalni bajarib bo‘lmadi.",
     "cancel": "Bekor qilish",
     "delete_title": "Bu suhbat butunlay o‘chirilsinmi?",

@@ -10,11 +10,13 @@ import type { ChatMessageOutput } from '@/types/chat';
 /**
  * Renders one left/right message bubble and derives the staff read tick from
  * the peer's conversation watermark.
- * @param props - Message data and the latest mobile-user read watermark.
+ * @param props - Message data, read watermark, and optional media callback.
  * @returns The message bubble.
  */
 export function ChatMessageBubble(props: {
   message: ChatMessageOutput;
+  /** Called when the thumbnail finishes loading. */
+  onMediaLoad?: () => void;
   peerLastReadMessageId: number | null;
 }) {
   const t = useTranslations('ChatsPage');
@@ -60,6 +62,7 @@ export function ChatMessageBubble(props: {
               <img
                 alt={t('image_alt')}
                 className="max-h-64 max-w-full object-contain"
+                onLoad={props.onMediaLoad}
                 src={message.image_url}
               />
             </button>

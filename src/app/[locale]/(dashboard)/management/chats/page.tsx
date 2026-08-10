@@ -1,6 +1,6 @@
 'use client';
 
-import { LoaderCircle } from 'lucide-react';
+import { LoaderCircle, MessagesSquare } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type * as React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -10,6 +10,7 @@ import { ChatsList } from '@/components/management/chats/ChatsList';
 import { ChatThread } from '@/components/management/chats/ChatThread';
 import { DangerConfirmDialog } from '@/components/management/dialogs/DangerConfirmDialog';
 import { ManagementPageHeader } from '@/components/management/ManagementPageHeader';
+import { EmptyState } from '@/components/management/states/EmptyState';
 import { ErrorState } from '@/components/management/states/ErrorState';
 import { TriageShell } from '@/components/management/triage/TriageShell';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -119,12 +120,8 @@ export default function ManagementChatsPage() {
       !conversations.some((conversation) => conversation.id === selectedId)
     ) {
       setSelectedId(null);
-      return;
     }
-    if (!isMobile && selectedId === null && conversations.length > 0) {
-      setSelectedId(conversations[0]!.id);
-    }
-  }, [conversations, isMobile, selectedId]);
+  }, [conversations, selectedId]);
 
   const selected = conversations.find((conversation) => conversation.id === selectedId) ?? null;
 
@@ -261,8 +258,13 @@ export default function ManagementChatsPage() {
     );
   } else {
     thread = (
-      <div className="flex h-full min-h-[600px] items-center justify-center p-10 text-sm text-muted-foreground">
-        {t('select_prompt')}
+      <div className="flex h-full items-center justify-center">
+        <EmptyState
+          description={t('select_prompt')}
+          icon={MessagesSquare}
+          title={t('select_prompt_title')}
+          tone="muted"
+        />
       </div>
     );
   }
