@@ -18,6 +18,7 @@ import {
   LayoutDashboard,
   LogOut,
   Map,
+  MessageCircle,
   Moon,
   ScrollText,
   Search,
@@ -77,6 +78,7 @@ type NavItemLabel =
   | 'nav_brokerage'
   | 'nav_portfolio_map'
   | 'nav_leads'
+  | 'nav_chats'
   | 'nav_my_listings'
   | 'nav_maintenance'
   | 'nav_how_it_works'
@@ -175,6 +177,12 @@ const mgmtSections: NavSection[] = [
   {
     sectionKey: 'sec_operations',
     items: [
+      {
+        labelKey: 'nav_chats',
+        href: '/management/chats',
+        icon: MessageCircle,
+        countKey: 'chats',
+      },
       {
         labelKey: 'nav_maintenance',
         href: '/management/maintenance',
@@ -400,16 +408,17 @@ export function AppSidebar(props: { role: Role; counts?: Record<string, number> 
               {section.items.map((item) => {
                 const Icon = item.icon;
                 const count = item.countKey ? counts[item.countKey] : undefined;
+                const label = item.labelKey === 'nav_chats' ? t('nav_chats') : t(item.labelKey);
                 return (
                   <SidebarMenuItem key={`${item.href}-${item.labelKey}`}>
                     <SidebarMenuButton
                       asChild
                       isActive={isItemActive(item.href, pathname)}
-                      tooltip={t(item.labelKey)}
+                      tooltip={label}
                     >
                       <Link href={item.href} onClick={() => setOpenMobile(false)}>
                         <Icon strokeWidth={1.5} />
-                        <span>{t(item.labelKey)}</span>
+                        <span>{label}</span>
                       </Link>
                     </SidebarMenuButton>
                     {count !== undefined && count > 0 ? (
