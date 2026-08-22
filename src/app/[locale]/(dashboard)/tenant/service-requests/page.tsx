@@ -137,6 +137,7 @@ export default function TenantServiceRequestsPage() {
               {(field, invalid) => (
                 <PropertySelect
                   id="property_id"
+                  // SAFETY: Form field value for property_id is number, null, or undefined
                   value={field.value as number | null | undefined}
                   onChange={(v) => field.onChange(v)}
                   aria-invalid={invalid}

@@ -45,6 +45,16 @@ function useSidebar() {
   return context;
 }
 
+function isFunction(
+  val: boolean | ((value: boolean) => boolean) | undefined,
+): val is (value: boolean) => boolean {
+  return Object.prototype.toString.call(val) === '[object Function]';
+}
+
+function isString(val: string | React.ComponentProps<typeof TooltipContent>): val is string {
+  return Object.prototype.toString.call(val) === '[object String]';
+}
+
 function SidebarProvider({
   defaultOpen = true,
   open: openProp,
@@ -65,7 +75,7 @@ function SidebarProvider({
   const open = openProp ?? openFromState;
   const setOpen = React.useCallback(
     (value: boolean | ((value: boolean) => boolean)) => {
-      const openState = typeof value === 'function' ? value(open) : value;
+      const openState = isFunction(value) ? value(open) : value;
       if (setOpenProp) {
         setOpenProp(openState);
       } else {
@@ -111,6 +121,7 @@ function SidebarProvider({
       <TooltipProvider delayDuration={0}>
         <div
           data-slot="sidebar-wrapper"
+          // SAFETY: Custom CSS variables cast to CSSProperties object
           style={
             {
               '--sidebar-width': SIDEBAR_WIDTH,
@@ -168,6 +179,7 @@ function Sidebar({
           data-slot="sidebar"
           data-mobile="true"
           className="w-(--sidebar-width) bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
+          // SAFETY: Custom CSS variables cast to CSSProperties object
           style={
             {
               '--sidebar-width': SIDEBAR_WIDTH_MOBILE,
@@ -465,17 +477,21 @@ function SidebarMenuButton({
     return button;
   }
 
-  const tooltipProps = typeof tooltip === 'string' ? { children: tooltip } : tooltip;
-
   return (
     <Tooltip>
       <TooltipTrigger asChild>{button}</TooltipTrigger>
-      <TooltipContent
-        side="right"
-        align="center"
-        hidden={state !== 'collapsed' || isMobile}
-        {...tooltipProps}
-      />
+      {isString(tooltip) ? (
+        <TooltipContent side="right" align="center" hidden={state !== 'collapsed' || isMobile}>
+          {tooltip}
+        </TooltipContent>
+      ) : (
+        <TooltipContent
+          side="right"
+          align="center"
+          hidden={state !== 'collapsed' || isMobile}
+          {...tooltip}
+        />
+      )}
     </Tooltip>
   );
 }
@@ -517,6 +533,7 @@ function SidebarMenuSkeleton({
       <Skeleton
         className="h-4 max-w-(--skeleton-width) flex-1"
         data-sidebar="menu-skeleton-text"
+        // SAFETY: Dynamic skeleton width assigned to CSS custom properties
         style={{ '--skeleton-width': width } as React.CSSProperties}
       />
     </div>

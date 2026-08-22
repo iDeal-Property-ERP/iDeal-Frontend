@@ -46,19 +46,13 @@ export type ChatReportListParams = {
 export async function listChatConversations(
   params: ChatConversationListParams,
 ): Promise<ChatConversationListResult> {
-  const query: Record<string, string | number | boolean | undefined> = { page: params.page };
-  if (params.perPage !== undefined) {
-    query.per_page = params.perPage;
-  }
-  if (params.status !== undefined) {
-    query.status = params.status;
-  }
-  if (params.search) {
-    query.q = params.search;
-  }
-  if (params.listingId !== undefined) {
-    query.listing_id = params.listingId;
-  }
+  const query = {
+    page: params.page,
+    per_page: params.perPage,
+    status: params.status,
+    q: params.search,
+    listing_id: params.listingId,
+  } satisfies Record<string, string | number | boolean | undefined>;
 
   const response = await apiFetch<PaginatedData<ChatConversationOutput>>('/chat/conversations/', {
     query,

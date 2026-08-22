@@ -12,6 +12,13 @@ import { useListingParams } from '@/hooks/useListingParams';
 
 const OPTIONS = ['newest', 'price_asc', 'price_desc'] as const;
 
+function parseSortOption(value: string | undefined): (typeof OPTIONS)[number] {
+  if (value === 'price_asc' || value === 'price_desc') {
+    return value;
+  }
+  return 'newest';
+}
+
 /**
  * Sort dropdown (Figma 76:80) — writes `sort` to the URL.
  * @returns The sort dropdown.
@@ -19,7 +26,7 @@ const OPTIONS = ['newest', 'price_asc', 'price_desc'] as const;
 export function SortDropdown() {
   const t = useTranslations('Listings');
   const { get, set } = useListingParams();
-  const current = (get('sort') || 'newest') as (typeof OPTIONS)[number];
+  const current = parseSortOption(get('sort'));
 
   return (
     <DropdownMenu>

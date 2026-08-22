@@ -56,6 +56,7 @@ export default function NewPropertyPage() {
               {(field, invalid) => (
                 <OwnerSelect
                   id="owner_id"
+                  // SAFETY: Form field value for owner_id is number, null, or undefined
                   value={field.value as number | null | undefined}
                   onChange={(v) => field.onChange(v)}
                   aria-invalid={invalid}

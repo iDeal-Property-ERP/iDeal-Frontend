@@ -2,9 +2,9 @@
 
 import { ChevronLeft, ChevronRight, Heart, LayoutGrid, Share2, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import Image from 'next/image';
 import { Dialog as DialogPrimitive } from 'radix-ui';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { DeferredImage } from '@/components/ui/DeferredImage';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useShareLink } from '@/hooks/useShareLink';
 import { cn } from '@/libs/utils';
@@ -177,10 +177,8 @@ export function ListingImageViewer(props: {
                     }}
                     type="button"
                   >
-                    <Image
+                    <DeferredImage
                       alt={p.caption ?? name}
-                      className="object-cover"
-                      fill
                       sizes="(max-width: 640px) 50vw, 25vw"
                       src={p.image_url}
                     />
@@ -199,10 +197,8 @@ export function ListingImageViewer(props: {
                 }}
               >
                 {current && (
-                  <Image
+                  <DeferredImage
                     alt={current.caption ?? name}
-                    className="object-cover"
-                    fill
                     priority
                     sizes="(max-width: 1024px) 100vw, 80vw"
                     src={current.image_url}
@@ -255,13 +251,7 @@ export function ListingImageViewer(props: {
                     }}
                     type="button"
                   >
-                    <Image
-                      alt={p.caption ?? name}
-                      className="object-cover"
-                      fill
-                      sizes="196px"
-                      src={p.image_url}
-                    />
+                    <DeferredImage alt={p.caption ?? name} sizes="196px" src={p.image_url} />
                   </button>
                 ))}
               </div>
@@ -281,13 +271,7 @@ export function ListingImageViewer(props: {
                     }}
                     type="button"
                   >
-                    <Image
-                      alt={p.caption ?? name}
-                      className="object-cover"
-                      fill
-                      sizes="80px"
-                      src={p.image_url}
-                    />
+                    <DeferredImage alt={p.caption ?? name} sizes="80px" src={p.image_url} />
                   </button>
                 ))}
               </div>

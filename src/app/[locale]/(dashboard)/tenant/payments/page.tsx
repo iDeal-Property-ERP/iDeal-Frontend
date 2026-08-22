@@ -161,6 +161,7 @@ export default function TenantPaymentsPage() {
                 <Select
                   value={method}
                   onValueChange={(v) => {
+                    // SAFETY: Select options only contain valid PaymentMethod values
                     setMethod(v as PaymentMethod);
                   }}
                 >

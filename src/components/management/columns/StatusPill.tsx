@@ -12,7 +12,7 @@ export type PillTone =
   | 'accent'
   | 'neutral';
 
-const toneClass: Record<PillTone, string> = {
+const toneClass = {
   rented: 'bg-primary-subtle text-primary-subtle-foreground',
   vacant: 'bg-accent-brand-subtle text-accent-brand-subtle-foreground',
   maintenance: 'bg-danger-subtle text-danger-subtle-foreground',
@@ -23,7 +23,7 @@ const toneClass: Record<PillTone, string> = {
   info: 'bg-info-subtle text-info-subtle-foreground',
   accent: 'bg-accent-brand-subtle text-accent-brand-subtle-foreground',
   neutral: 'bg-muted text-muted-foreground',
-};
+} satisfies Record<PillTone, string>;
 
 /**
  * A status pill matching the Figma table/status treatment — a full-radius chip

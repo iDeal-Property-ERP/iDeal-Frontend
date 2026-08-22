@@ -21,18 +21,20 @@ import type { ManagementPropertyMapRow } from '@/types/management';
 
 const STATUSES = ['rented', 'vacant', 'maintenance', 'pending_review'];
 const ROOMS = ['1', '2', '3', '4', '5'];
-const PRICE_BANDS: Record<string, { min?: number; max?: number }> = {
-  '0-400': { max: 400 },
+export type PriceBand = { min?: number; max?: number };
+
+const PRICE_BANDS = {
+  '0-400': { min: undefined, max: 400 },
   '400-700': { min: 400, max: 700 },
   '700-1000': { min: 700, max: 1000 },
-  '1000+': { min: 1000 },
-};
-const STATUS_LEGEND_COLOR: Record<string, string> = {
+  '1000+': { min: 1000, max: undefined },
+} satisfies Record<string, PriceBand>;
+const STATUS_LEGEND_COLOR = {
   rented: 'var(--color-success)',
   vacant: 'var(--color-warning)',
   maintenance: 'var(--color-danger)',
   pending_review: 'var(--color-muted-foreground)',
-};
+} satisfies Record<string, string>;
 
 export default function PortfolioMapPage() {
   const t = useTranslations('Management');
@@ -40,7 +42,7 @@ export default function PortfolioMapPage() {
 
   const [properties, setProperties] = useState<ManagementPropertyMapRow[]>([]);
   const [districts, setDistricts] = useState<DistrictOption[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<string | null>(null);
   const [districtId, setDistrictId] = useState<string | null>(null);
@@ -67,7 +69,8 @@ export default function PortfolioMapPage() {
   };
   const tariffLabel = (value: string): string =>
     value === 'standard' || value === 'comfort' || value === 'premium'
-      ? t(`tariff_${value}` as never)
+      ? // SAFETY: Tariff literal values map to localized tariff keys
+        t(`tariff_${value}` as never)
       : value;
 
   useEffect(() => {
@@ -80,27 +83,32 @@ export default function PortfolioMapPage() {
 
   useEffect(() => {
     let active = true;
-    const band = price ? PRICE_BANDS[price] : undefined;
+    const band =
+      price && price in PRICE_BANDS
+        ? // SAFETY: Price filter key verified in PRICE_BANDS lookup
+          PRICE_BANDS[price as keyof typeof PRICE_BANDS]
+        : undefined;
     startTransition(() => {
-      setError(null);
-      listMapProperties({
-        search: search || undefined,
-        status: status ?? undefined,
-        districtId: districtId ?? undefined,
-        rooms: rooms ?? undefined,
-        priceMin: band?.min,
-        priceMax: band?.max,
-      })
-        .then((rows) => {
+      setFetchError(null);
+      void (async () => {
+        try {
+          const rows = await listMapProperties({
+            search: search || undefined,
+            status: status ?? undefined,
+            districtId: districtId ?? undefined,
+            rooms: rooms ?? undefined,
+            priceMin: band?.min,
+            priceMax: band?.max,
+          });
           if (active) {
             setProperties(rows);
           }
-        })
-        .catch((caughtError: unknown) => {
+        } catch (error) {
           if (active) {
-            setError(caughtError instanceof Error ? caughtError.message : t('map_error'));
+            setFetchError(error instanceof Error ? error.message : t('map_error'));
           }
-        });
+        }
+      })();
     });
     return () => {
       active = false;
@@ -116,7 +124,11 @@ export default function PortfolioMapPage() {
     status: s,
     label: statusLabel(s),
     count: properties.filter((p) => p.status === s).length,
-    color: STATUS_LEGEND_COLOR[s] ?? 'var(--color-muted-foreground)',
+    color:
+      (s in STATUS_LEGEND_COLOR
+        ? // SAFETY: Status string checked against STATUS_LEGEND_COLOR lookup
+          STATUS_LEGEND_COLOR[s as keyof typeof STATUS_LEGEND_COLOR]
+        : undefined) ?? 'var(--color-muted-foreground)',
   }));
 
   const chips: MapFilterChip[] = [
@@ -203,11 +215,11 @@ export default function PortfolioMapPage() {
     />
   );
 
-  if (error) {
+  if (fetchError) {
     return (
       <ErrorState
         title={t('map_error')}
-        message={error}
+        message={fetchError}
         onRetry={() => setSearch((s) => s)}
         retryLabel={t('retry')}
       />

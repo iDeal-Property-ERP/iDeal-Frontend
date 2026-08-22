@@ -50,12 +50,14 @@ const SAVED_VIEW_DEFS = [
   { id: 'all', labelKey: 'view_all', countKey: 'all' },
 ] as const satisfies { id: string; labelKey: string; countKey: keyof ActCounts }[];
 
+export type InventoryViewQuery = { status?: string; awaiting_ack?: string };
+
 /**
  * Maps a saved-view id to the backend list query it applies.
  * @param view - The saved-view id.
  * @returns The list query for that view.
  */
-function queryForView(view: string): { status?: string; awaiting_ack?: string } {
+function queryForView(view: string): InventoryViewQuery {
   if (view === 'all') {
     return {};
   }
@@ -108,6 +110,7 @@ export default function ManagementInventoryPage() {
     async ({ page, query }) =>
       await listActs({
         page,
+        // SAFETY: Query parameter indexed as string
         status: query.status as string | undefined,
         awaitingAck: query.awaiting_ack === 'true',
       }),
@@ -115,7 +118,9 @@ export default function ManagementInventoryPage() {
   );
 
   const view = viewFromQuery({
+    // SAFETY: Query parameter indexed as string
     status: resource.query.status as string | undefined,
+    // SAFETY: Query parameter indexed as string
     awaiting_ack: resource.query.awaiting_ack as string | undefined,
   });
 

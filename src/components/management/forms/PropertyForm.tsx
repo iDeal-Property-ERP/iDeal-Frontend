@@ -272,8 +272,28 @@ function getVerificationScheduled(mode: 'create' | 'edit', initial?: PropertyDet
   return mode === 'edit' ? Boolean(initial?.verification) : false;
 }
 
-function getImmutableEngagement(initial?: PropertyDetail): string | null {
-  return initial?.engagement_type ?? null;
+function getImmutableEngagement(initial?: PropertyDetail): 'managed' | 'one_off' | null {
+  if (initial?.engagement_type === 'one_off') {
+    return 'one_off';
+  }
+  if (initial?.engagement_type === 'managed') {
+    return 'managed';
+  }
+  return null;
+}
+
+function resolveEngagement(
+  immutable: 'managed' | 'one_off' | null,
+  watched: string | undefined,
+  initial: 'managed' | 'one_off',
+): 'managed' | 'one_off' {
+  if (immutable) {
+    return immutable;
+  }
+  if (watched === 'one_off' || watched === 'managed') {
+    return watched;
+  }
+  return initial;
 }
 
 function triggerAutosave(
@@ -479,9 +499,11 @@ export function PropertyForm(props: PropertyFormProps) {
         },
   });
 
-  const engagement: 'managed' | 'one_off' = (immutableEngagement ??
-    form.watch('engagement_type') ??
-    initialEngagement) as 'managed' | 'one_off';
+  const engagement = resolveEngagement(
+    immutableEngagement,
+    form.watch('engagement_type'),
+    initialEngagement,
+  );
   const oneOff = engagement === 'one_off';
   const managedDraft = usePropertyDraft(getManagedDraftId(mode, initial));
   const oneOffDraft = useOneOffPropertyDraft(getOneOffDraftId(mode, initial));
@@ -582,6 +604,7 @@ export function PropertyForm(props: PropertyFormProps) {
     const missing = new Set<string>();
     for (const issue of parsed.error.issues) {
       const path = String(issue.path[0]);
+      // SAFETY: Validation error path maps to a property form field key
       form.setError(path as keyof ManagementPropertyFormData, {
         type: 'publish',
         message: issue.message,
@@ -591,6 +614,7 @@ export function PropertyForm(props: PropertyFormProps) {
     setServerMissing(missing);
     setErrorStep(missing.size ? Math.min(...[...missing].map(stepForCode)) : 0);
     const first = String(parsed.error.issues[0]?.path[0] ?? 'name');
+    // SAFETY: First validation issue path corresponds to a form field name
     form.setFocus(first as keyof ManagementPropertyFormData);
     return true;
   };

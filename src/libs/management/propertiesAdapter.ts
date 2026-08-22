@@ -120,6 +120,7 @@ export async function publishProperty(
   } catch (error) {
     const { ApiError_ } = await import('@/libs/api');
     if (error instanceof ApiError_) {
+      // SAFETY: ApiError body inspected for incomplete draft validation payload
       const raw = error.body?.error as { code?: string; missing?: string[] } | undefined;
       if (raw && raw.code === 'incomplete' && Array.isArray(raw.missing)) {
         return { ok: false, missing: raw.missing };
@@ -238,22 +239,14 @@ export type PropertyListResult = {
  * @returns The page of rows plus totals.
  */
 export async function listProperties(params: PropertyListParams): Promise<PropertyListResult> {
-  const query: Record<string, string | number> = { page: params.page };
-  if (params.perPage) {
-    query.per_page = params.perPage;
-  }
-  if (params.search) {
-    query.search = params.search;
-  }
-  if (params.status) {
-    query.status = params.status;
-  }
-  if (params.districtId) {
-    query.district_id = params.districtId;
-  }
-  if (params.tariff) {
-    query.tariff = params.tariff;
-  }
+  const query = {
+    page: params.page,
+    per_page: params.perPage,
+    search: params.search,
+    status: params.status,
+    district_id: params.districtId,
+    tariff: params.tariff,
+  } satisfies Record<string, string | number | undefined>;
   const res = await apiFetch<PaginatedData<ManagementPropertyOutput>>('/management/properties/', {
     query,
   });
@@ -279,16 +272,15 @@ export type StatusCounts = {
 export async function getStatusCounts(search?: string): Promise<StatusCounts> {
   const countOf = async (status?: string): Promise<number> => {
     try {
+      const query = {
+        page: 1,
+        per_page: 1,
+        search,
+        status,
+      } satisfies Record<string, string | number | undefined>;
       const res = await apiFetch<PaginatedData<ManagementPropertyOutput>>(
         '/management/properties/',
-        {
-          query: {
-            page: 1,
-            per_page: 1,
-            ...(search ? { search } : {}),
-            ...(status ? { status } : {}),
-          },
-        },
+        { query },
       );
       return res.count;
     } catch {
@@ -329,7 +321,7 @@ export async function getWorkbenchKpis(counts: StatusCounts): Promise<WorkbenchK
   const [dashboard, sample] = await Promise.all([
     apiFetch<ManagementDashboardOutput>('/management/dashboard/').catch(() => null),
     listProperties({ page: 1, perPage: 50 }).catch(
-      () => ({ items: [], total: 0, totalPages: 1 }) as PropertyListResult,
+      (): PropertyListResult => ({ items: [], total: 0, totalPages: 1 }),
     ),
   ]);
 
@@ -381,9 +373,9 @@ export type BulkStatusResult = { succeeded: number[]; failed: number[] };
  */
 export async function bulkChangeStatus(ids: number[], status: string): Promise<BulkStatusResult> {
   const results = await Promise.allSettled(
-    ids.map(async (id) => {
-      await apiFetch(`/properties/${id}/`, { method: 'PATCH', body: { status } });
-    }),
+    ids.map(
+      async (id) => await apiFetch(`/properties/${id}/`, { method: 'PATCH', body: { status } }),
+    ),
   );
   const succeeded: number[] = [];
   const failed: number[] = [];

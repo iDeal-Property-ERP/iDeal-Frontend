@@ -35,28 +35,16 @@ export type PayoutListResult = {
  * @returns The page of rows plus totals.
  */
 export async function listPayouts(params: PayoutListParams): Promise<PayoutListResult> {
-  const query: Record<string, string | number> = { page: params.page };
-  if (params.perPage) {
-    query.per_page = params.perPage;
-  }
-  if (params.search) {
-    query.search = params.search;
-  }
-  if (params.status) {
-    query.status = params.status;
-  }
-  if (params.ownerId) {
-    query.owner_id = params.ownerId;
-  }
-  if (params.scheduledFrom) {
-    query.scheduled_from = params.scheduledFrom;
-  }
-  if (params.scheduledTo) {
-    query.scheduled_to = params.scheduledTo;
-  }
-  if (params.order) {
-    query.order = params.order;
-  }
+  const query = {
+    page: params.page,
+    per_page: params.perPage,
+    search: params.search,
+    status: params.status,
+    owner_id: params.ownerId,
+    scheduled_from: params.scheduledFrom,
+    scheduled_to: params.scheduledTo,
+    order: params.order,
+  } satisfies Record<string, string | number | undefined>;
   const res = await apiFetch<PaginatedData<ManagementPayoutOutput>>('/management/payouts/', {
     query,
   });

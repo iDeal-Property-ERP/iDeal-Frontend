@@ -84,21 +84,21 @@ Lefthook runs on every commit:
 - `chore: bump` and `Updating` commits are ignored by commitlint (dependabot)
 - Use `npm run commit` for interactive commit prompt
 
-### Using Postman MCP tools
-The Postman MCP (Model Context Protocol) tools provide programmatic access to the iDeal API collection. Use these to inspect endpoint schemas, request/response shapes, and auth requirements without needing the backend running.
-**Fetch the full collection:**
-Use the postman_getCollection tool with the collection ID to
-retrieve all endpoints, folders, request bodies, and saved responses.
-**Inspect a specific endpoint:**
-Use postman_getCollectionRequest with the request's ID to get
-the full request definition including URL, method, headers, body schema,
-and saved example responses.
-**For frontend development, use these tools to:**
-- Check request body schemas when building forms
-- Check response shapes when writing API client code or types
-- Verify auth requirements (Bearer token via `{{TOKEN}}` variable)
-- Find saved example responses (success/failure) for each endpoint
-**Collection ID:** `47796254-67fe0405-7142-4fc5-8a5d-ccccd8807359`
+### API contract and Bruno collection
+Use the Git-tracked Bruno collection at `Backend/docs/api/bruno` in the Backend
+repository (local path: `/home/mehroj/PycharmProjects/iDeal-Backend/docs/api/bruno`) for executable
+request definitions and saved success/failure examples. The backend URL
+resolver defines the mounted routes and methods; backend view annotations,
+Pydantic schemas, tests, and response handling define the request and response
+contract. Do not treat an external collection as authority when it conflicts
+with backend source.
+
+For frontend work, use Bruno to check request fields, query/path parameters,
+response envelopes, authentication requirements, and representative validation
+or permission failures. Keep environment variables and tokens secret; switch
+between `Local`, `Dev`, and `Prod` rather than editing request URLs. When the
+backend collection changes, verify the relevant frontend client, Zod schema,
+and tests against the updated Bruno examples.
 
 ## Backend Source
 - Path: `/home/mehroj/PycharmProjects/iDeal-Backend`

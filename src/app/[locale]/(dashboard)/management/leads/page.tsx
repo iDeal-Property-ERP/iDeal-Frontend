@@ -55,8 +55,11 @@ export default function ManagementLeadsPage() {
       await listLeads({
         page,
         perPage: 50,
+        // SAFETY: Tab query parameter indexed as string
         tab: query.tab as string,
+        // SAFETY: Type query parameter indexed as string
         type: query.type === 'all' ? undefined : (query.type as string),
+        // SAFETY: Search query parameter indexed as string
         search: (query.search as string) || undefined,
       }),
     { initialQuery: { tab: 'new', type: 'all', search: '' } },

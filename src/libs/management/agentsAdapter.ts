@@ -42,16 +42,12 @@ export type AgentListResult = {
  * @returns The page of rows plus totals.
  */
 export async function listAgents(params: AgentListParams): Promise<AgentListResult> {
-  const query: Record<string, string | number | boolean> = { page: params.page };
-  if (params.perPage) {
-    query.per_page = params.perPage;
-  }
-  if (params.isActive !== undefined) {
-    query.is_active = params.isActive;
-  }
-  if (params.hasPendingCommission !== undefined) {
-    query.has_pending_commission = params.hasPendingCommission;
-  }
+  const query = {
+    page: params.page,
+    per_page: params.perPage,
+    is_active: params.isActive,
+    has_pending_commission: params.hasPendingCommission,
+  } satisfies Record<string, string | number | boolean | undefined>;
   const res = await apiFetch<PaginatedData<AgentOutput>>('/agents/', { query });
   return { items: res.page.object_list, total: res.count, totalPages: res.num_pages };
 }
@@ -88,7 +84,7 @@ export type AgentKpis = {
  */
 export async function getAgentKpis(): Promise<AgentKpis> {
   const sample = await listAgents({ page: 1, perPage: 100 }).catch(
-    () => ({ items: [], total: 0, totalPages: 1 }) as AgentListResult,
+    (): AgentListResult => ({ items: [], total: 0, totalPages: 1 }),
   );
   const dealsYtd = sample.items.reduce((sum, agent) => sum + agent.deals_ytd, 0);
   let commissionPaid = 0;

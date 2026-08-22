@@ -77,9 +77,9 @@ function conditionTone(condition: string): PillTone {
 function worstCondition(items: InventoryActOutput['items']): string | null {
   let worstIndex = -1;
   for (const item of items) {
-    const index = CONDITION_ORDER.indexOf(
-      item.condition.toLowerCase() as (typeof CONDITION_ORDER)[number],
-    );
+    // SAFETY: item.condition string lowercased to match CONDITION_ORDER elements
+    const cond = item.condition.toLowerCase() as (typeof CONDITION_ORDER)[number];
+    const index = CONDITION_ORDER.indexOf(cond);
     if (index > worstIndex) {
       worstIndex = index;
     }
@@ -98,6 +98,7 @@ function computeConditionValue(
   t: (key: string) => string,
 ): string {
   const worst = worstCondition(items);
+  // SAFETY: Condition key mapped to localized condition label
   return worst ? t(`inv_condition_${worst}` as 'inv_condition_good') : t('inv_condition_good');
 }
 
@@ -148,6 +149,7 @@ function InventoryActTabBody(props: {
             </div>
             <StatusPill
               tone={conditionTone(item.condition)}
+              // SAFETY: Condition key mapped to localized condition label
               label={t(`inv_condition_${item.condition.toLowerCase()}` as 'inv_condition_good')}
             />
           </div>
@@ -442,6 +444,7 @@ export function InventoryActRecordPanel(props: {
   const itemCount = detail ? items.length : act.item_count;
   const photoCount = detail ? photos.length : act.photo_count;
   const isDraft = act.status.toLowerCase() === 'draft';
+  // SAFETY: Dynamic key passed to localized translator
   const conditionValue = computeConditionValue(items, (key) => t(key as 'inv_condition_good'));
   const flagged = computeFlagged(items);
 

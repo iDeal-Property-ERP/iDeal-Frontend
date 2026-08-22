@@ -54,6 +54,7 @@ export function MaintenanceMobileView(props: {
                   </span>
                   <StatusPill
                     tone={priorityTone(request.priority)}
+                    // SAFETY: Priority string mapped to localized priority label
                     label={t(`priority_${request.priority}` as never)}
                   />
                 </div>

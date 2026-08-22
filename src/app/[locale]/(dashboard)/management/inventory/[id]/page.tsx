@@ -146,6 +146,7 @@ export default function InventoryActDetailPage() {
                 disabled={!isDraft}
                 onValueChange={(value) => {
                   const next = [...items];
+                  // SAFETY: Condition value selected from CONDITIONS list
                   next[idx] = { ...item, condition: value as ConditionRating };
                   setItems(next);
                 }}

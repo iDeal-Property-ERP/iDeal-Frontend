@@ -10,12 +10,14 @@ const handleI18nRouting = createMiddleware(routing);
 const ACCESS_COOKIE = 'ideal_access';
 const REFRESH_COOKIE = 'ideal_refresh';
 
+type LocaleSegments = { prefix: string; rest: string };
+
 /**
  * Split a leading locale segment (e.g. `/ru`) off the pathname.
  * @param pathname - The request pathname.
  * @returns The locale prefix (or '') and the remaining path.
  */
-function stripLocale(pathname: string): { prefix: string; rest: string } {
+function stripLocale(pathname: string): LocaleSegments {
   for (const locale of routing.locales) {
     const seg = `/${locale}`;
     if (pathname === seg || pathname.startsWith(`${seg}/`)) {
@@ -36,6 +38,7 @@ function decodeClaims(token: string): { role?: Role; mustChange?: boolean } | nu
     if (!payload) {
       return null;
     }
+    // SAFETY: Base64-decoded JWT claims parsed to extract role and mustChange fields
     const json = JSON.parse(atob(payload.replaceAll('-', '+').replaceAll('_', '/'))) as {
       extras?: { role?: Role; must_change_password?: boolean };
     };
@@ -78,5 +81,5 @@ export default function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: '/((?!_next|_vercel|monitoring|api|.*\\..*).*)',
+  matcher: '/((?!_next|_vercel|monitoring|api|payment-return|.*\\..*).*)',
 };

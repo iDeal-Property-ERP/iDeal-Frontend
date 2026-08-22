@@ -104,13 +104,14 @@ function buildQuery(params: Record<string, string | undefined>): URLSearchParams
 export async function fetchListings(
   params: ListingFilters & { per_page?: string } = {},
 ): Promise<ListingOutput[]> {
-  const url = new URL(`${BASE}/listings/`);
-  url.search = buildQuery(params).toString();
   try {
+    const url = new URL(`${BASE}/listings/`);
+    url.search = buildQuery(params).toString();
     const res = await fetch(url.toString());
     if (!res.ok) {
       return [];
     }
+    // SAFETY: Marketplace response json conforms to paginated envelope
     const json = (await res.json()) as Envelope<PaginatedPayload<ListingOutput>>;
     return json.data?.page?.object_list ?? [];
   } catch {
@@ -139,16 +140,17 @@ export async function fetchListingsPage(
   perPage: number,
 ): Promise<PagedListings> {
   const empty: PagedListings = { items: [], count: 0, numPages: 0, page, perPage };
-  const url = new URL(`${BASE}/listings/`);
-  const search = buildQuery(params);
-  search.set('page', String(page));
-  search.set('per_page', String(perPage));
-  url.search = search.toString();
   try {
+    const url = new URL(`${BASE}/listings/`);
+    const search = buildQuery(params);
+    search.set('page', String(page));
+    search.set('per_page', String(perPage));
+    url.search = search.toString();
     const res = await fetch(url.toString());
     if (!res.ok) {
       return empty;
     }
+    // SAFETY: Marketplace response json conforms to paginated envelope
     const json = (await res.json()) as Envelope<PaginatedPayload<ListingOutput>>;
     const { data } = json;
     if (!data?.page) {
@@ -177,6 +179,7 @@ export async function fetchListing(id: string | number): Promise<ListingDetail |
     if (!res.ok) {
       return null;
     }
+    // SAFETY: Marketplace response json conforms to listing detail envelope
     const json = (await res.json()) as Envelope<ListingDetail>;
     return json.data ?? null;
   } catch {
@@ -194,6 +197,7 @@ export async function fetchListingsMap(): Promise<MapPoint[]> {
     if (!res.ok) {
       return [];
     }
+    // SAFETY: Marketplace response json conforms to GeoJSON collection envelope
     const json = (await res.json()) as Envelope<ListingMapCollection>;
     const features = json.data?.features ?? [];
     return features.map((f) => ({
@@ -217,6 +221,7 @@ export async function fetchDistricts(): Promise<DistrictOption[]> {
     if (!res.ok) {
       return [];
     }
+    // SAFETY: Marketplace response json conforms to district list envelope
     const json = (await res.json()) as Envelope<DistrictOption[]>;
     return json.data ?? [];
   } catch {
@@ -230,6 +235,7 @@ export async function fetchAmenities(): Promise<AmenityOption[]> {
     if (!res.ok) {
       return [];
     }
+    // SAFETY: Marketplace response json conforms to amenity list envelope
     const json = (await res.json()) as Envelope<AmenityOption[]>;
     return json.data ?? [];
   } catch {
@@ -243,6 +249,7 @@ export async function fetchFaqs(): Promise<FaqItem[]> {
     if (!res.ok) {
       return [];
     }
+    // SAFETY: Marketplace response json conforms to FAQ list envelope
     const json = (await res.json()) as Envelope<FaqItem[]>;
     return json.data ?? [];
   } catch {
@@ -265,6 +272,7 @@ export async function bookViewing(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
+  // SAFETY: Server JSON conforms to ViewingOutput response envelope
   const json = (await res.json()) as Envelope<ViewingOutput>;
   if (!res.ok || !json.success) {
     throw new Error('book_viewing_failed');
@@ -283,6 +291,7 @@ export async function postInquiry(payload: ContactInquiryPayload): Promise<Conta
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
+  // SAFETY: Server JSON conforms to ContactInquiryOutput response envelope
   const json = (await res.json()) as Envelope<ContactInquiryOutput>;
   if (!res.ok || !json.success) {
     throw new Error('inquiry_failed');

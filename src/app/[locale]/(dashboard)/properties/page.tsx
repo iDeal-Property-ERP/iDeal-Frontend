@@ -13,11 +13,11 @@ import { useRouter } from '@/libs/I18nNavigation';
 import type { PaginatedData } from '@/types/api';
 import type { PropertyOutput } from '@/types/property';
 
-const TARIFF_LABEL: Record<string, string> = {
+const TARIFF_LABEL = {
   standard: 'Standard',
   comfort: 'Comfort',
   premium: 'Premium',
-};
+} satisfies Record<string, string>;
 
 /**
  * Renders the paginated properties list with navigation to create a new property.
@@ -72,7 +72,11 @@ export default function PropertiesPage() {
     {
       accessorKey: 'tariff',
       header: 'Tariff',
-      cell: ({ row }) => TARIFF_LABEL[row.original.tariff] ?? row.original.tariff,
+      cell: ({ row }) =>
+        (row.original.tariff in TARIFF_LABEL
+          ? // SAFETY: Tariff string checked against TARIFF_LABEL keys
+            TARIFF_LABEL[row.original.tariff as keyof typeof TARIFF_LABEL]
+          : undefined) ?? row.original.tariff,
     },
     { accessorKey: 'vacant_days', header: 'Vacant Days' },
   ];

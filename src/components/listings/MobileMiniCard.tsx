@@ -2,7 +2,7 @@
 
 import { Building2, Heart, MapPin } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import Image from 'next/image';
+import { DeferredImage } from '@/components/ui/DeferredImage';
 import { useFavorites } from '@/hooks/useFavorites';
 import { Link } from '@/libs/I18nNavigation';
 import { formatPrice } from '@/libs/marketplace';
@@ -40,13 +40,7 @@ export function MobileMiniCard(props: MobileMiniCardProps) {
     >
       <div className="relative h-full w-28 shrink-0 bg-muted">
         {property.image_url ? (
-          <Image
-            alt={property.name}
-            className="object-cover"
-            fill
-            sizes="112px"
-            src={property.image_url}
-          />
+          <DeferredImage alt={property.name} sizes="112px" src={property.image_url} />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/10 to-primary/25">
             <Building2 className="size-6 text-primary/40" />

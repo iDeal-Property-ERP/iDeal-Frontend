@@ -22,7 +22,7 @@ const AUTH_FLOW_PATHS = ['/auth/login/', '/auth/refresh/', '/auth/logout/'];
  * @param path - The API path that returned the terminal 401.
  */
 function notifySessionExpired(path: string): void {
-  if (typeof window === 'undefined' || AUTH_FLOW_PATHS.some((p) => path.startsWith(p))) {
+  if (globalThis.window === undefined || AUTH_FLOW_PATHS.some((p) => path.startsWith(p))) {
     return;
   }
   window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
@@ -93,6 +93,7 @@ async function unwrap<T>(res: Response, method: string, path: string): Promise<T
   if (!res.ok) {
     let errorBody: ApiError | null = null;
     try {
+      // SAFETY: Unwrapped error response payload parsed to match ApiError envelope
       errorBody = (await res.json()) as ApiError;
     } catch {
       // noop
@@ -100,6 +101,7 @@ async function unwrap<T>(res: Response, method: string, path: string): Promise<T
     throw new ApiError_(res.status, errorBody);
   }
 
+  // SAFETY: Server JSON response matches ApiResponse<T> envelope
   const json = (await res.json()) as ApiResponse<T>;
   if (!json.success) {
     throw new ApiError_(res.status, { success: false, message: json.message, error: json.message });
@@ -112,16 +114,18 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
   const { query, body, headers: initHeaders, ...rest } = options;
   const url = buildUrl(path, query);
 
-  const send = async (): Promise<Response> =>
-    await fetch(url, {
+  const send = async (): Promise<Response> => {
+    const headers = new Headers(initHeaders);
+    if (!headers.has('Content-Type')) {
+      headers.set('Content-Type', 'application/json');
+    }
+    return await fetch(url, {
       ...rest,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(initHeaders as Record<string, string>),
-      },
+      headers,
       body: body !== undefined ? JSON.stringify(body) : undefined,
       credentials: 'include',
     });
+  };
 
   let res = await send();
   if (res.status === 401 && (await refreshSession())) {

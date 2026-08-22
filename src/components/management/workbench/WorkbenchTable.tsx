@@ -124,10 +124,16 @@ export function WorkbenchTable<T>(props: {
                     props.onOpenRecord(row);
                   } else if (event.key === 'ArrowDown') {
                     event.preventDefault();
-                    (event.currentTarget.nextElementSibling as HTMLElement | null)?.focus();
+                    (event.currentTarget.nextElementSibling instanceof HTMLElement
+                      ? event.currentTarget.nextElementSibling
+                      : null
+                    )?.focus();
                   } else if (event.key === 'ArrowUp') {
                     event.preventDefault();
-                    (event.currentTarget.previousElementSibling as HTMLElement | null)?.focus();
+                    (event.currentTarget.previousElementSibling instanceof HTMLElement
+                      ? event.currentTarget.previousElementSibling
+                      : null
+                    )?.focus();
                   }
                 }}
                 className={cn(

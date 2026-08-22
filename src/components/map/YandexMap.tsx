@@ -5,7 +5,7 @@ import { useEffect, useRef } from 'react';
 import { Env } from '@/libs/Env';
 import { formatPrice } from '@/libs/marketplace';
 import { cn } from '@/libs/utils';
-import { bboxFromBounds, loadYmaps, TASHKENT, YANDEX_LANG } from '@/libs/yandexMaps';
+import { bboxFromBounds, getYandexLang, loadYmaps, TASHKENT } from '@/libs/yandexMaps';
 import type { MapPoint } from '@/types/marketplace';
 
 const DEFAULT_ZOOM = 11;
@@ -116,7 +116,7 @@ export function YandexMap(props: YandexMapProps) {
   useEffect(() => {
     let cancelled = false;
     if (apiKey && containerRef.current) {
-      const lang = YANDEX_LANG[locale] ?? 'en_US';
+      const lang = getYandexLang(locale);
       loadYmaps(apiKey, lang)
         .then((ymaps) => {
           if (cancelled || !containerRef.current || mapRef.current) {

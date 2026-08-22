@@ -2,7 +2,7 @@
 
 import { Bed, Building2, Heart, MapPin, Maximize, Star } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import Image from 'next/image';
+import { DeferredImage } from '@/components/ui/DeferredImage';
 import { useFavorites } from '@/hooks/useFavorites';
 import { Link } from '@/libs/I18nNavigation';
 import { formatPrice } from '@/libs/marketplace';
@@ -52,10 +52,9 @@ export function ListingCard(props: ListingCardProps) {
     >
       <div className="relative aspect-[388/210] w-full overflow-hidden bg-muted">
         {property.image_url ? (
-          <Image
+          <DeferredImage
             alt={property.name}
-            className="object-cover transition duration-300 group-hover:scale-105"
-            fill
+            className="transition duration-300 group-hover:scale-105"
             priority={priority}
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             src={property.image_url}

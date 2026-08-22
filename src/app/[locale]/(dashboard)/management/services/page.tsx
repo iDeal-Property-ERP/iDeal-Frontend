@@ -65,9 +65,9 @@ export default function ManagementServicesPage() {
   const isMobile = useIsMobile();
 
   const [tab, setTab] = useState<string>(() => {
-    if (typeof window !== 'undefined') {
+    if (globalThis.window) {
       const initial = new URLSearchParams(window.location.search).get('tab');
-      if (initial && (TABS as readonly string[]).includes(initial)) {
+      if (initial && TABS.some((tabItem) => tabItem === initial)) {
         return initial;
       }
     }
@@ -91,9 +91,13 @@ export default function ManagementServicesPage() {
       await listVasOrders({
         page,
         perPage: 20,
+        // SAFETY: Status query parameter indexed as string
         status: query.status as string,
+        // SAFETY: Service type query parameter indexed as string
         serviceType: query.service_type as string,
+        // SAFETY: Search query parameter indexed as string
         search: (query.search as string) || undefined,
+        // SAFETY: Order query parameter indexed as string
         order: (query.order as string) || 'recent',
       }),
     { initialQuery: { order: 'recent' } },
@@ -163,9 +167,11 @@ export default function ManagementServicesPage() {
       id: 'service',
       label: t('svc_filter_service'),
       anyLabel: t('svc_filter_service'),
+      // SAFETY: Service type query parameter indexed as string
       value: (query.service_type as string) ?? null,
       options: SERVICE_TYPES.map((type) => ({
         value: type,
+        // SAFETY: Service type string mapped to localized VAS type key
         label: t(`vas_type_${type}` as never),
       })),
       onChange: (value) => patchQuery({ service_type: value ?? undefined }),
@@ -174,8 +180,13 @@ export default function ManagementServicesPage() {
       id: 'status',
       label: t('svc_filter_status'),
       anyLabel: t('svc_filter_status'),
+      // SAFETY: Status query parameter indexed as string
       value: (query.status as string) ?? null,
-      options: ORDER_STATUSES.map((s) => ({ value: s, label: t(`vas_status_${s}` as never) })),
+      options: ORDER_STATUSES.map((s) => ({
+        value: s,
+        // SAFETY: Status string mapped to localized VAS status key
+        label: t(`vas_status_${s}` as never),
+      })),
       onChange: (value) => patchQuery({ status: value ?? undefined }),
     },
   ])();
@@ -235,6 +246,7 @@ export default function ManagementServicesPage() {
         <div className="flex items-center gap-2">
           <StatusPill
             tone={vasOrderStatusTone(row.status)}
+            // SAFETY: Order status mapped to localized VAS status key
             label={t(`vas_status_${row.status}` as never)}
           />
           {row.status === 'requested' ? (
@@ -321,9 +333,13 @@ export default function ManagementServicesPage() {
       const res = await listVasOrders({
         page: 1,
         perPage: 1000,
+        // SAFETY: Status query parameter indexed as string
         status: scope === 'filtered' ? ((query.status as string) ?? undefined) : undefined,
+        // SAFETY: Service type query parameter indexed as string
         serviceType:
+          // SAFETY: Service type query parameter indexed as string
           scope === 'filtered' ? ((query.service_type as string) ?? undefined) : undefined,
+        // SAFETY: Search query parameter indexed as string
         search: scope === 'filtered' ? ((query.search as string) ?? undefined) : undefined,
       });
       data = res.items;
@@ -560,6 +576,7 @@ export default function ManagementServicesPage() {
               }}
               filters={chipFilters}
               sort={{
+                // SAFETY: Query parameter indexed as string
                 value: (query.order as string | undefined) ?? 'recent',
                 onChange: (value) => patchQuery({ order: value }),
                 options: [

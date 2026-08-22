@@ -54,7 +54,9 @@ export default function ManagementOnboardingsPage() {
       await listOnboardings({
         page,
         perPage: 50,
+        // SAFETY: Status query parameter indexed as string
         status: query.status as string,
+        // SAFETY: Search query parameter indexed as string
         search: (query.search as string) || undefined,
       }),
     { initialQuery: { status: 'submitted', search: '' } },

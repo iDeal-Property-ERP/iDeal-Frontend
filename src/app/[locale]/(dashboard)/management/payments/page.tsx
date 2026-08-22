@@ -56,11 +56,13 @@ import type { ManagementPaymentOutput, PaymentsStats } from '@/types/management'
 /** Payment methods, for the Method filter chip. */
 const METHOD_VALUES = ['cash', 'bank_transfer', 'click', 'payme', 'uzum', 'online'];
 
+export type MonthBounds = { start: string; end: string };
+
 /**
  * First/last day of the current month as ISO dates.
  * @returns The month's start and end.
  */
-function monthBounds(): { start: string; end: string } {
+function monthBounds(): MonthBounds {
   const now = new Date();
   const start = new Date(now.getFullYear(), now.getMonth(), 1);
   const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
@@ -113,13 +115,20 @@ function viewFromQuery(query: QueryParams): string {
 function queryToParams(page: number, query: QueryParams): PaymentListParams {
   return {
     page,
+    // SAFETY: Query parameter indexed as string
     search: query.search as string | undefined,
+    // SAFETY: Query parameter indexed as string
     status: query.status as string | undefined,
+    // SAFETY: Query parameter indexed as string
     method: query.method as string | undefined,
+    // SAFETY: Query parameter indexed as string
     propertyId: query.property_id as string | undefined,
+    // SAFETY: Query parameter indexed as string
     dueFrom: query.due_from as string | undefined,
+    // SAFETY: Query parameter indexed as string
     dueTo: query.due_to as string | undefined,
     overdue: query.overdue === 'true',
+    // SAFETY: Query parameter indexed as string
     order: (query.order as string | undefined) ?? 'due_date',
   };
 }
@@ -182,6 +191,7 @@ export default function ManagementPaymentsPage() {
     { initialQuery: { ...queryForView('overdue'), order: 'due_date' } },
   );
 
+  // SAFETY: Query parameter indexed as string
   const search = (resource.query.search as string | undefined) ?? '';
   const view = viewFromQuery(resource.query);
 
@@ -230,8 +240,10 @@ export default function ManagementPaymentsPage() {
     void load();
   }, []);
 
+  // SAFETY: Payment status mapped to localized status key
   const statusLabel = (value: string): string =>
     t(`payment_status_${value.toLowerCase()}` as 'payment_status_paid');
+  // SAFETY: Payment method mapped to localized method key
   const methodLabel = (value: string): string =>
     t(`method_${value.toLowerCase()}` as 'method_cash');
 
@@ -278,6 +290,7 @@ export default function ManagementPaymentsPage() {
       id: 'method',
       label: t('col_method'),
       anyLabel: t('any_method'),
+      // SAFETY: Query parameter indexed as string
       value: (resource.query.method as string | undefined) ?? null,
       options: METHOD_VALUES.map((value) => ({ value, label: methodLabel(value) })),
       onChange: (value) => resource.patchQuery({ method: value ?? undefined }),
@@ -286,6 +299,7 @@ export default function ManagementPaymentsPage() {
       id: 'property',
       label: t('col_property'),
       anyLabel: t('any_property'),
+      // SAFETY: Query parameter indexed as string
       value: (resource.query.property_id as string | undefined) ?? null,
       options: propertyOptions,
       onChange: (value) => resource.patchQuery({ property_id: value ?? undefined }),
@@ -296,7 +310,9 @@ export default function ManagementPaymentsPage() {
     <DateRangeChip
       label={t('due_date_range')}
       value={{
+        // SAFETY: Query parameter indexed as string
         from: resource.query.due_from as string | undefined,
+        // SAFETY: Query parameter indexed as string
         to: resource.query.due_to as string | undefined,
       }}
       onChange={(range) =>
@@ -620,6 +636,7 @@ export default function ManagementPaymentsPage() {
               extra={dueRangeChip}
               extraPanel={dueRangeChip}
               sort={{
+                // SAFETY: Query parameter indexed as string
                 value: (resource.query.order as string | undefined) ?? 'due_date',
                 onChange: (value) => resource.patchQuery({ order: value }),
                 options: [

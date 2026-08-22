@@ -5,7 +5,7 @@
  * @returns The formatted amount, e.g. "$64,200".
  */
 export function formatMoney(amount: string | number, currency = '$'): string {
-  const value = typeof amount === 'string' ? Number(amount) : amount;
+  const value = Number(amount);
   if (Number.isNaN(value)) {
     return `${currency}0`;
   }
@@ -20,7 +20,7 @@ export function formatMoney(amount: string | number, currency = '$'): string {
  */
 export function formatCurrency(amount: string | number, currency: string): string {
   if (currency === 'UZS') {
-    const value = typeof amount === 'string' ? Number(amount) : amount;
+    const value = Number(amount);
     return `${Number.isNaN(value) ? 0 : Math.round(value).toLocaleString('en-US')} UZS`;
   }
   return formatMoney(amount, '$');

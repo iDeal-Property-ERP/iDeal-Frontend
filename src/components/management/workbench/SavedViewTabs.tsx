@@ -44,7 +44,7 @@ export function SavedViewTabs(props: {
             )}
           >
             {view.label}
-            {typeof view.count === 'number' ? (
+            {view.count !== undefined ? (
               <span
                 className={cn(
                   'rounded-full px-1.5 py-0.5 text-[11px] font-semibold tabular-nums',

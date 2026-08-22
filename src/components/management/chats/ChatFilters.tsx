@@ -29,7 +29,10 @@ export function ChatFilters(props: {
     <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <SavedViewTabs
         active={props.status}
-        onChange={(next) => props.onStatusChange(next as ChatStatus)}
+        onChange={(next) => {
+          // SAFETY: Selected tab ID corresponds to a valid ChatStatus
+          props.onStatusChange(next as ChatStatus);
+        }}
         views={views}
       />
       <SearchField

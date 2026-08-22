@@ -43,31 +43,17 @@ export type MaintenanceListResult = {
 export async function listServiceRequests(
   params: MaintenanceListParams,
 ): Promise<MaintenanceListResult> {
-  const query: Record<string, string | number> = { page: params.page };
-  if (params.perPage) {
-    query.per_page = params.perPage;
-  }
-  if (params.status) {
-    query.status = params.status;
-  }
-  if (params.priority) {
-    query.priority = params.priority;
-  }
-  if (params.propertyId) {
-    query.property_id = params.propertyId;
-  }
-  if (params.assignedToId) {
-    query.assigned_to_id = params.assignedToId;
-  }
-  if (params.unassigned) {
-    query.unassigned = 'true';
-  }
-  if (params.search) {
-    query.search = params.search;
-  }
-  if (params.order) {
-    query.order = params.order;
-  }
+  const query = {
+    page: params.page,
+    per_page: params.perPage,
+    status: params.status,
+    priority: params.priority,
+    property_id: params.propertyId,
+    assigned_to_id: params.assignedToId,
+    unassigned: params.unassigned ? 'true' : undefined,
+    search: params.search,
+    order: params.order,
+  } satisfies Record<string, string | number | undefined>;
   const res = await apiFetch<PaginatedData<ManagementServiceRequestOutput>>(
     '/management/service-requests/',
     { query },

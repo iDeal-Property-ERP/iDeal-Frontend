@@ -42,34 +42,18 @@ export type VasOrdersListResult = {
  * @returns The page of rows plus totals.
  */
 export async function listVasOrders(params: VasOrdersListParams): Promise<VasOrdersListResult> {
-  const query: Record<string, string | number> = { page: params.page };
-  if (params.perPage) {
-    query.per_page = params.perPage;
-  }
-  if (params.status) {
-    query.status = params.status;
-  }
-  if (params.serviceType) {
-    query.service_type = params.serviceType;
-  }
-  if (params.propertyId) {
-    query.property_id = params.propertyId;
-  }
-  if (params.tenantId) {
-    query.tenant_id = params.tenantId;
-  }
-  if (params.search) {
-    query.search = params.search;
-  }
-  if (params.order) {
-    query.order = params.order;
-  }
-  if (params.dateFrom) {
-    query.date_from = params.dateFrom;
-  }
-  if (params.dateTo) {
-    query.date_to = params.dateTo;
-  }
+  const query = {
+    page: params.page,
+    per_page: params.perPage,
+    status: params.status,
+    service_type: params.serviceType,
+    property_id: params.propertyId,
+    tenant_id: params.tenantId,
+    search: params.search,
+    order: params.order,
+    date_from: params.dateFrom,
+    date_to: params.dateTo,
+  } satisfies Record<string, string | number | undefined>;
   const res = await apiFetch<PaginatedData<ServiceOrderOutput>>('/management/vas-orders/', {
     query,
   });

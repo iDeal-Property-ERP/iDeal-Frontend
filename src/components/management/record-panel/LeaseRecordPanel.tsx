@@ -219,6 +219,7 @@ export function LeaseRecordPanel(props: {
       ) : (
         <EmptyState
           icon={activeTab === 'payments' ? FileText : Building2}
+          // SAFETY: Active tab identifier maps to localized empty state title
           title={t(`empty_${activeTab}` as 'empty_payments')}
           tone="muted"
           className="py-10"

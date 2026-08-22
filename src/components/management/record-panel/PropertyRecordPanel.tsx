@@ -33,11 +33,11 @@ import { RecordPanel } from './RecordPanel';
 import { RecordPanelTabs } from './RecordPanelTabs';
 import { VacancyAlert } from './VacancyAlert';
 
-const TARIFF_PILL: Record<string, string> = {
+const TARIFF_PILL = {
   standard: 'bg-muted text-muted-foreground',
   comfort: 'bg-info-subtle text-info-subtle-foreground',
   premium: 'bg-warning-subtle text-warning-subtle-foreground',
-};
+} satisfies Record<string, string>;
 
 /**
  * Parses a nullable decimal string into a number (0 when null/unparseable).
@@ -123,7 +123,10 @@ function PropertyRecordPanelHeader(props: {
           <span
             className={cn(
               'inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium',
-              TARIFF_PILL[property.tariff] ?? 'bg-muted text-muted-foreground',
+              (property.tariff in TARIFF_PILL
+                ? // SAFETY: Property tariff verified as key in TARIFF_PILL lookup
+                  TARIFF_PILL[property.tariff as keyof typeof TARIFF_PILL]
+                : undefined) ?? 'bg-muted text-muted-foreground',
             )}
           >
             {tariffLabel(property.tariff)}
@@ -336,6 +339,7 @@ function PropertyRecordPanelBody(props: {
       ) : (
         <EmptyState
           icon={Building2}
+          // SAFETY: Active tab identifier maps to localized empty state title
           title={t(`empty_${activeTab}` as 'empty_payments')}
           tone="muted"
           className="py-10"

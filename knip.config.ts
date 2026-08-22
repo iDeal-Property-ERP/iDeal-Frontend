@@ -8,6 +8,7 @@ const config: KnipConfig = {
     // shadcn/ui is a vendored component library: keep primitives available
     // even when not yet consumed by a page.
     'src/components/ui/**',
+    'tools/**',
   ],
   ignoreDependencies: ['@swc/helpers'],
   rules: {

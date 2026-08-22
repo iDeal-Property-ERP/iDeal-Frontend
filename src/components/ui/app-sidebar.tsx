@@ -242,12 +242,12 @@ const listingsSections: NavSection[] = [
   },
 ];
 
-const roleNavMap: Record<Exclude<Role, 'agent'>, NavSection[]> = {
+const roleNavMap = {
   mgmt: mgmtSections,
   owner: ownerSections,
   tenant: tenantSections,
   listings: listingsSections,
-};
+} satisfies Record<Exclude<Role, 'agent'>, NavSection[]>;
 
 function isItemActive(href: string, pathname: string): boolean {
   if (href === '/management' || href === '/owner' || href === '/tenant') {

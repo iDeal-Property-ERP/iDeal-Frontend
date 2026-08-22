@@ -35,10 +35,10 @@ export default function MaintenancePage() {
 
   const fetchData = useCallback(async (p: number, status: string) => {
     try {
-      const query: Record<string, string | number> = { page: p };
-      if (status) {
-        query.status = status;
-      }
+      const query = {
+        page: p,
+        status: status || undefined,
+      } satisfies Record<string, string | number | undefined>;
       const res = await apiFetch<PaginatedData<ServiceRequestOutput>>('/maintenance/requests/', {
         query,
       });

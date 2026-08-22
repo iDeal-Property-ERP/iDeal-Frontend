@@ -1,0 +1,23 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appIDs": [
+          "R4HRZ34ZYE.com.ideal.mobile",
+          "R4HRZ34ZYE.com.ideal.mobile.dev",
+          "R4HRZ34ZYE.com.ideal.mobile.stage"
+        ],
+        "components": [
+          {
+            "/": "/payment-return",
+            "?": {
+              "checkout": "*"
+            },
+            "comment": "Open hosted-payment returns in the iDeal mobile app."
+          }
+        ]
+      }
+    ]
+  }
+}

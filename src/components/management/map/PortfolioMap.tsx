@@ -4,17 +4,22 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useRef } from 'react';
 import { Env } from '@/libs/Env';
 import { cn } from '@/libs/utils';
-import { loadYmaps, TASHKENT, YANDEX_LANG } from '@/libs/yandexMaps';
+import { getYandexLang, loadYmaps, TASHKENT } from '@/libs/yandexMaps';
 import type { ManagementPropertyMapRow } from '@/types/management';
 
 const DEFAULT_ZOOM = 11;
 
 /** Property status → the CSS custom property whose hex feeds the pin colour. */
-const STATUS_TOKEN: Record<string, string> = {
+const STATUS_TOKEN = {
   rented: '--success',
   vacant: '--warning',
   maintenance: '--danger',
   pending_review: '--muted-foreground',
+} satisfies Record<string, string>;
+
+export type ResolvedPinColors = {
+  byStatus: Record<string, string>;
+  cluster: string;
 };
 
 /**
@@ -24,7 +29,7 @@ const STATUS_TOKEN: Record<string, string> = {
  * map on locale change, and theme changes are rare mid-session).
  * @returns A status → hex colour map plus the primary (cluster) colour.
  */
-function resolvePinColors(): { byStatus: Record<string, string>; cluster: string } {
+function resolvePinColors(): ResolvedPinColors {
   const styles = getComputedStyle(document.documentElement);
   const read = (token: string) => styles.getPropertyValue(token).trim() || '#586377';
   const byStatus: Record<string, string> = {};
@@ -112,7 +117,7 @@ export function PortfolioMap(props: {
   useEffect(() => {
     let cancelled = false;
     if (apiKey && containerRef.current) {
-      const lang = YANDEX_LANG[locale] ?? 'en_US';
+      const lang = getYandexLang(locale);
       loadYmaps(apiKey, lang)
         .then((ymaps) => {
           if (cancelled || !containerRef.current || mapRef.current) {

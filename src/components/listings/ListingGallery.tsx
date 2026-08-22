@@ -2,9 +2,9 @@
 
 import { BadgeCheck, Building2, ChevronLeft, Heart, Share2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import Image from 'next/image';
 import { useState } from 'react';
 import { ListingImageViewer } from '@/components/listings/ListingImageViewer';
+import { DeferredImage } from '@/components/ui/DeferredImage';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useShareLink } from '@/hooks/useShareLink';
 import { Link } from '@/libs/I18nNavigation';
@@ -77,16 +77,7 @@ export function ListingGallery(props: {
           onClick={() => openAt(0)}
           type="button"
         >
-          {hero && (
-            <Image
-              alt={name}
-              className="object-cover"
-              fill
-              priority
-              sizes="62vw"
-              src={hero.image_url}
-            />
-          )}
+          {hero && <DeferredImage alt={name} priority sizes="62vw" src={hero.image_url} />}
           {verified && <VerifiedBadge label={t('verified_by')} />}
         </button>
         <div className="grid grid-cols-2 grid-rows-2 gap-3">
@@ -97,7 +88,7 @@ export function ListingGallery(props: {
               onClick={() => openAt(i + 1)}
               type="button"
             >
-              <Image alt={name} className="object-cover" fill sizes="18vw" src={p.image_url} />
+              <DeferredImage alt={name} sizes="18vw" src={p.image_url} />
               {i === 3 && showMore && (
                 <span className={cn(MORE_OVERLAY, 'text-base')}>
                   {t('more_photos', { count: moreCount })}
@@ -111,16 +102,7 @@ export function ListingGallery(props: {
       {/* Mobile + small tablet: full-bleed hero + thumbnail strip (Figma 116:2) */}
       <div className="md:hidden">
         <div className="relative aspect-[13/10] overflow-hidden bg-muted">
-          {hero && (
-            <Image
-              alt={name}
-              className="object-cover"
-              fill
-              priority
-              sizes="100vw"
-              src={hero.image_url}
-            />
-          )}
+          {hero && <DeferredImage alt={name} priority sizes="100vw" src={hero.image_url} />}
           <button
             aria-label={name}
             className="absolute inset-0"
@@ -165,7 +147,7 @@ export function ListingGallery(props: {
               onClick={() => openAt(i + 1)}
               type="button"
             >
-              <Image alt={name} className="object-cover" fill sizes="84px" src={p.image_url} />
+              <DeferredImage alt={name} sizes="84px" src={p.image_url} />
               {i === 3 && showMore && (
                 <span className={cn(MORE_OVERLAY, 'text-sm')}>+{moreCount}</span>
               )}

@@ -16,7 +16,7 @@ export type ChecklistRow = {
 };
 
 /** Maps a backend `missing` field code to the checklist row it belongs to. */
-const CODE_TO_ROW: Record<string, ChecklistRowId> = {
+const CODE_TO_ROW = {
   name: 'basics',
   address: 'basics',
   district: 'basics',
@@ -29,7 +29,7 @@ const CODE_TO_ROW: Record<string, ChecklistRowId> = {
   owner_guaranteed_price: 'pricing',
   tenant_charge_price: 'pricing',
   photos: 'photos',
-};
+} satisfies Record<string, ChecklistRowId>;
 
 export type UsePublishChecklistArgs = {
   values: ManagementPropertyFormData;
@@ -56,8 +56,9 @@ export function usePublishChecklist(args: UsePublishChecklistArgs): {
   return useMemo(() => {
     const serverRows = new Set<ChecklistRowId>();
     for (const code of serverMissing) {
-      const row = CODE_TO_ROW[code];
-      if (row) {
+      if (code in CODE_TO_ROW) {
+        // SAFETY: Code validated as key of CODE_TO_ROW map
+        const row = CODE_TO_ROW[code as keyof typeof CODE_TO_ROW];
         serverRows.add(row);
       }
     }
@@ -99,7 +100,7 @@ export function usePublishChecklist(args: UsePublishChecklistArgs): {
         : []),
       { id: 'photos', done: photosDone, codes: ['photos'] },
       ...(engagementType !== 'one_off'
-        ? [{ id: 'verification' as const, done: verificationScheduled, codes: [] as string[] }]
+        ? [{ id: 'verification' as const, done: verificationScheduled, codes: [] }]
         : []),
     ];
 

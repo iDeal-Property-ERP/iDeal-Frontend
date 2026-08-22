@@ -7,11 +7,11 @@ import { useListingParams } from '@/hooks/useListingParams';
 import { cn } from '@/libs/utils';
 import type { ListingOutput } from '@/types/marketplace';
 
-const COLUMN_CLASS: Record<1 | 2 | 3, string> = {
+const COLUMN_CLASS = {
   1: 'grid-cols-1',
   2: 'grid-cols-1 sm:grid-cols-2',
   3: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3',
-};
+} satisfies Record<1 | 2 | 3, string>;
 
 const FILTER_KEYS = [
   'district_id',

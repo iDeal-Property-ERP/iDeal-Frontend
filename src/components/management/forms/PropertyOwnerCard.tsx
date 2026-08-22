@@ -82,6 +82,7 @@ export function PropertyOwnerCard(props: PropertyOwnerCardProps) {
             return (
               <OwnerSelect
                 id="owner_id"
+                // SAFETY: Form field value for owner_id is number, null, or undefined
                 value={field.value as number | null | undefined}
                 onChange={handleOwnerChange}
                 initialLabel={initialLabel}

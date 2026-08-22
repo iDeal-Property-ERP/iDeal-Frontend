@@ -11,11 +11,11 @@ export function useShareLink() {
   const t = useTranslations('ListingDetail');
   return useCallback(
     async (title: string) => {
-      const url = typeof window === 'undefined' ? '' : window.location.href;
+      const url = globalThis.window ? window.location.href : '';
       try {
-        if (typeof navigator !== 'undefined' && navigator.share) {
+        if (globalThis.navigator && 'share' in navigator) {
           await navigator.share({ title, url });
-        } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        } else if (globalThis.navigator && 'clipboard' in navigator) {
           await navigator.clipboard.writeText(url);
           toast.success(t('link_copied'));
         }

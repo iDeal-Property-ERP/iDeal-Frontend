@@ -47,7 +47,13 @@ export function InviteUserDialog(props: {
   const [busy, setBusy] = useState(false);
   const [tempPassword, setTempPassword] = useState<string | null>(null);
 
+  // SAFETY: Role value string mapped to localized role string key
   const roleLabel = (value: string): string => t(`usr_role_${value}` as 'usr_role_mgmt');
+
+  const handleRoleChange = (value: string) => {
+    // SAFETY: Select options are populated from USER_ROLES
+    setRole(value as Role);
+  };
 
   const submit = async () => {
     if (!firstName || !email) {
@@ -153,7 +159,7 @@ export function InviteUserDialog(props: {
           </div>
           <div className="flex flex-col gap-1.5">
             <Label>{t('usr_field_role')} *</Label>
-            <Select value={role} onValueChange={(value) => setRole(value as Role)}>
+            <Select value={role} onValueChange={handleRoleChange}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -207,7 +213,13 @@ export function EditUserDialog(props: {
     return null;
   }
 
+  // SAFETY: Role value string mapped to localized role string key
   const roleLabel = (value: string): string => t(`usr_role_${value}` as 'usr_role_mgmt');
+
+  const handleRoleChange = (value: string) => {
+    // SAFETY: Select options are populated from USER_ROLES
+    setRole(value as Role);
+  };
 
   const submit = async () => {
     if (!firstName || !email) {
@@ -283,7 +295,7 @@ export function EditUserDialog(props: {
           </div>
           <div className="flex flex-col gap-1.5">
             <Label>{t('usr_field_role')}</Label>
-            <Select value={role} onValueChange={(value) => setRole(value as Role)}>
+            <Select value={role} onValueChange={handleRoleChange}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>

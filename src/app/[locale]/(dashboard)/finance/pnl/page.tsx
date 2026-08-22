@@ -46,10 +46,10 @@ export default function PnLPage() {
   const onSubmit = async (filters: FilterForm) => {
     setLoading(true);
     try {
-      const query: Record<string, string | number> = { year: filters.year };
-      if (filters.month) {
-        query.month = filters.month;
-      }
+      const query = {
+        year: filters.year,
+        month: filters.month ?? undefined,
+      } satisfies Record<string, string | number | undefined>;
       const res = await apiFetch<PnLOutput>('/finance/pnl/', { query });
       setData(res);
     } catch {

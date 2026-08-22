@@ -8,11 +8,24 @@
 export const TASHKENT: [number, number] = [41.3111, 69.2797];
 
 /** Yandex Maps has no Uzbek locale; `uz` falls back to Russian. */
-export const YANDEX_LANG: Record<string, string> = {
+export const YANDEX_LANG = {
   en: 'en_US',
   ru: 'ru_RU',
   uz: 'ru_RU',
-};
+} satisfies Record<string, string>;
+
+/**
+ * Resolves Yandex Maps language code for an application locale.
+ * @param locale - The application locale string.
+ * @returns The corresponding Yandex language code.
+ */
+export function getYandexLang(locale: string): string {
+  if (locale in YANDEX_LANG) {
+    // SAFETY: Locale key verified to exist in YANDEX_LANG lookup table
+    return YANDEX_LANG[locale as keyof typeof YANDEX_LANG];
+  }
+  return 'en_US';
+}
 
 let loaderPromise: Promise<Ymaps> | null = null;
 
@@ -24,7 +37,7 @@ let loaderPromise: Promise<Ymaps> | null = null;
  * @returns The ready `ymaps` global.
  */
 export async function loadYmaps(apiKey: string, lang: string): Promise<Ymaps> {
-  if (typeof window === 'undefined') {
+  if (!globalThis.window) {
     throw new TypeError('Yandex Maps can only load in the browser');
   }
   if (loaderPromise) {

@@ -8,6 +8,76 @@ import { cn } from '@/libs/utils';
 import type { ChatMessageOutput } from '@/types/chat';
 
 /**
+ * Reserves the rendered image footprint in a chat message before its remote media arrives.
+ * @param props - The image URL, source dimensions, translated labels, and load callback.
+ * @returns A message image with an in-place loading placeholder and fullscreen preview.
+ */
+function ChatImageMessage(props: {
+  imageAlt: string;
+  imageHeight: number | null;
+  imageUrl: string;
+  imageWidth: number | null;
+  isMine: boolean;
+  onMediaLoad?: () => void;
+  openLabel: string;
+  previewLabel: string;
+}) {
+  const [imageOpen, setImageOpen] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const imageWidth = props.imageWidth && props.imageWidth > 0 ? props.imageWidth : 320;
+  const imageHeight = props.imageHeight && props.imageHeight > 0 ? props.imageHeight : 240;
+  const displayedImageWidth = Math.min(imageWidth, (imageWidth / imageHeight) * 256);
+
+  return (
+    <>
+      <button
+        aria-label={props.openLabel}
+        className={cn(
+          'relative max-w-full overflow-hidden rounded-[14px] border border-border bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+          props.isMine ? 'rounded-br-[4px]' : 'rounded-bl-[4px]',
+        )}
+        onClick={() => setImageOpen(true)}
+        style={{ aspectRatio: `${imageWidth} / ${imageHeight}`, width: displayedImageWidth }}
+        type="button"
+      >
+        <span
+          aria-hidden="true"
+          className={cn(
+            'absolute inset-0 bg-muted motion-safe:animate-pulse motion-reduce:animate-none transition-opacity duration-200',
+            imageLoaded && 'opacity-0',
+          )}
+        />
+        {/* eslint-disable-next-line @next/next/no-img-element -- chat media is served by the backend host. */}
+        <img
+          alt={props.imageAlt}
+          className={cn(
+            'size-full object-contain transition-opacity duration-200 motion-reduce:transition-none',
+            imageLoaded ? 'opacity-100' : 'opacity-0',
+          )}
+          onLoad={() => {
+            setImageLoaded(true);
+            props.onMediaLoad?.();
+          }}
+          src={props.imageUrl}
+        />
+      </button>
+      <Dialog onOpenChange={setImageOpen} open={imageOpen}>
+        <DialogContent className="max-w-4xl border-0 bg-black/90 p-2">
+          <DialogTitle className="sr-only">{props.previewLabel}</DialogTitle>
+          <DialogDescription className="sr-only">{props.imageAlt}</DialogDescription>
+          {/* eslint-disable-next-line @next/next/no-img-element -- chat media is served by the backend host. */}
+          <img
+            alt={props.imageAlt}
+            className="max-h-[80vh] w-full object-contain"
+            src={props.imageUrl}
+          />
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+/**
  * Renders one left/right message bubble and derives the staff read tick from
  * the peer's conversation watermark.
  * @param props - Message data, read watermark, and optional media callback.
@@ -21,7 +91,6 @@ export function ChatMessageBubble(props: {
 }) {
   const t = useTranslations('ChatsPage');
   const locale = useLocale();
-  const [imageOpen, setImageOpen] = useState(false);
   const { message } = props;
   const isRead =
     message.is_mine &&
@@ -48,37 +117,16 @@ export function ChatMessageBubble(props: {
           </span>
         ) : null}
         {message.kind === 'image' && message.image_url ? (
-          <>
-            <button
-              aria-label={t('open_image')}
-              className={cn(
-                'overflow-hidden rounded-[14px] border border-border bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
-                message.is_mine ? 'rounded-br-[4px]' : 'rounded-bl-[4px]',
-              )}
-              onClick={() => setImageOpen(true)}
-              type="button"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element -- chat media is served by the backend host. */}
-              <img
-                alt={t('image_alt')}
-                className="max-h-64 max-w-full object-contain"
-                onLoad={props.onMediaLoad}
-                src={message.image_url}
-              />
-            </button>
-            <Dialog onOpenChange={setImageOpen} open={imageOpen}>
-              <DialogContent className="max-w-4xl border-0 bg-black/90 p-2">
-                <DialogTitle className="sr-only">{t('image_preview')}</DialogTitle>
-                <DialogDescription className="sr-only">{t('image_alt')}</DialogDescription>
-                {/* eslint-disable-next-line @next/next/no-img-element -- chat media is served by the backend host. */}
-                <img
-                  alt={t('image_alt')}
-                  className="max-h-[80vh] w-full object-contain"
-                  src={message.image_url}
-                />
-              </DialogContent>
-            </Dialog>
-          </>
+          <ChatImageMessage
+            imageAlt={t('image_alt')}
+            imageHeight={message.image_height}
+            imageUrl={message.image_url}
+            imageWidth={message.image_width}
+            isMine={message.is_mine}
+            onMediaLoad={props.onMediaLoad}
+            openLabel={t('open_image')}
+            previewLabel={t('image_preview')}
+          />
         ) : (
           <div
             className={cn(

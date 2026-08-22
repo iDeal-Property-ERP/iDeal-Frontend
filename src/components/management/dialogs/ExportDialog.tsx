@@ -132,6 +132,7 @@ export function ExportDialog(props: {
               { value: 'pdf', label: 'PDF' },
             ]}
             value={format}
+            // SAFETY: Options list only offers supported ExportFormat values
             onChange={(value) => setFormat(value as ExportFormat)}
           />
           <p className="text-xs text-muted-foreground">{props.labels.footnote}</p>

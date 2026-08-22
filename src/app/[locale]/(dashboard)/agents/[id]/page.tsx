@@ -19,11 +19,11 @@ import { createApiSubmit } from '@/libs/forms';
 import type { AgentOutput, DealOutput } from '@/types/agent';
 import type { PaginatedData } from '@/types/api';
 
-const DEAL_STATUS_VARIANT: Record<string, 'success' | 'warning' | 'default'> = {
+const DEAL_STATUS_VARIANT = {
   closed: 'success',
   pending: 'warning',
   cancelled: 'default',
-};
+} satisfies Record<string, 'success' | 'warning' | 'default'>;
 
 const dealSchema = z.object({
   property_id: z.coerce.number().min(1, 'Property is required'),
@@ -104,7 +104,14 @@ export default function AgentDetailPage(props: { params: Promise<{ id: string }>
       accessorKey: 'status',
       header: 'Status',
       cell: ({ row }) => (
-        <Badge variant={DEAL_STATUS_VARIANT[row.original.status] ?? 'default'}>
+        <Badge
+          variant={
+            (row.original.status in DEAL_STATUS_VARIANT
+              ? // SAFETY: Status string checked against DEAL_STATUS_VARIANT lookup
+                DEAL_STATUS_VARIANT[row.original.status as keyof typeof DEAL_STATUS_VARIANT]
+              : undefined) ?? 'default'
+          }
+        >
           {row.original.status}
         </Badge>
       ),
@@ -142,6 +149,7 @@ export default function AgentDetailPage(props: { params: Promise<{ id: string }>
               {(field, invalid) => (
                 <PropertySelect
                   id="property_id"
+                  // SAFETY: Form field value for property_id is number, null, or undefined
                   value={field.value as number | null | undefined}
                   onChange={(v) => field.onChange(v)}
                   aria-invalid={invalid}

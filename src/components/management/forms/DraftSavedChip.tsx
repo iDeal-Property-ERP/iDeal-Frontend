@@ -12,12 +12,12 @@ type DraftSavedChipProps = {
   labels: { saving: string; saved: string; error: string; unsaved: string };
 };
 
-const TONE: Record<Exclude<ChipState, 'idle'>, string> = {
+const TONE = {
   saving: 'text-muted-foreground',
   saved: 'text-success',
   error: 'text-danger',
   unsaved: 'text-warning',
-};
+} satisfies Record<Exclude<ChipState, 'idle'>, string>;
 
 /**
  * The status chip shown in the property form header. In create it tracks the

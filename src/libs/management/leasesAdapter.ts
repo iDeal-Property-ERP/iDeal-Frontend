@@ -42,25 +42,15 @@ export type LeaseListResult = {
  * @returns The page of rows plus totals.
  */
 export async function listLeases(params: LeaseListParams): Promise<LeaseListResult> {
-  const query: Record<string, string | number> = { page: params.page };
-  if (params.perPage) {
-    query.per_page = params.perPage;
-  }
-  if (params.search) {
-    query.search = params.search;
-  }
-  if (params.status) {
-    query.status = params.status;
-  }
-  if (params.endsWithin) {
-    query.ends_within = params.endsWithin;
-  }
-  if (params.propertyId) {
-    query.property_id = params.propertyId;
-  }
-  if (params.tenantId) {
-    query.tenant_id = params.tenantId;
-  }
+  const query = {
+    page: params.page,
+    per_page: params.perPage,
+    search: params.search,
+    status: params.status,
+    ends_within: params.endsWithin,
+    property_id: params.propertyId,
+    tenant_id: params.tenantId,
+  } satisfies Record<string, string | number | undefined>;
   const res = await apiFetch<PaginatedData<ManagementLeaseOutput>>('/management/leases/', {
     query,
   });
@@ -85,8 +75,14 @@ export type LeaseStatusCounts = {
 export async function getLeaseStatusCounts(search?: string): Promise<LeaseStatusCounts> {
   const countOf = async (extra: Record<string, string | number>): Promise<number> => {
     try {
+      const query = {
+        page: 1,
+        per_page: 1,
+        search,
+        ...extra,
+      } satisfies Record<string, string | number | undefined>;
       const res = await apiFetch<PaginatedData<ManagementLeaseOutput>>('/management/leases/', {
-        query: { page: 1, per_page: 1, ...(search ? { search } : {}), ...extra },
+        query,
       });
       return res.count;
     } catch {
@@ -136,7 +132,7 @@ function termMonths(start: string, end: string): number {
  */
 export async function getLeaseKpis(counts: LeaseStatusCounts): Promise<LeaseKpis> {
   const sample = await listLeases({ page: 1, perPage: 50, status: 'active' }).catch(
-    () => ({ items: [], total: 0, totalPages: 1 }) as LeaseListResult,
+    (): LeaseListResult => ({ items: [], total: 0, totalPages: 1 }),
   );
   const terms = sample.items
     .map((row) => termMonths(row.start_date, row.end_date))

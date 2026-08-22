@@ -33,7 +33,7 @@ const COLUMNS = [
     heading: 'col_legal',
     links: [
       { href: '/', key: 'link_terms_of_use' },
-      { href: '/', key: 'link_privacy' },
+      { href: '/privacy-policy', key: 'link_privacy' },
       { href: '/', key: 'link_contracts' },
       { href: '/', key: 'link_deposit_policy' },
     ],
@@ -89,7 +89,7 @@ export function MarketingFooter() {
           <p>{t('footer_rights')}</p>
           <div className="hidden items-center gap-5 sm:flex">
             <span>{t('footer_lang')}</span>
-            <Link href="/" className="transition-colors hover:text-foreground">
+            <Link href="/privacy-policy" className="transition-colors hover:text-foreground">
               {t('link_privacy')}
             </Link>
             <Link href="/" className="transition-colors hover:text-foreground">

@@ -89,6 +89,7 @@ export default function NewAgreementPage() {
               {(field, invalid) => (
                 <OwnerSelect
                   id="owner_id"
+                  // SAFETY: Form field value for owner_id is number, null, or undefined
                   value={field.value as number | null | undefined}
                   onChange={(v) => field.onChange(v)}
                   aria-invalid={invalid}
@@ -99,6 +100,7 @@ export default function NewAgreementPage() {
               {(field, invalid) => (
                 <PropertySelect
                   id="property_id"
+                  // SAFETY: Form field value for property_id is number, null, or undefined
                   value={field.value as number | null | undefined}
                   onChange={(v) => field.onChange(v)}
                   aria-invalid={invalid}

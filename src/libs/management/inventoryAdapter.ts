@@ -43,22 +43,14 @@ export type ActListResult = {
  * @returns The page of rows plus totals.
  */
 export async function listActs(params: ActListParams): Promise<ActListResult> {
-  const query: Record<string, string | number> = { page: params.page };
-  if (params.perPage) {
-    query.per_page = params.perPage;
-  }
-  if (params.status) {
-    query.status = params.status;
-  }
-  if (params.propertyId) {
-    query.property_id = params.propertyId;
-  }
-  if (params.leaseId) {
-    query.lease_id = params.leaseId;
-  }
-  if (params.awaitingAck) {
-    query.awaiting_ack = 'true';
-  }
+  const query = {
+    page: params.page,
+    per_page: params.perPage,
+    status: params.status,
+    property_id: params.propertyId,
+    lease_id: params.leaseId,
+    awaiting_ack: params.awaitingAck ? 'true' : undefined,
+  } satisfies Record<string, string | number | undefined>;
   const res = await apiFetch<PaginatedData<InventoryActListOutput>>('/inventory/acts/', { query });
   return { items: res.page.object_list, total: res.count, totalPages: res.num_pages };
 }

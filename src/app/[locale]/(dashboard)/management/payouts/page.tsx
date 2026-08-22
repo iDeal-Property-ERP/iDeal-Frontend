@@ -116,10 +116,15 @@ function shortDate(iso: string | null): string {
 function queryToParams(page: number, query: QueryParams): PayoutListParams {
   return {
     page,
+    // SAFETY: Query parameter indexed as string
     search: query.search as string | undefined,
+    // SAFETY: Query parameter indexed as string
     status: query.status as string | undefined,
+    // SAFETY: Query parameter indexed as string
     scheduledFrom: query.scheduled_from as string | undefined,
+    // SAFETY: Query parameter indexed as string
     scheduledTo: query.scheduled_to as string | undefined,
+    // SAFETY: Query parameter indexed as string
     order: (query.order as string | undefined) ?? 'scheduled_date',
   };
 }
@@ -165,7 +170,9 @@ export default function ManagementPayoutsPage() {
     { initialQuery: { ...queryForView('due'), order: 'scheduled_date' } },
   );
 
+  // SAFETY: Query parameter indexed as string
   const search = (resource.query.search as string | undefined) ?? '';
+  // SAFETY: Query parameter indexed as string
   const status = resource.query.status as string | undefined;
   const view = viewFromQuery(status);
 
@@ -199,8 +206,10 @@ export default function ManagementPayoutsPage() {
     };
   }, [resource.data]);
 
+  // SAFETY: Payout status mapped to localized status key
   const statusLabel = (value: string): string =>
     t(`payout_status_${value.toLowerCase()}` as 'payout_status_paid');
+  // SAFETY: Method string mapped to localized method key
   const methodLabel = (value: string): string =>
     t(`method_${value.toLowerCase()}` as 'method_cash');
 
@@ -236,6 +245,7 @@ export default function ManagementPayoutsPage() {
       id: 'status',
       label: t('col_status'),
       anyLabel: t('any_status'),
+      // SAFETY: Query parameter indexed as string
       value: (resource.query.status as string | undefined) ?? null,
       options: PAYOUT_STATUSES.map((value) => ({ value, label: statusLabel(value) })),
       onChange: (value) => resource.patchQuery({ status: value ?? undefined }),
@@ -246,7 +256,9 @@ export default function ManagementPayoutsPage() {
     <DateRangeChip
       label={t('scheduled_date_range')}
       value={{
+        // SAFETY: Query parameter indexed as string
         from: resource.query.scheduled_from as string | undefined,
+        // SAFETY: Query parameter indexed as string
         to: resource.query.scheduled_to as string | undefined,
       }}
       onChange={(range) =>
@@ -611,6 +623,7 @@ export default function ManagementPayoutsPage() {
             extra={rangeChip}
             extraPanel={rangeChip}
             sort={{
+              // SAFETY: Query parameter indexed as string
               value: (resource.query.order as string | undefined) ?? 'scheduled_date',
               onChange: (value) => resource.patchQuery({ order: value }),
               options: [

@@ -53,12 +53,14 @@ const SAVED_VIEW_DEFS = [
   { id: 'terminated', labelKey: 'agr_view_terminated', countKey: 'terminated' },
 ] as const satisfies { id: string; labelKey: string; countKey: keyof AgreementStatusCounts }[];
 
+export type AgreementViewQuery = { status?: string; ends_within?: number };
+
 /**
  * Maps a saved-view id to the backend query it applies.
  * @param view - The saved-view id.
  * @returns The status / ends-within query for that view.
  */
-function queryForView(view: string): { status?: string; ends_within?: number } {
+function queryForView(view: string): AgreementViewQuery {
   if (view === 'expiring') {
     return { status: 'active', ends_within: AGREEMENT_EXPIRING_WINDOW };
   }
@@ -154,15 +156,21 @@ export default function ManagementAgreementsPage() {
     async ({ page, query }) =>
       await listAgreements({
         page,
+        // SAFETY: Query parameter indexed as string
         search: query.search as string | undefined,
+        // SAFETY: Query parameter indexed as string
         status: query.status as string | undefined,
+        // SAFETY: Query parameter indexed as number
         endsWithin: query.ends_within as number | undefined,
       }),
     { initialQuery: queryForView('active') },
   );
 
+  // SAFETY: Query parameter indexed as string
   const search = (resource.query.search as string | undefined) ?? '';
+  // SAFETY: Query parameter indexed as string
   const status = resource.query.status as string | undefined;
+  // SAFETY: Query parameter indexed as number
   const endsWithin = resource.query.ends_within as number | undefined;
   const view = viewFromQuery(status, endsWithin);
 
@@ -213,14 +221,17 @@ export default function ManagementAgreementsPage() {
   };
 
   // Client-side commission filter + sort over the loaded page (server fixes ordering).
-  const COMMISSION_BUCKETS: Record<string, (rate: number) => boolean> = {
-    low: (rate) => rate < 15,
-    mid: (rate) => rate >= 15 && rate <= 20,
-    high: (rate) => rate > 20,
-  };
+  const COMMISSION_BUCKETS = {
+    low: (rate: number) => rate < 15,
+    mid: (rate: number) => rate >= 15 && rate <= 20,
+    high: (rate: number) => rate > 20,
+  } satisfies Record<string, (rate: number) => boolean>;
   const filtered = commissionFilter
     ? resource.data.filter((row) =>
-        (COMMISSION_BUCKETS[commissionFilter] ?? (() => true))(Number(row.commission_rate)),
+        (commissionFilter in COMMISSION_BUCKETS
+          ? // SAFETY: Filter key validated against COMMISSION_BUCKETS lookup
+            COMMISSION_BUCKETS[commissionFilter as keyof typeof COMMISSION_BUCKETS]
+          : () => true)(Number(row.commission_rate)),
       )
     : resource.data;
   const rows = filtered.toSorted((a, b) => {

@@ -236,6 +236,7 @@ export function AgreementRecordPanel(props: {
       ) : (
         <EmptyState
           icon={activeTab === 'payouts' ? FileText : Building2}
+          // SAFETY: Active tab identifier maps to localized empty state title
           title={t(`agr_empty_${activeTab}` as 'agr_empty_properties')}
           tone="muted"
           className="py-10"

@@ -53,12 +53,17 @@ const SAVED_VIEW_DEFS = [
 
 type Translator = ReturnType<typeof useTranslations>;
 
+export type AgentViewQuery = {
+  is_active?: string;
+  has_pending_commission?: string;
+};
+
 /**
  * Maps a saved-view id to the list query it applies (as strings).
  * @param view - The saved-view id.
  * @returns The `is_active` / `has_pending_commission` query for that view.
  */
-function queryForView(view: string): { is_active?: string; has_pending_commission?: string } {
+function queryForView(view: string): AgentViewQuery {
   if (view === 'active') {
     return { is_active: 'true', has_pending_commission: undefined };
   }
@@ -188,7 +193,9 @@ export default function ManagementAgentsPage() {
     { initialQuery: queryForView('active') },
   );
 
+  // SAFETY: String query params indexed from Resource query state
   const isActive = resource.query.is_active as string | undefined;
+  // SAFETY: String query params indexed from Resource query state
   const hasPendingCommission = resource.query.has_pending_commission as string | undefined;
   const view = viewFromQuery(isActive, hasPendingCommission);
 

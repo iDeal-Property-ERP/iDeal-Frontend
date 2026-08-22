@@ -2,11 +2,11 @@
 
 import { Building2, Check, Loader2, Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import Image from 'next/image';
 import { Fragment, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { DeferredImage } from '@/components/ui/DeferredImage';
 import {
   Select,
   SelectContent,
@@ -251,6 +251,7 @@ function DetailsStep(props: {
       <StepHeading subtitle={t('details_subtitle')} title={t('details_title')} />
       <WizField label={t('property_type')}>
         <FilledSelect
+          // SAFETY: Select option values match PropertyType union
           onChange={(v) => setDetails((d) => ({ ...d, property_type: v as PropertyType }))}
           value={details.property_type}
           options={PROPERTY_TYPES.map((pt) => ({ value: pt, label: t(`type_${pt}`) }))}
@@ -397,7 +398,7 @@ function PhotosStep(props: {
         {draft.photos.map((p, i) => (
           <div className="space-y-1.5" key={p.id}>
             <div className="group relative aspect-square overflow-hidden rounded-[12px] bg-muted">
-              <Image alt="" className="object-cover" fill sizes="160px" src={p.image_url} />
+              <DeferredImage alt="" sizes="160px" src={p.image_url} />
               {(p.is_primary || i === 0) && (
                 <span className="absolute top-2 left-2 rounded-md bg-primary px-2 py-0.5 text-[11px] font-medium text-primary-foreground">
                   {t('cover')}
@@ -640,7 +641,7 @@ function ReviewStep(props: {
         <Checkbox
           checked={acceptOffer}
           className="mt-0.5"
-          onCheckedChange={(checked) => setAcceptOffer(checked as boolean)}
+          onCheckedChange={(checked) => setAcceptOffer(Boolean(checked))}
         />
         {t('accept_offer')}
       </label>
@@ -658,11 +659,13 @@ function PreviewCard(props: {
   const { details, pricing, districts, draft, t } = props;
   const districtName = districts.find((d) => String(d.id) === details.district_id)?.name;
   const cover = draft?.photos[0]?.image_url;
+  // SAFETY: PricingForm currency matches Currency enum
+  const currency = pricing.currency as Currency;
   return (
     <div className={cn(CARD, 'overflow-hidden')}>
       <div className="relative h-[168px] bg-muted">
         {cover ? (
-          <Image alt="" className="object-cover" fill sizes="348px" src={cover} />
+          <DeferredImage alt="" sizes="348px" src={cover} />
         ) : (
           <div className="flex h-full items-center justify-center">
             <Building2 className="size-8 text-muted-foreground" />
@@ -679,7 +682,7 @@ function PreviewCard(props: {
         <p className="text-[13px] text-muted-foreground">{districtName ?? '—'}</p>
         {pricing.monthly_price && (
           <p className="font-display text-[22px] font-bold tracking-[-0.4px] text-primary">
-            {formatPrice(pricing.monthly_price, pricing.currency as Currency)} {t('per_month')}
+            {formatPrice(pricing.monthly_price, currency)} {t('per_month')}
           </p>
         )}
       </div>
@@ -822,8 +825,9 @@ function StepContent(props: {
 }
 
 export function ListPropertyWizard() {
-  // Cast to a loose signature: this component builds keys dynamically (`type_${pt}`, etc.).
-  const t = useTranslations('ListProperty') as unknown as TFn;
+  const baseT = useTranslations('ListProperty');
+  // SAFETY: Wrapper adapts typed translator for dynamic key construction
+  const t: TFn = (key, values) => baseT(key as never, values as never);
   const { user, isLoading, isAuthenticated: _isAuth } = useAuth();
   const isAuthenticated = _isAuth && user?.role === 'owner';
 
@@ -929,6 +933,7 @@ export function ListPropertyWizard() {
       amenities: amenityOptions.filter((a) => currentDetails.amenities.includes(a.slug)),
       monthly_price: currentPricing.monthly_price,
       deposit_amount: currentPricing.deposit_amount,
+      // SAFETY: PricingForm currency matches Currency enum
       currency: currentPricing.currency as Currency,
       minimum_stay: currentPricing.minimum_stay,
       price_includes: currentPricing.price_includes,
@@ -972,7 +977,7 @@ export function ListPropertyWizard() {
         amenities: details.amenities,
       };
       if (!isAuthenticated) {
-        syncGuestDraft(payload as unknown as DetailsForm, pricing, guestPhotos, guestCaptions);
+        syncGuestDraft(details, pricing, guestPhotos, guestCaptions);
         toast.success(t('saved'));
         setBusy(false);
         if (advance) {
@@ -1092,6 +1097,7 @@ export function ListPropertyWizard() {
       const result = await updateOwnerListing(draft.id, {
         monthly_price: pricing.monthly_price,
         deposit_amount: pricing.deposit_amount,
+        // SAFETY: PricingForm currency matches Currency enum
         currency: pricing.currency as Currency,
         minimum_stay: pricing.minimum_stay,
         price_includes: pricing.price_includes,

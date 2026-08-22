@@ -87,13 +87,11 @@ function EntityCombobox<T>(props: EntityComboboxProps<T>) {
   React.useEffect(() => {
     let cancelled = false;
     if (open) {
-      const requestQuery: Record<string, string | number | boolean | undefined> = {
+      const requestQuery = {
         ...query,
         page: 1,
-      };
-      if (!clientFilter && debounced) {
-        requestQuery.search = debounced;
-      }
+        search: !clientFilter && debounced ? debounced : undefined,
+      } satisfies Record<string, string | number | boolean | undefined>;
       apiFetch<PaginatedData<T>>(endpoint, { query: requestQuery })
         .then((res) => {
           if (cancelled) {

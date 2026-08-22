@@ -199,6 +199,9 @@ export function NewRequestDialog(props: {
   const [priority, setPriority] = useState('medium');
   const [busy, setBusy] = useState(false);
 
+  // SAFETY: Priority string mapped into localized priority key
+  const priorityLabel = (p: string): string => t(`priority_${p}` as never);
+
   const submit = async () => {
     if (!propertyId || !tenantId || !title) {
       toast.error(t('dialog_fill_required'));
@@ -254,7 +257,7 @@ export function NewRequestDialog(props: {
                       : 'border-border text-muted-foreground hover:border-ring/40',
                   )}
                 >
-                  {t(`priority_${p}` as never)}
+                  {priorityLabel(p)}
                 </button>
               ))}
             </div>

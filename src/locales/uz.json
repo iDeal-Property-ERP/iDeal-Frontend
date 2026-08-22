@@ -2222,5 +2222,39 @@
     "delete_confirm_phrase_label": "Tasdiqlash iborasini kiriting",
     "delete_confirm_phrase": "O‘CHIRISH",
     "delete_confirm": "Suhbatni o‘chirish"
+  },
+  "PrivacyPolicyPage": {
+    "eyebrow": "Huquqiy ma'lumot",
+    "title": "Maxfiylik siyosati",
+    "meta_title": "Maxfiylik siyosati | iDeal",
+    "meta_description": "iDeal maxfiylik siyosati bilan tanishing: ma'lumotlaringiz qanday to'planishi, ishlatilishi va himoyalanishi haqida bilib oling.",
+    "intro": "iDeal sizning maxfiyligingizni hurmat qiladi va shaxsiy ma'lumotlaringiz xavfsizligini ta'minlaydi.",
+    "draft_title": "Loyiha holatidagi hujjat:",
+    "draft_body": "Ushbu maxfiylik siyosati yuridik ko'rib chiqish jarayonida. Shartlar yangilanishi mumkin.",
+    "data_title": "Ma'lumotlarni to'plash",
+    "data_body": "Biz siz to'g'ridan-to'g'ri taqdim etgan ma'lumotlarni to'playmiz: ism, aloqa ma'lumotlari, to'lov rekvizitlari va e'lon parametrlari.",
+    "use_title": "Ma'lumotlardan foydalanish",
+    "use_body": "Ma'lumotlardan ijara xizmatlarini ko'rsatish, to'lovlarni amalga oshirish, shaxsni tasdiqlash va aloqa o'rnatish uchun foydalanamiz.",
+    "sharing_title": "Ma'lumotlarni uzatish",
+    "sharing_body": "Biz shaxsiy ma'lumotlaringizni sotmaymiz. Ma'lumotlar faqat shartnomalarni bajarish uchun mulkdorlar, ijarachilar va to'lov tizimlari bilan bo'lishiladi.",
+    "retention_title": "Ma'lumotlarni saqlash",
+    "retention_body": "Shaxsiy ma'lumotlar xizmat ko'rsatish, qonuniy talablarga rioya qilish va nizolarni hal qilish uchun zarur bo'lgan muddat davomida saqlanadi.",
+    "security_title": "Xavfsizlik",
+    "security_body": "Ma'lumotlaringizni ruxsatsiz kirish, yo'qotish yoki noto'g'ri foydalanishdan himoya qilish uchun barcha zarur xavfsizlik choralari ko'riladi.",
+    "rights_title": "Sizning huquqlaringiz",
+    "rights_body": "Shaxsiy ma'lumotlaringizni profilingiz orqali yoki qo'llab-quvvatlash xizmatiga murojaat qilib o'zgartirishingiz va yangilashingiz mumkin.",
+    "deletion_title": "Ma'lumotlarni o'chirish",
+    "deletion_body": "Profilingiz va unga tegishli ma'lumotlarni o'chirish uchun qo'llab-quvvatlash xizmatiga so'rov yuborishingiz mumkin.",
+    "contact_title": "Bog'lanish",
+    "contact_body": "Maxfiylik siyosati bo'yicha savollaringiz bo'lsa, privacy@ideal.uz manzili orqali bog'lanishingiz mumkin.",
+    "updated": "Oxirgi yangilanish: 2026-yil avgust"
+  },
+  "PaymentReturnPage": {
+    "meta_title": "To'lov jarayoni | iDeal",
+    "meta_description": "iDeal to'lovidan keyingi qaytish holati.",
+    "title": "To'lov jarayoni",
+    "description": "To'lovingiz qayta ishlanmoqda. Agar to'lovni ilovada yakunlagan bo'lsangiz, iDeal saytiga qaytishingiz mumkin.",
+    "verification_notice": "To'lov tasdiqlanishi bir necha daqiqa vaqt olishi mumkin. Iltimos, qayta to'lov qilmang.",
+    "back_to_website": "Saytga qaytish"
   }
 }

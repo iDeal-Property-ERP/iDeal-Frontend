@@ -12,19 +12,30 @@ const INACTIVE = 'border-border bg-card text-foreground hover:bg-muted';
 const CHIP =
   'inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-medium transition';
 
+const PROPERTY_TYPE_LABEL_KEYS = {
+  apartment: 'type_apartment',
+  house: 'type_house',
+  studio: 'type_studio',
+  room: 'type_room',
+} as const;
+
+function isPropertyType(val: string): val is keyof typeof PROPERTY_TYPE_LABEL_KEYS {
+  return val in PROPERTY_TYPE_LABEL_KEYS;
+}
+
 type Get = (key: string) => string;
 type RemovableChip = { key: string; label: string; clear: Record<string, undefined> };
 
 /**
  * Builds the active, removable filter chips (those not represented by a quick-toggle).
  * @param get - Reads a current URL param.
- * @param tx - Loose translator for dynamic keys.
+ * @param t - Translation function.
  * @param amenities - Amenities for resolving amenity labels.
  * @returns The removable chip descriptors.
  */
 function buildRemovable(
   get: Get,
-  tx: (key: string) => string,
+  t: ReturnType<typeof useTranslations<'Listings'>>,
   amenities: AmenityOption[],
 ): RemovableChip[] {
   const out: RemovableChip[] = [];
@@ -35,10 +46,14 @@ function buildRemovable(
       clear: { area_min: undefined, area_max: undefined },
     });
   }
-  if (get('property_type')) {
+  const propertyType = get('property_type');
+  if (propertyType) {
+    const label = isPropertyType(propertyType)
+      ? t(PROPERTY_TYPE_LABEL_KEYS[propertyType])
+      : propertyType;
     out.push({
       key: 'ptype',
-      label: tx(`type_${get('property_type')}`),
+      label,
       clear: { property_type: undefined },
     });
   }
@@ -63,12 +78,11 @@ export function DiscoveryFilterChips(props: {
 }) {
   const { districts, amenities } = props;
   const t = useTranslations('Listings');
-  const tx = t as unknown as (key: string) => string;
   const { get, set } = useListingParams();
 
   const toggle = (key: string, value: string) =>
     set({ [key]: get(key) === value ? undefined : value });
-  const removable = buildRemovable(get, tx, amenities);
+  const removable = buildRemovable(get, t, amenities);
 
   const removeAmenity = (slug: string) => {
     const next = (get('amenities') ? get('amenities').split(',') : []).filter((s) => s !== slug);

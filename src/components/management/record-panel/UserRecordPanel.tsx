@@ -71,10 +71,10 @@ export function UserRecordPanel(props: {
   }
 
   const rel = relativeTimeFromNow(user.updated_at);
+  // SAFETY: Relative unit string formatted into localized active key
+  const activeUnitKey = `usr_active_${rel.unit}` as 'usr_active_days';
   const activeValue =
-    rel.unit === 'today'
-      ? t('usr_active_today')
-      : t(`usr_active_${rel.unit}` as 'usr_active_days', { count: rel.count });
+    rel.unit === 'today' ? t('usr_active_today') : t(activeUnitKey, { count: rel.count });
 
   const tabs = [
     { id: 'overview', label: t('tab_overview') },

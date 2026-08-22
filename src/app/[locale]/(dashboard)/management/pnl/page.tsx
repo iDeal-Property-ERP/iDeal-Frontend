@@ -63,30 +63,30 @@ export default function PnlPage() {
   const [sources, setSources] = useState<string[]>(ALL_SOURCES);
   const [data, setData] = useState<PnlOutput | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
 
   useEffect(() => {
     let active = true;
     startTransition(() => {
       setIsLoading(true);
-      setError(null);
-      getPnl({ year, currency, sources })
-        .then((result) => {
+      setFetchError(null);
+      void (async () => {
+        try {
+          const result = await getPnl({ year, currency, sources });
           if (active) {
             setData(result);
           }
-        })
-        .catch((caughtError: unknown) => {
+        } catch (error) {
           if (active) {
-            setError(caughtError instanceof Error ? caughtError.message : t('pnl_error'));
+            setFetchError(error instanceof Error ? error.message : t('pnl_error'));
           }
-        })
-        .finally(() => {
+        } finally {
           if (active) {
             setIsLoading(false);
           }
-        });
+        }
+      })();
     });
     return () => {
       active = false;
@@ -100,7 +100,10 @@ export default function PnlPage() {
     return currency === 'UZS' ? `${formatted} UZS` : `$${formatted}`;
   };
 
+  // SAFETY: Source string mapped to localized source key
   const sourceLabel = (source: string) => t(`pnl_source_${source}` as never);
+  // SAFETY: Column key string mapped to localized column header
+  const colHeader = (col: string): string => t(`pnl_col_${col}` as never);
 
   const controls = (
     <div className="flex flex-wrap items-center gap-2.5">
@@ -150,11 +153,11 @@ export default function PnlPage() {
     />
   );
 
-  if (error) {
+  if (fetchError) {
     return (
       <ErrorState
         title={t('pnl_error')}
-        message={error}
+        message={fetchError}
         onRetry={() => setYear((y) => y)}
         retryLabel={t('retry')}
       />
@@ -336,7 +339,7 @@ export default function PnlPage() {
                       key={col}
                       className="py-2.5 pr-4 text-[11px] font-semibold tracking-[0.06em] text-muted-foreground uppercase last:pr-0"
                     >
-                      {t(`pnl_col_${col}` as never)}
+                      {colHeader(col)}
                     </th>
                   ))}
                 </tr>

@@ -5,11 +5,12 @@ import { useCallback, useEffect, useState } from 'react';
 const KEY = 'ideal_favorites';
 
 function read(): number[] {
-  if (typeof window === 'undefined') {
+  if (!globalThis.window) {
     return [];
   }
   try {
     const raw = localStorage.getItem(KEY);
+    // SAFETY: LocalStorage favorite IDs parsed as numeric array
     return raw ? (JSON.parse(raw) as number[]) : [];
   } catch {
     return [];

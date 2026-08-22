@@ -1,11 +1,12 @@
 import type { FieldValues, Path, UseFormReturn } from 'react-hook-form';
 import { toast } from 'sonner';
+import { z } from 'zod';
 import { ApiError_ } from '@/libs/api';
 
 /**
  * Extracts a human-readable message from an unknown thrown value, preferring
  * the API error envelope's message.
- * @param error - The thrown value.
+ * @param cause - The thrown value.
  * @param fallback - Message to use when nothing better can be derived.
  * @returns A display message.
  */
@@ -24,29 +25,38 @@ const GENERIC_BACKEND_MESSAGES = new Set([
   'NOT OK',
 ]);
 
-export function getApiErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof ApiError_) {
-    const message = error.body?.message;
+export function getApiErrorMessage(cause: unknown, fallback: string): string {
+  if (cause instanceof ApiError_) {
+    const message = cause.body?.message;
     if (message && !GENERIC_BACKEND_MESSAGES.has(message)) {
       return message;
     }
     return fallback;
   }
-  if (error instanceof Error && error.message) {
-    return error.message;
+  if (cause instanceof Error && cause.message) {
+    return cause.message;
   }
   return fallback;
 }
 
+const LocArraySchema = z.array(z.union([z.string(), z.number()]));
+const PydanticErrorItemSchema = z.object({
+  loc: z.array(z.union([z.string(), z.number()])).optional(),
+  msg: z.string().optional(),
+});
+const PydanticErrorListSchema = z.array(PydanticErrorItemSchema);
+const FieldMessageMapSchema = z.record(z.string(), z.union([z.string(), z.array(z.string())]));
+
 /**
  * Field name from a Pydantic error `loc` tuple, e.g. ["parsed_body","amount"] → "amount".
- * @param loc - The `loc` value from a Pydantic error item.
+ * @param cause - The `loc` value from a Pydantic error item.
  * @returns The last string segment, or null if not derivable.
  */
-function fieldFromLoc(loc: unknown): string | null {
-  if (Array.isArray(loc) && loc.length > 0) {
-    const last = loc.at(-1);
-    return typeof last === 'string' ? last : null;
+function fieldFromLoc(cause: unknown): string | null {
+  const parsed = LocArraySchema.safeParse(cause);
+  if (parsed.success && parsed.data.length > 0) {
+    const last = parsed.data.at(-1);
+    return z.string().safeParse(last).data ?? null;
   }
   return null;
 }
@@ -55,51 +65,54 @@ function fieldFromLoc(loc: unknown): string | null {
  * Best-effort mapping of server-side field errors onto a react-hook-form
  * instance. Backends that return `error` as a `{ field: message }` object get
  * their messages attached to the matching fields; otherwise a toast is shown.
- * @param error - The thrown value (usually an {@link ApiError_}).
+ * @param cause - The thrown value (usually an {@link ApiError_}).
  * @param form - The react-hook-form instance to attach errors to.
  * @param fallback - Toast message used when no field mapping applies.
  */
 export function applyApiError<TForm extends FieldValues>(
-  error: unknown,
+  cause: unknown,
   form: UseFormReturn<TForm>,
   fallback: string,
 ): void {
-  if (error instanceof ApiError_) {
-    const raw: unknown = error.body?.error;
+  if (cause instanceof ApiError_) {
+    const raw = cause.body?.error;
     const fields = form.getValues();
     let mappedAny = false;
 
-    if (Array.isArray(raw)) {
+    const listResult = PydanticErrorListSchema.safeParse(raw);
+    if (listResult.success) {
       // Pydantic validation errors: [{ loc: [...], msg, type }, ...]
-      for (const item of raw) {
-        if (item && typeof item === 'object') {
-          const { loc, msg } = item as { loc?: unknown; msg?: unknown };
-          const field = fieldFromLoc(loc);
-          if (field && field in fields) {
-            form.setError(field as Path<TForm>, { type: 'server', message: String(msg ?? '') });
-            mappedAny = true;
-          }
+      for (const item of listResult.data) {
+        const field = fieldFromLoc(item.loc);
+        if (field && field in fields) {
+          // SAFETY: Dynamic key verified to exist in form field set
+          form.setError(field as Path<TForm>, { type: 'server', message: item.msg ?? '' });
+          mappedAny = true;
         }
       }
-    } else if (raw && typeof raw === 'object') {
-      // { field: message } shape.
-      for (const [key, message] of Object.entries(raw as Record<string, unknown>)) {
-        if (key in fields) {
-          form.setError(key as Path<TForm>, {
-            type: 'server',
-            message: Array.isArray(message) ? String(message[0]) : String(message),
-          });
-          mappedAny = true;
+    } else {
+      const mapResult = FieldMessageMapSchema.safeParse(raw);
+      if (mapResult.success) {
+        // { field: message } shape.
+        for (const [key, message] of Object.entries(mapResult.data)) {
+          if (key in fields) {
+            // SAFETY: Dynamic key verified to exist in form field set
+            form.setError(key as Path<TForm>, {
+              type: 'server',
+              message: Array.isArray(message) ? (message[0] ?? '') : message,
+            });
+            mappedAny = true;
+          }
         }
       }
     }
 
     if (mappedAny) {
-      toast.error(getApiErrorMessage(error, fallback));
+      toast.error(getApiErrorMessage(cause, fallback));
       return;
     }
   }
-  toast.error(getApiErrorMessage(error, fallback));
+  toast.error(getApiErrorMessage(cause, fallback));
 }
 
 type ApiSubmitConfig<TForm extends FieldValues, TResult> = {

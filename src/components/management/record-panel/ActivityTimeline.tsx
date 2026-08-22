@@ -9,12 +9,12 @@ export type ActivityEvent = {
   tone?: ActivityTone;
 };
 
-const toneClass: Record<ActivityTone, string> = {
+const toneClass = {
   accent: 'bg-accent-brand',
   success: 'bg-success',
   warning: 'bg-warning',
   muted: 'bg-muted-foreground/50',
-};
+} satisfies Record<ActivityTone, string>;
 
 /**
  * A dot-timeline of record events under an overline heading — each row a colored

@@ -17,13 +17,13 @@ export type SwipeAction = {
   onAction: () => void;
 };
 
-const TONE_BG: Record<SwipeActionTone, string> = {
+const TONE_BG = {
   success: 'bg-success',
   accent: 'bg-accent-brand',
   warning: 'bg-warning',
   danger: 'bg-danger',
   info: 'bg-info',
-};
+} satisfies Record<SwipeActionTone, string>;
 
 type SwipeActionRowProps = {
   children: ReactNode;

@@ -30,7 +30,13 @@ export function useQueueCounts(enabled: boolean, pathname: string): Record<strin
       apiFetch<QueueCounts>('/management/queue-counts/')
         .then((data) => {
           if (active) {
-            setCounts(data as unknown as Record<string, number>);
+            setCounts({
+              leads: data.leads,
+              onboardings: data.onboardings,
+              maintenance: data.maintenance,
+              payments: data.payments,
+              payouts: data.payouts,
+            });
           }
         })
         .catch(() => {

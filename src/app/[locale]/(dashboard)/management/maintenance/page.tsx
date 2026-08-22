@@ -66,12 +66,18 @@ export default function ManagementMaintenancePage() {
       await listServiceRequests({
         page,
         perPage: 20,
+        // SAFETY: Status query parameter indexed as string
         status: query.status as string,
+        // SAFETY: Priority query parameter indexed as string
         priority: query.priority as string,
+        // SAFETY: Property ID query parameter indexed as string
         propertyId: query.property_id as string,
+        // SAFETY: Assignee ID query parameter indexed as string
         assignedToId: query.assigned_to_id as string,
         unassigned: query.unassigned === 'true',
+        // SAFETY: Search query parameter indexed as string
         search: (query.search as string) || undefined,
+        // SAFETY: Order query parameter indexed as string
         order: (query.order as string) || 'priority',
       }),
     { initialQuery: { status: 'open', order: 'priority' } },
@@ -166,14 +172,20 @@ export default function ManagementMaintenancePage() {
       id: 'priority',
       label: t('mnt_filter_priority'),
       anyLabel: t('mnt_filter_priority'),
+      // SAFETY: Query parameter indexed as string
       value: (query.priority as string) ?? null,
-      options: PRIORITIES.map((p) => ({ value: p, label: t(`priority_${p}` as never) })),
+      options: PRIORITIES.map((p) => ({
+        value: p,
+        // SAFETY: Priority string mapped to localized priority key
+        label: t(`priority_${p}` as never),
+      })),
       onChange: (value) => patchQuery({ priority: value ?? undefined }),
     },
     {
       id: 'property',
       label: t('mnt_filter_property'),
       anyLabel: t('mnt_filter_property'),
+      // SAFETY: Query parameter indexed as string
       value: (query.property_id as string) ?? null,
       options: propertyOptions,
       onChange: (value) => patchQuery({ property_id: value ?? undefined }),
@@ -183,6 +195,7 @@ export default function ManagementMaintenancePage() {
       label: t('mnt_filter_assignee'),
       anyLabel: t('mnt_filter_assignee'),
       value:
+        // SAFETY: Query parameter indexed as string
         query.unassigned === 'true' ? 'unassigned' : ((query.assigned_to_id as string) ?? null),
       options: [{ value: 'unassigned', label: t('mnt_unassigned') }, ...assigneeOptions],
       onChange: (value) =>
@@ -234,6 +247,7 @@ export default function ManagementMaintenancePage() {
       cell: (row) => (
         <StatusPill
           tone={priorityTone(row.priority)}
+          // SAFETY: Priority string mapped to localized priority key
           label={t(`priority_${row.priority}` as never)}
         />
       ),
@@ -438,6 +452,7 @@ export default function ManagementMaintenancePage() {
             }}
             filters={chipFilters}
             sort={{
+              // SAFETY: Query parameter indexed as string
               value: (query.order as string | undefined) ?? 'priority',
               onChange: (value) => patchQuery({ order: value }),
               options: [

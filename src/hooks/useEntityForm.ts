@@ -38,6 +38,7 @@ export function useEntityForm<TData, TForm extends FieldValues>(
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<TData | null>(null);
 
+  // SAFETY: ZodType is widened for zodResolver generic compatibility
   const form = useForm<TForm, unknown, TForm>({
     resolver: zodResolver(config.schema as never),
   });

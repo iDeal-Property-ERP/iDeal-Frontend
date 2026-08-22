@@ -54,6 +54,7 @@ function DashboardContent(props: { children: React.ReactNode }) {
   const showTabBar = isManagement && isMobile;
 
   return (
+    // SAFETY: Custom CSS variable assigned to CSSProperties object
     <SidebarProvider style={{ '--sidebar-width': '252px' } as CSSProperties}>
       <AppSidebar role={user.role} counts={queueCounts} />
       <SidebarInset>

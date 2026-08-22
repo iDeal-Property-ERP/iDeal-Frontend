@@ -9,7 +9,7 @@ type BadgeVariant = NonNullable<VariantProps<typeof badgeVariants>['variant']>;
  * @returns Badge variant for the given status.
  */
 export function paymentStatusVariant(status: string): BadgeVariant {
-  const map: Record<string, BadgeVariant> = {
+  const map = {
     paid: 'success',
     completed: 'success',
     pending: 'warning',
@@ -17,8 +17,9 @@ export function paymentStatusVariant(status: string): BadgeVariant {
     failed: 'danger',
     cancelled: 'default',
     refunded: 'info',
-  };
-  return map[status.toLowerCase()] ?? 'default';
+  } satisfies Record<string, BadgeVariant>;
+  // SAFETY: Fallback handles any unmapped status string
+  return map[status.toLowerCase() as keyof typeof map] ?? 'default';
 }
 
 /**
@@ -27,14 +28,15 @@ export function paymentStatusVariant(status: string): BadgeVariant {
  * @returns Badge variant for the given priority.
  */
 export function priorityVariant(priority: string): BadgeVariant {
-  const map: Record<string, BadgeVariant> = {
+  const map = {
     urgent: 'danger',
     high: 'danger',
     medium: 'warning',
     normal: 'warning',
     low: 'info',
-  };
-  return map[priority.toLowerCase()] ?? 'default';
+  } satisfies Record<string, BadgeVariant>;
+  // SAFETY: Fallback handles any unmapped priority string
+  return map[priority.toLowerCase() as keyof typeof map] ?? 'default';
 }
 
 /**
@@ -43,14 +45,15 @@ export function priorityVariant(priority: string): BadgeVariant {
  * @returns Badge variant for the given status.
  */
 export function maintenanceStatusVariant(status: string): BadgeVariant {
-  const map: Record<string, BadgeVariant> = {
+  const map = {
     open: 'warning',
     in_progress: 'info',
     resolved: 'success',
     closed: 'default',
     cancelled: 'default',
-  };
-  return map[status.toLowerCase()] ?? 'default';
+  } satisfies Record<string, BadgeVariant>;
+  // SAFETY: Fallback handles any unmapped maintenance status string
+  return map[status.toLowerCase() as keyof typeof map] ?? 'default';
 }
 
 /**
@@ -59,14 +62,15 @@ export function maintenanceStatusVariant(status: string): BadgeVariant {
  * @returns Badge variant for the given role.
  */
 export function roleVariant(role: string): BadgeVariant {
-  const map: Record<string, BadgeVariant> = {
+  const map = {
     mgmt: 'info',
     owner: 'success',
     tenant: 'warning',
     agent: 'default',
     listings: 'default',
-  };
-  return map[role.toLowerCase()] ?? 'default';
+  } satisfies Record<string, BadgeVariant>;
+  // SAFETY: Fallback handles any unmapped role string
+  return map[role.toLowerCase() as keyof typeof map] ?? 'default';
 }
 
 /**
@@ -75,14 +79,15 @@ export function roleVariant(role: string): BadgeVariant {
  * @returns Badge variant for the given status.
  */
 export function leaseStatusVariant(status: string): BadgeVariant {
-  const map: Record<string, BadgeVariant> = {
+  const map = {
     active: 'success',
     expired: 'danger',
     pending: 'warning',
     terminated: 'default',
     draft: 'default',
-  };
-  return map[status.toLowerCase()] ?? 'default';
+  } satisfies Record<string, BadgeVariant>;
+  // SAFETY: Fallback handles any unmapped lease status string
+  return map[status.toLowerCase() as keyof typeof map] ?? 'default';
 }
 
 /**
@@ -91,13 +96,14 @@ export function leaseStatusVariant(status: string): BadgeVariant {
  * @returns Badge variant for the given status.
  */
 export function propertyStatusVariant(status: string): BadgeVariant {
-  const map: Record<string, BadgeVariant> = {
+  const map = {
     rented: 'success',
     occupied: 'success',
     vacant: 'warning',
     available: 'info',
     maintenance: 'danger',
     inactive: 'default',
-  };
-  return map[status.toLowerCase()] ?? 'default';
+  } satisfies Record<string, BadgeVariant>;
+  // SAFETY: Fallback handles any unmapped property status string
+  return map[status.toLowerCase() as keyof typeof map] ?? 'default';
 }

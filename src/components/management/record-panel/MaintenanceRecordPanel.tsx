@@ -238,10 +238,13 @@ export function MaintenanceRecordPanel(props: {
   const reportedClock = clockOf(new Date(request.created_at).getTime());
   const showSlaBanner = !resolved && request.assigned_to_id === null;
 
+  // SAFETY: Priority string mapped to localized priority key
+  const priorityLabel = t(`priority_${request.priority}` as never);
+
   const trio = [
     {
       label: t('mnt_trio_priority'),
-      value: t(`priority_${request.priority}` as never),
+      value: priorityLabel,
       caption: t('mnt_sla_rule', { hours: slaHours }),
     },
     {
@@ -306,10 +309,7 @@ export function MaintenanceRecordPanel(props: {
           {number} · {request.property_name}
         </span>
       </div>
-      <StatusPill
-        tone={priorityTone(request.priority)}
-        label={t(`priority_${request.priority}` as never)}
-      />
+      <StatusPill tone={priorityTone(request.priority)} label={priorityLabel} />
     </div>
   );
 
@@ -351,7 +351,7 @@ export function MaintenanceRecordPanel(props: {
           breached={breached}
           hoursOff={hoursOff}
           reportedClock={reportedClock}
-          priorityLabel={t(`priority_${request.priority}` as never)}
+          priorityLabel={priorityLabel}
           onAssign={props.onAssign}
         />
       ) : null}

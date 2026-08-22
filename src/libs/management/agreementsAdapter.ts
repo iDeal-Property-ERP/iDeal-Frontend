@@ -42,25 +42,15 @@ export type AgreementListResult = {
  * @returns The page of rows plus totals.
  */
 export async function listAgreements(params: AgreementListParams): Promise<AgreementListResult> {
-  const query: Record<string, string | number> = { page: params.page };
-  if (params.perPage) {
-    query.per_page = params.perPage;
-  }
-  if (params.search) {
-    query.search = params.search;
-  }
-  if (params.status) {
-    query.status = params.status;
-  }
-  if (params.endsWithin) {
-    query.ends_within = params.endsWithin;
-  }
-  if (params.ownerId) {
-    query.owner_id = params.ownerId;
-  }
-  if (params.propertyId) {
-    query.property_id = params.propertyId;
-  }
+  const query = {
+    page: params.page,
+    per_page: params.perPage,
+    search: params.search,
+    status: params.status,
+    ends_within: params.endsWithin,
+    owner_id: params.ownerId,
+    property_id: params.propertyId,
+  } satisfies Record<string, string | number | undefined>;
   const res = await apiFetch<PaginatedData<ManagementAgreementOutput>>(
     '/management/owner-agreements/',
     { query },
@@ -86,9 +76,15 @@ export type AgreementStatusCounts = {
 export async function getAgreementStatusCounts(search?: string): Promise<AgreementStatusCounts> {
   const countOf = async (extra: Record<string, string | number>): Promise<number> => {
     try {
+      const query = {
+        page: 1,
+        per_page: 1,
+        search,
+        ...extra,
+      } satisfies Record<string, string | number | undefined>;
       const res = await apiFetch<PaginatedData<ManagementAgreementOutput>>(
         '/management/owner-agreements/',
-        { query: { page: 1, per_page: 1, ...(search ? { search } : {}), ...extra } },
+        { query },
       );
       return res.count;
     } catch {
@@ -124,7 +120,7 @@ export type AgreementKpis = {
  */
 export async function getAgreementKpis(counts: AgreementStatusCounts): Promise<AgreementKpis> {
   const sample = await listAgreements({ page: 1, perPage: 50, status: 'active' }).catch(
-    () => ({ items: [], total: 0, totalPages: 1 }) as AgreementListResult,
+    (): AgreementListResult => ({ items: [], total: 0, totalPages: 1 }),
   );
   const rates = sample.items
     .map((row) => Number(row.commission_rate))

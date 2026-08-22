@@ -116,20 +116,21 @@ export function ServiceOrderRecordPanel(props: {
       : []),
   ];
 
+  // SAFETY: Order status mapped to localized VAS status key
+  const statusLabel = t(`vas_status_${order.status}` as never);
+  // SAFETY: Service type mapped to localized VAS type key
+  const typeLabel = t(`vas_type_${order.service_type}` as never);
+
   const header = (
     <div className="flex flex-col gap-1">
       <div className="flex items-center gap-2">
         <span className="font-display text-[22px] leading-7 font-bold text-foreground">
           {order.catalog_item_name}
         </span>
-        <StatusPill
-          tone={vasOrderStatusTone(order.status)}
-          label={t(`vas_status_${order.status}` as never)}
-        />
+        <StatusPill tone={vasOrderStatusTone(order.status)} label={statusLabel} />
       </div>
       <span className="text-sm text-muted-foreground">
-        {t('svc_order_number', { id: order.id })} · {order.property_name} ·{' '}
-        {t(`vas_type_${order.service_type}` as never)}
+        {t('svc_order_number', { id: order.id })} · {order.property_name} · {typeLabel}
       </span>
     </div>
   );

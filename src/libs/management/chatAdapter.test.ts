@@ -15,7 +15,11 @@ import {
   unblockChatConversation,
 } from './chatAdapter';
 
-function jsonResponse(data: unknown, status = 200): Response {
+type JsonPrimitive = string | number | boolean | null | undefined;
+type JsonObject = Record<string, JsonPrimitive | JsonPrimitive[] | Record<string, JsonPrimitive>>;
+type JsonValue = JsonPrimitive | JsonValue[] | JsonObject;
+
+function jsonResponse(data: Record<string, JsonValue> | null, status = 200): Response {
   return Response.json({ success: true, message: 'OK', data }, { status });
 }
 

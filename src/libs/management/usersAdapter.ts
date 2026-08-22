@@ -34,22 +34,14 @@ export type UserListResult = {
  * @returns The page of rows plus totals.
  */
 export async function listUsers(params: UserListParams): Promise<UserListResult> {
-  const query: Record<string, string | number | boolean> = { page: params.page };
-  if (params.perPage) {
-    query.per_page = params.perPage;
-  }
-  if (params.search) {
-    query.search = params.search;
-  }
-  if (params.role) {
-    query.role = params.role;
-  }
-  if (params.isActive !== undefined) {
-    query.is_active = params.isActive;
-  }
-  if (params.isVerified !== undefined) {
-    query.is_verified = params.isVerified;
-  }
+  const query = {
+    page: params.page,
+    per_page: params.perPage,
+    search: params.search,
+    role: params.role,
+    is_active: params.isActive,
+    is_verified: params.isVerified,
+  } satisfies Record<string, string | number | boolean | undefined>;
   const res = await apiFetch<PaginatedData<UserOutput>>('/management/users/', { query });
   return { items: res.page.object_list, total: res.count, totalPages: res.num_pages };
 }
@@ -72,8 +64,14 @@ export type UserRoleCounts = {
 export async function getUserRoleCounts(search?: string): Promise<UserRoleCounts> {
   const countOf = async (extra: Record<string, string | number>): Promise<number> => {
     try {
+      const query = {
+        page: 1,
+        per_page: 1,
+        search,
+        ...extra,
+      } satisfies Record<string, string | number | undefined>;
       const res = await apiFetch<PaginatedData<UserOutput>>('/management/users/', {
-        query: { page: 1, per_page: 1, ...(search ? { search } : {}), ...extra },
+        query,
       });
       return res.count;
     } catch {
@@ -114,6 +112,11 @@ export async function updateUser(id: number, payload: UserUpdatePayload): Promis
   return await apiFetch<UserOutput>(`/management/users/${id}/`, { method: 'PATCH', body: payload });
 }
 
+export type RelativeTime = {
+  unit: 'today' | 'days' | 'weeks' | 'months' | 'years';
+  count: number;
+};
+
 /**
  * A relative "time ago" bucket derived from an ISO timestamp.
  * BACKEND-GAP: the API exposes no "last active" timestamp — `updated_at` is used
@@ -122,10 +125,7 @@ export async function updateUser(id: number, payload: UserUpdatePayload): Promis
  * @param iso - The ISO timestamp (typically `updated_at`).
  * @returns The coarse unit and its count (e.g. `{ unit: 'days', count: 3 }`).
  */
-export function relativeTimeFromNow(iso: string): {
-  unit: 'today' | 'days' | 'weeks' | 'months' | 'years';
-  count: number;
-} {
+export function relativeTimeFromNow(iso: string): RelativeTime {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) {
     return { unit: 'today', count: 0 };

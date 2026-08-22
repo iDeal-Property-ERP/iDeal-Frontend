@@ -71,14 +71,15 @@ import type {
 import type { ManagementPropertyOutput } from '@/types/management';
 
 type Translator = ReturnType<typeof useTranslations>;
-type Overrides = Record<number, string>;
+export type PropertyOverrides = Record<number, string>;
+type Overrides = PropertyOverrides;
 
-const PRICE_RANGES: Record<string, [number, number]> = {
+const PRICE_RANGES = {
   '0-400': [0, 400],
   '400-600': [400, 600],
   '600-800': [600, 800],
   '800+': [800, Number.POSITIVE_INFINITY],
-};
+} satisfies Record<string, [number, number]>;
 
 const SAVED_VIEW_DEFS = [
   { id: 'all', labelKey: 'view_all', countKey: 'all' },
@@ -194,9 +195,9 @@ function sortRows(rows: ManagementPropertyOutput[], sort: string): ManagementPro
  * @param ids - The ids to drop.
  * @returns A new overrides map.
  */
-function withoutOverrides(overrides: Overrides, ids: number[]): Overrides {
+function withoutOverrides(overrides: PropertyOverrides, ids: number[]) {
   const drop = new Set(ids);
-  const next: Overrides = {};
+  const next: PropertyOverrides = {};
   for (const [key, value] of Object.entries(overrides)) {
     if (!drop.has(Number(key))) {
       next[Number(key)] = value;
@@ -278,17 +279,25 @@ export default function ManagementPropertiesPage() {
   const resource = usePaginatedResource<ManagementPropertyOutput>(async ({ page, query }) => {
     const result = await listProperties({
       page,
+      // SAFETY: Query parameter indexed as string
       search: query.search as string | undefined,
+      // SAFETY: Query parameter indexed as string
       status: query.status as string | undefined,
+      // SAFETY: Query parameter indexed as number
       districtId: query.district_id as number | undefined,
+      // SAFETY: Query parameter indexed as string
       tariff: query.tariff as string | undefined,
     });
     return result;
   });
 
+  // SAFETY: Query parameter indexed as string
   const search = (resource.query.search as string | undefined) ?? '';
+  // SAFETY: Query parameter indexed as string
   const status = resource.query.status as string | undefined;
+  // SAFETY: Query parameter indexed as number
   const districtId = resource.query.district_id as number | undefined;
+  // SAFETY: Query parameter indexed as string
   const tariff = resource.query.tariff as string | undefined;
   const view = viewFromStatus(status);
 
@@ -382,7 +391,11 @@ export default function ManagementPropertiesPage() {
     const override = overrides[row.id];
     return override ? { ...row, status: override } : row;
   });
-  const range = price ? PRICE_RANGES[price] : undefined;
+  const range =
+    price && price in PRICE_RANGES
+      ? // SAFETY: Price key checked against PRICE_RANGES lookup
+        PRICE_RANGES[price as keyof typeof PRICE_RANGES]
+      : undefined;
   const filteredRows = range
     ? overridden.filter((row) => rentOf(row) >= range[0] && rentOf(row) < range[1])
     : overridden;
@@ -835,7 +848,7 @@ export default function ManagementPropertiesPage() {
               {PROPERTY_STATUSES.map((value) => (
                 <DropdownMenuItem
                   key={value}
-                  onSelect={() => changeStatus([...selection.selected] as number[], value)}
+                  onSelect={() => changeStatus([...selection.selected].map(Number), value)}
                 >
                   <StatusPill tone={propertyStatusTone(value)} label={statusLabel(value)} />
                 </DropdownMenuItem>

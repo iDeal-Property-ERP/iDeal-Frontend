@@ -32,6 +32,7 @@ function activeLabel(t: Translator, iso: string): string {
   if (rel.unit === 'today') {
     return t('usr_active_today');
   }
+  // SAFETY: Relative unit string formatted into localized active key
   return t(`usr_active_${rel.unit}` as 'usr_active_days', { count: rel.count });
 }
 

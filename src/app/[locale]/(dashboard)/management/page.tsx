@@ -102,7 +102,7 @@ export default function ManagementDashboardPage() {
             query: { page: 1 },
           })
             .then((res) => res.page.object_list.slice(0, 5))
-            .catch(() => [] as ManagementPropertyOutput[]),
+            .catch((): ManagementPropertyOutput[] => []),
         ]);
         if (active) {
           setData({ dashboard, pnl, properties });

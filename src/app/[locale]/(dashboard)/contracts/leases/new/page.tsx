@@ -76,6 +76,7 @@ export default function NewLeasePage() {
               {(field, invalid) => (
                 <PropertySelect
                   id="property_id"
+                  // SAFETY: Form field value for property_id is number, null, or undefined
                   value={field.value as number | null | undefined}
                   onChange={(v) => field.onChange(v)}
                   aria-invalid={invalid}
@@ -91,6 +92,7 @@ export default function NewLeasePage() {
               {(field, invalid) => (
                 <AgreementSelect
                   id="owner_agreement_id"
+                  // SAFETY: Form field value for owner_agreement_id is number, null, or undefined
                   value={field.value as number | null | undefined}
                   onChange={(v) => field.onChange(v)}
                   aria-invalid={invalid}
@@ -101,6 +103,7 @@ export default function NewLeasePage() {
               {(field, invalid) => (
                 <TenantSelect
                   id="tenant_id"
+                  // SAFETY: Form field value for tenant_id is number, null, or undefined
                   value={field.value as number | null | undefined}
                   onChange={(v) => field.onChange(v)}
                   aria-invalid={invalid}

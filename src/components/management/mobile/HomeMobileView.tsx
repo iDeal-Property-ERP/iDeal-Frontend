@@ -15,12 +15,12 @@ import type { ManagementDashboardOutput } from '@/types/management';
 
 type Translator = ReturnType<typeof useTranslations>;
 
-const toneClass: Record<AttentionTone, string> = {
+const toneClass = {
   danger: 'bg-danger-subtle text-danger-subtle-foreground',
   accent: 'bg-accent-brand-subtle text-accent-brand-subtle-foreground',
   brand: 'bg-primary-subtle text-primary-subtle-foreground',
   warning: 'bg-warning-subtle text-warning-subtle-foreground',
-};
+} satisfies Record<AttentionTone, string>;
 
 const deltaToneClass = {
   success: 'text-success',

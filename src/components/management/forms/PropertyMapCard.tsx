@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Env } from '@/libs/Env';
 import type { ManagementPropertyFormData } from '@/libs/schemas/managementProperty';
 import { cn } from '@/libs/utils';
-import { loadYmaps, TASHKENT, YANDEX_LANG } from '@/libs/yandexMaps';
+import { getYandexLang, loadYmaps, TASHKENT } from '@/libs/yandexMaps';
 
 type Translator = ReturnType<typeof useTranslations>;
 
@@ -95,7 +95,7 @@ function MapPickerCanvas(props: MapPickerCanvasProps) {
 
   useEffect(() => {
     let cancelled = false;
-    const lang = YANDEX_LANG[props.locale] ?? 'en_US';
+    const lang = getYandexLang(props.locale);
     void loadYmaps(props.apiKey, lang)
       .then((ymaps) => {
         if (cancelled || !containerRef.current || mapRef.current) {
@@ -128,12 +128,12 @@ function MapPickerCanvas(props: MapPickerCanvasProps) {
           const rawCoordinates = event.get('coords');
           if (
             !Array.isArray(rawCoordinates) ||
-            typeof rawCoordinates[0] !== 'number' ||
-            typeof rawCoordinates[1] !== 'number'
+            !Number.isFinite(rawCoordinates[0]) ||
+            !Number.isFinite(rawCoordinates[1])
           ) {
             return;
           }
-          onPickRef.current([rawCoordinates[0], rawCoordinates[1]]);
+          onPickRef.current([Number(rawCoordinates[0]), Number(rawCoordinates[1])]);
         });
       })
       .catch(() => {
@@ -152,7 +152,7 @@ function MapPickerCanvas(props: MapPickerCanvasProps) {
   useEffect(() => {
     let cancelled = false;
     if (props.searchRequest) {
-      const lang = YANDEX_LANG[props.locale] ?? 'en_US';
+      const lang = getYandexLang(props.locale);
       void loadYmaps(props.apiKey, lang)
         .then((ymaps) => ymaps.geocode(props.searchRequest!.query))
         .then((result) => {
@@ -160,11 +160,11 @@ function MapPickerCanvas(props: MapPickerCanvasProps) {
             return;
           }
           const found = result.geoObjects.get(0)?.geometry.getCoordinates();
-          if (!found || typeof found[0] !== 'number' || typeof found[1] !== 'number') {
+          if (!Array.isArray(found) || !Number.isFinite(found[0]) || !Number.isFinite(found[1])) {
             onSearchCompleteRef.current?.(false);
             return;
           }
-          onPickRef.current([found[0], found[1]]);
+          onPickRef.current([Number(found[0]), Number(found[1])]);
           onSearchCompleteRef.current?.(true);
         })
         .catch(() => {

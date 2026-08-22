@@ -81,12 +81,14 @@ const SAVED_VIEW_DEFS = [
   { id: 'all', labelKey: 'view_all', countKey: 'all' },
 ] as const satisfies { id: string; labelKey: string; countKey: keyof LeaseStatusCounts }[];
 
+export type LeaseViewQuery = { status?: string; ends_within?: number };
+
 /**
  * Maps a saved-view id to the backend query it applies.
  * @param view - The saved-view id.
  * @returns The status / ends-within query for that view.
  */
-function queryForView(view: string): { status?: string; ends_within?: number } {
+function queryForView(view: string): LeaseViewQuery {
   if (view === 'expiring') {
     return { status: 'active', ends_within: LEASE_EXPIRING_WINDOW };
   }
@@ -154,11 +156,11 @@ function termMonths(start: string, end: string): number {
 }
 
 /** Client-side term-bucket predicates (server fixes base ordering). */
-const TERM_BUCKETS: Record<string, (m: number) => boolean> = {
-  short: (m) => m <= 6,
-  year: (m) => m > 6 && m <= 12,
-  long: (m) => m > 12,
-};
+const TERM_BUCKETS = {
+  short: (m: number) => m <= 6,
+  year: (m: number) => m > 6 && m <= 12,
+  long: (m: number) => m > 12,
+} satisfies Record<string, (m: number) => boolean>;
 
 /**
  * Applies the term-bucket filter and the active sort to the loaded page.
@@ -174,7 +176,10 @@ function filterAndSortLeases(
 ): ManagementLeaseOutput[] {
   const filtered = termFilter
     ? data.filter((row) =>
-        (TERM_BUCKETS[termFilter] ?? (() => true))(termMonths(row.start_date, row.end_date)),
+        (termFilter in TERM_BUCKETS
+          ? // SAFETY: Term filter key validated against TERM_BUCKETS lookup
+            TERM_BUCKETS[termFilter as keyof typeof TERM_BUCKETS]
+          : () => true)(termMonths(row.start_date, row.end_date)),
       )
     : data;
   return filtered.toSorted((a, b) => {
@@ -209,15 +214,21 @@ export default function ManagementLeasesPage() {
     async ({ page, query }) =>
       await listLeases({
         page,
+        // SAFETY: Query parameter indexed as string
         search: query.search as string | undefined,
+        // SAFETY: Query parameter indexed as string
         status: query.status as string | undefined,
+        // SAFETY: Query parameter indexed as number
         endsWithin: query.ends_within as number | undefined,
       }),
     { initialQuery: queryForView('expiring') },
   );
 
+  // SAFETY: Query parameter indexed as string
   const search = (resource.query.search as string | undefined) ?? '';
+  // SAFETY: Query parameter indexed as string
   const status = resource.query.status as string | undefined;
+  // SAFETY: Query parameter indexed as number
   const endsWithin = resource.query.ends_within as number | undefined;
   const view = viewFromQuery(status, endsWithin);
 

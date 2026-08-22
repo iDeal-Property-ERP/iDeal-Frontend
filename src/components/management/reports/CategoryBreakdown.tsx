@@ -4,15 +4,19 @@ import { ReportCard } from '@/components/management/reports/ReportCard';
 import type { PnlBreakdown, PnlBreakdownRow } from '@/types/management';
 
 /** Per-source theme color, so revenue and expense streams read consistently. */
-const SOURCE_COLOR: Record<string, string> = {
+const SOURCE_COLOR = {
   lease: 'var(--color-primary)',
   vas: 'var(--color-accent-brand)',
   payouts: 'var(--color-primary)',
   maintenance: 'var(--color-warning)',
-};
+} satisfies Record<string, string>;
 
 function sourceColor(source: string): string {
-  return SOURCE_COLOR[source] ?? 'var(--color-muted-foreground)';
+  if (source in SOURCE_COLOR) {
+    // SAFETY: Source key checked against SOURCE_COLOR lookup
+    return SOURCE_COLOR[source as keyof typeof SOURCE_COLOR];
+  }
+  return 'var(--color-muted-foreground)';
 }
 
 /**

@@ -103,7 +103,9 @@ export default function ManagementUsersPage() {
     async ({ page, query }) =>
       await listUsers({
         page,
+        // SAFETY: Search query parameter indexed as string
         search: query.search as string | undefined,
+        // SAFETY: Role query parameter indexed as string
         role: query.role as string | undefined,
         isActive: query.is_active === undefined ? undefined : query.is_active === 'true',
         isVerified: query.is_verified === undefined ? undefined : query.is_verified === 'true',
@@ -111,9 +113,13 @@ export default function ManagementUsersPage() {
     { initialQuery: {} },
   );
 
+  // SAFETY: Search query parameter indexed as string
   const search = (resource.query.search as string | undefined) ?? '';
+  // SAFETY: Role query parameter indexed as string
   const role = resource.query.role as string | undefined;
+  // SAFETY: Active query parameter indexed as string
   const isActive = resource.query.is_active as string | undefined;
+  // SAFETY: Verified query parameter indexed as string
   const isVerified = resource.query.is_verified as string | undefined;
   const view = role ?? 'all';
 
@@ -141,6 +147,7 @@ export default function ManagementUsersPage() {
     };
   }, [search]);
 
+  // SAFETY: Role string mapped to localized role key
   const roleLabel = (value: string): string => t(`usr_role_${value}` as 'usr_role_mgmt');
   const statusLabel = (value: boolean): string =>
     value ? t('usr_status_active') : t('usr_status_deactivated');
@@ -150,6 +157,7 @@ export default function ManagementUsersPage() {
     if (rel.unit === 'today') {
       return t('usr_active_today');
     }
+    // SAFETY: Unit string mapped to localized relative active key
     return t(`usr_active_${rel.unit}` as 'usr_active_days', { count: rel.count });
   };
 

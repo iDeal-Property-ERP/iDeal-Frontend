@@ -33,6 +33,28 @@ const FURNISHINGS: Furnishing[] = ['furnished', 'semi_furnished', 'unfurnished']
 const TARIFFS: Tariff[] = ['standard', 'comfort', 'premium'];
 const PROPERTY_TYPES: PropertyType[] = ['apartment', 'house', 'studio', 'room'];
 
+const PROPERTY_TYPE_LABEL_KEYS = {
+  apartment: 'type_apartment',
+  house: 'type_house',
+  studio: 'type_studio',
+  room: 'type_room',
+} satisfies Record<PropertyType, 'type_apartment' | 'type_house' | 'type_studio' | 'type_room'>;
+
+const FURNISHING_LABEL_KEYS = {
+  furnished: 'furnishing_furnished',
+  semi_furnished: 'furnishing_semi_furnished',
+  unfurnished: 'furnishing_unfurnished',
+} satisfies Record<
+  Furnishing,
+  'furnishing_furnished' | 'furnishing_semi_furnished' | 'furnishing_unfurnished'
+>;
+
+const TARIFF_LABEL_KEYS = {
+  standard: 'tariff_standard',
+  comfort: 'tariff_comfort',
+  premium: 'tariff_premium',
+} satisfies Record<Tariff, 'tariff_standard' | 'tariff_comfort' | 'tariff_premium'>;
+
 type MobilePage = 'filters' | 'dates';
 
 type Draft = {
@@ -116,8 +138,6 @@ export function AllFiltersSheet(props: {
 }) {
   const { districts, amenities, trigger } = props;
   const t = useTranslations('Listings');
-  // Loose alias for dynamically-built keys (`type_${x}`, `furnishing_${x}`, `tariff_${x}`).
-  const tx = t as unknown as (key: string) => string;
   const { get, set } = useListingParams();
   const [open, setOpen] = useState(false);
   const [mobilePage, setMobilePage] = useState<MobilePage>('filters');
@@ -410,19 +430,28 @@ export function AllFiltersSheet(props: {
               <ChoiceGroup
                 label={t('filter_property_type')}
                 value={draft.property_type}
-                options={PROPERTY_TYPES.map((pt) => ({ value: pt, label: tx(`type_${pt}`) }))}
+                options={PROPERTY_TYPES.map((pt) => ({
+                  value: pt,
+                  label: t(PROPERTY_TYPE_LABEL_KEYS[pt]),
+                }))}
                 onChange={(v) => upd({ property_type: v })}
               />
               <ChoiceGroup
                 label={t('filter_furnishing')}
                 value={draft.furnishing}
-                options={FURNISHINGS.map((f) => ({ value: f, label: tx(`furnishing_${f}`) }))}
+                options={FURNISHINGS.map((f) => ({
+                  value: f,
+                  label: t(FURNISHING_LABEL_KEYS[f]),
+                }))}
                 onChange={(v) => upd({ furnishing: v })}
               />
               <ChoiceGroup
                 label={t('filter_tariff')}
                 value={draft.tariff}
-                options={TARIFFS.map((tr) => ({ value: tr, label: tx(`tariff_${tr}`) }))}
+                options={TARIFFS.map((tr) => ({
+                  value: tr,
+                  label: t(TARIFF_LABEL_KEYS[tr]),
+                }))}
                 onChange={(v) => upd({ tariff: v })}
               />
 

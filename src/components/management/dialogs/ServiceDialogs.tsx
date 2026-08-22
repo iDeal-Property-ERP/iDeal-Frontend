@@ -59,6 +59,9 @@ export function CatalogItemDialog(props: {
   const [isActive, setIsActive] = useState(() => item?.is_active ?? true);
   const [busy, setBusy] = useState(false);
 
+  // SAFETY: VAS service type maps to localized type key
+  const typeLabel = (type: string): string => t(`vas_type_${type}` as never);
+
   const submit = async () => {
     if (!name || !price) {
       toast.error(t('dialog_fill_required'));
@@ -67,6 +70,7 @@ export function CatalogItemDialog(props: {
     setBusy(true);
     const payload = {
       name,
+      // SAFETY: serviceType is selected from SERVICE_TYPES options
       service_type: serviceType as ServiceCatalogItemOutput['service_type'],
       partner_name: partner || undefined,
       base_price: price,
@@ -108,7 +112,7 @@ export function CatalogItemDialog(props: {
               <SelectContent>
                 {SERVICE_TYPES.map((type) => (
                   <SelectItem key={type} value={type}>
-                    {t(`vas_type_${type}` as never)}
+                    {typeLabel(type)}
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -33,16 +33,12 @@ export type OnboardingListResult = {
  * @returns The page of onboarding rows plus totals.
  */
 export async function listOnboardings(params: OnboardingListParams): Promise<OnboardingListResult> {
-  const query: Record<string, string | number> = { page: params.page };
-  if (params.perPage) {
-    query.per_page = params.perPage;
-  }
-  if (params.status) {
-    query.status = params.status;
-  }
-  if (params.search) {
-    query.search = params.search;
-  }
+  const query = {
+    page: params.page,
+    per_page: params.perPage,
+    status: params.status,
+    search: params.search,
+  } satisfies Record<string, string | number | undefined>;
   const res = await apiFetch<PaginatedData<ManagementOnboardingOutput>>(
     '/management/onboardings/',
     {

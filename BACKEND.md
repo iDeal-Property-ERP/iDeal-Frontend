@@ -192,14 +192,24 @@ See below for the complete endpoint map grouped by feature area.
 5. **Empty states** — Helpful placeholders when no data
 6. **Responsive** — Mobile-first where applicable (management panel may stay desktop)
 
-## Schema Reference (Postman)
+## Schema Reference (Bruno)
 
-The Postman collection provides the authoritative API schema:
+The Git-tracked Bruno collection at `Backend/docs/api/bruno` in the Backend
+repository (local path: `/home/mehroj/PycharmProjects/iDeal-Backend/docs/api/bruno`) contains executable
+requests and saved response examples for the backend API. Use it as a
+frontend-oriented fixture and handoff reference, while treating the backend
+URL resolver, view annotations, Pydantic schemas, tests, and response handling
+as the authoritative contract.
 
-- **Collection ID**: `41924153-ba70da5d-fed9-4973-8e18-6f52381d9c7c`
-- Use `postman_getCollection` to browse all endpoints
-- Use `postman_getCollectionRequest` + `postman_getCollectionResponse` for request/response shapes
-- Each saved response has an example body — use these as fixtures
+- Check the request's path/query fields, body, auth mode, and `docs` notes.
+- Use success, empty, validation, permission, not-found, conflict, and provider
+  examples where applicable when writing client types and error handling.
+- Switch `Local`, `Dev`, or `Prod` environments instead of editing request URLs.
+  Never commit tokens, credentials, webhook secrets, or local fixture paths.
+- After backend contract changes, run the collection's static validator and
+  update affected frontend Zod schemas, API clients, and tests. Runtime Bruno
+  checks are separate from static checks and require the relevant service and
+  fixtures.
 
 ## Key Design Decisions
 

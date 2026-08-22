@@ -27,11 +27,11 @@ export type KpiItem = {
   tone?: 'default' | 'danger';
 };
 
-const deltaToneClass: Record<DeltaTone, string> = {
+const deltaToneClass = {
   success: 'text-success',
   danger: 'text-danger',
   muted: 'text-muted-foreground',
-};
+} satisfies Record<DeltaTone, string>;
 
 /**
  * A single KPI card: overline label + icon badge, a large numeric value, and an

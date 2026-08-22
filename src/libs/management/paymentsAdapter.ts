@@ -42,40 +42,20 @@ export type PaymentListResult = {
  * @returns The page of rows plus totals.
  */
 export async function listPayments(params: PaymentListParams): Promise<PaymentListResult> {
-  const query: Record<string, string | number> = { page: params.page };
-  if (params.perPage) {
-    query.per_page = params.perPage;
-  }
-  if (params.search) {
-    query.search = params.search;
-  }
-  if (params.status) {
-    query.status = params.status;
-  }
-  if (params.method) {
-    query.method = params.method;
-  }
-  if (params.propertyId) {
-    query.property_id = params.propertyId;
-  }
-  if (params.leaseId) {
-    query.lease_id = params.leaseId;
-  }
-  if (params.tenantId) {
-    query.tenant_id = params.tenantId;
-  }
-  if (params.dueFrom) {
-    query.due_from = params.dueFrom;
-  }
-  if (params.dueTo) {
-    query.due_to = params.dueTo;
-  }
-  if (params.overdue) {
-    query.overdue = 'true';
-  }
-  if (params.order) {
-    query.order = params.order;
-  }
+  const query = {
+    page: params.page,
+    per_page: params.perPage,
+    search: params.search,
+    status: params.status,
+    method: params.method,
+    property_id: params.propertyId,
+    lease_id: params.leaseId,
+    tenant_id: params.tenantId,
+    due_from: params.dueFrom,
+    due_to: params.dueTo,
+    overdue: params.overdue ? 'true' : undefined,
+    order: params.order,
+  } satisfies Record<string, string | number | undefined>;
   const res = await apiFetch<PaginatedData<ManagementPaymentOutput>>('/management/payments/', {
     query,
   });

@@ -2,11 +2,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/libs/utils';
 
-const COLUMN_CLASS: Record<1 | 2 | 3, string> = {
+const COLUMN_CLASS = {
   1: 'grid-cols-1',
   2: 'grid-cols-1 md:grid-cols-2',
   3: 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3',
-};
+} satisfies Record<1 | 2 | 3, string>;
 
 type DetailGridProps = {
   children: React.ReactNode;

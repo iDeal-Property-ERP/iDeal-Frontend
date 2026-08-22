@@ -31,7 +31,7 @@ function shouldIgnore(event: KeyboardEvent, enabled: boolean | undefined): boole
   if (event.metaKey || event.ctrlKey || event.altKey) {
     return true;
   }
-  const target = event.target as HTMLElement | null;
+  const target = event.target instanceof HTMLElement ? event.target : null;
   const tag = target?.tagName;
   return (
     tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || Boolean(target?.isContentEditable)

@@ -5,14 +5,14 @@ import { Brush, Package, Sparkles, Wifi, Wrench, Zap } from 'lucide-react';
 import { cn } from '@/libs/utils';
 import type { ServiceCatalogItemOutput } from '@/types/vas';
 
-const TYPE_ICONS: Record<string, LucideIcon> = {
+const TYPE_ICONS = {
   cleaning: Brush,
   handyman: Wrench,
   utility: Zap,
   internet: Wifi,
   moving: Package,
   other: Sparkles,
-};
+} satisfies Record<string, LucideIcon>;
 
 /**
  * Resolves the lucide icon for a VAS service type (brush, wrench, zap, wifi…).
@@ -20,7 +20,11 @@ const TYPE_ICONS: Record<string, LucideIcon> = {
  * @returns The matching icon component.
  */
 export function serviceTypeIcon(serviceType: string): LucideIcon {
-  return TYPE_ICONS[serviceType] ?? Sparkles;
+  if (serviceType in TYPE_ICONS) {
+    // SAFETY: Service type validated against TYPE_ICONS lookup
+    return TYPE_ICONS[serviceType as keyof typeof TYPE_ICONS];
+  }
+  return Sparkles;
 }
 
 /**

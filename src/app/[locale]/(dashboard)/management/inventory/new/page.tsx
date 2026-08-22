@@ -42,14 +42,12 @@ export default function NewInventoryActPage() {
 
   const onSubmit = createApiSubmit(form, {
     submit: async (data) => {
-      const body: Record<string, unknown> = {
+      const body = {
         property_id: data.property_id,
         act_type: data.act_type,
         notes: data.notes,
+        lease_id: data.lease_id,
       };
-      if (data.lease_id) {
-        body.lease_id = data.lease_id;
-      }
       return await apiFetch<InventoryActOutput>('/inventory/acts/', { method: 'POST', body });
     },
     success: t('inventory_create'),
@@ -74,6 +72,7 @@ export default function NewInventoryActPage() {
               {(field, invalid) => (
                 <PropertySelect
                   id="property_id"
+                  // SAFETY: Form field value for property_id is number, null, or undefined
                   value={field.value as number | null | undefined}
                   onChange={(v) => field.onChange(v)}
                   aria-invalid={invalid}
@@ -84,6 +83,7 @@ export default function NewInventoryActPage() {
               {(field, invalid) => (
                 <LeaseSelect
                   id="lease_id"
+                  // SAFETY: Form field value for lease_id is number, null, or undefined
                   value={field.value as number | null | undefined}
                   onChange={(v) => field.onChange(v)}
                   aria-invalid={invalid}

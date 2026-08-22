@@ -2222,5 +2222,39 @@
     "delete_confirm_phrase_label": "Type the confirmation phrase",
     "delete_confirm_phrase": "PURGE",
     "delete_confirm": "Purge conversation"
+  },
+  "PrivacyPolicyPage": {
+    "eyebrow": "Legal",
+    "title": "Privacy policy",
+    "meta_title": "Privacy policy | iDeal",
+    "meta_description": "Read iDeal's privacy policy to learn how we collect, use, and protect your personal information.",
+    "intro": "At iDeal, we respect your privacy and are committed to protecting the personal information you share with us.",
+    "draft_title": "Draft policy notice:",
+    "draft_body": "This privacy policy is currently pending final legal review. Terms may be updated.",
+    "data_title": "Information we collect",
+    "data_body": "We collect information you provide directly, such as your name, contact details, payment information, and listing preferences.",
+    "use_title": "How we use your information",
+    "use_body": "We use collected information to provide and improve our rental platform, facilitate transactions, verify identities, and communicate with you.",
+    "sharing_title": "Information sharing and disclosure",
+    "sharing_body": "We do not sell your personal data. We only share information with property owners, tenants, payment processors, and verified service providers as necessary to fulfill agreements.",
+    "retention_title": "Data retention",
+    "retention_body": "We retain your personal data for as long as needed to provide our services, comply with legal obligations, and resolve disputes.",
+    "security_title": "Security measures",
+    "security_body": "We implement appropriate technical and organizational safeguards to protect your personal information against unauthorized access, loss, or misuse.",
+    "rights_title": "Your privacy rights",
+    "rights_body": "You have the right to access, update, or correct your personal data at any time through your account settings or by contacting our support team.",
+    "deletion_title": "Account and data deletion",
+    "deletion_body": "You can request deletion of your account and associated personal data by submitting a request to our support team.",
+    "contact_title": "Contact us",
+    "contact_body": "If you have any questions or concerns regarding this privacy policy, please reach out to us at privacy@ideal.uz.",
+    "updated": "Last updated: August 2026"
+  },
+  "PaymentReturnPage": {
+    "meta_title": "Payment processing | iDeal",
+    "meta_description": "Return status for iDeal payments.",
+    "title": "Payment processing",
+    "description": "Your payment is being processed. If you completed the payment in your banking or mobile app, you can return to iDeal.",
+    "verification_notice": "Please allow a few moments for the payment confirmation to reflect in your account. Do not submit duplicate payments.",
+    "back_to_website": "Back to website"
   }
 }

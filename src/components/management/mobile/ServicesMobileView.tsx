@@ -57,6 +57,7 @@ export function ServicesMobileView(props: {
                     </span>
                     <StatusPill
                       tone={vasOrderStatusTone(order.status)}
+                      // SAFETY: Order status mapped to localized VAS status key
                       label={t(`vas_status_${order.status}` as never)}
                     />
                   </div>

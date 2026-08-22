@@ -30,19 +30,13 @@ export type LeadListResult = {
  * @returns The page of merged lead rows plus totals.
  */
 export async function listLeads(params: LeadListParams): Promise<LeadListResult> {
-  const query: Record<string, string | number> = { page: params.page };
-  if (params.perPage) {
-    query.per_page = params.perPage;
-  }
-  if (params.tab) {
-    query.tab = params.tab;
-  }
-  if (params.type) {
-    query.type = params.type;
-  }
-  if (params.search) {
-    query.search = params.search;
-  }
+  const query = {
+    page: params.page,
+    per_page: params.perPage,
+    tab: params.tab,
+    type: params.type,
+    search: params.search,
+  } satisfies Record<string, string | number | undefined>;
   const res = await apiFetch<PaginatedData<ManagementLeadOutput>>('/management/leads/', { query });
   return { items: res.page.object_list, total: res.count, totalPages: res.num_pages };
 }
@@ -142,12 +136,12 @@ export async function convertBooking(
 /**
  * Detects the backend's active-lease conflict (HTTP 409, `error: "lease_conflict"`),
  * which drives the convert wizard's "cannot convert" state.
- * @param error - The thrown value from a failed convert.
+ * @param cause - The thrown value from a failed convert.
  * @returns Whether the error is a lease conflict.
  */
-export function isLeaseConflict(error: unknown): boolean {
+export function isLeaseConflict(cause: unknown): boolean {
   return (
-    error instanceof ApiError_ && (error.status === 409 || error.body?.error === 'lease_conflict')
+    cause instanceof ApiError_ && (cause.status === 409 || cause.body?.error === 'lease_conflict')
   );
 }
 
@@ -156,10 +150,11 @@ export function isLeaseConflict(error: unknown): boolean {
 const SEEN_KEY = 'ideal_leads_seen';
 
 function readSeen(): Record<string, string> {
-  if (typeof window === 'undefined') {
+  if (!globalThis.window) {
     return {};
   }
   try {
+    // SAFETY: LocalStorage seen leads parsed as string map
     return JSON.parse(localStorage.getItem(SEEN_KEY) ?? '{}') as Record<string, string>;
   } catch {
     return {};
@@ -181,7 +176,7 @@ export function isLeadUnread(lead: ManagementLeadOutput): boolean {
  * @param lead - The lead row that was opened.
  */
 export function markLeadSeen(lead: ManagementLeadOutput): void {
-  if (typeof window === 'undefined') {
+  if (!globalThis.window) {
     return;
   }
   const seen = readSeen();

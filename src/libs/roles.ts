@@ -1,13 +1,13 @@
 import type { Role } from '@/types/enums';
 
 /** Default landing route per role (post-login + role-mismatch redirects). */
-export const roleDashboardMap: Record<Role, string> = {
+export const roleDashboardMap = {
   mgmt: '/management',
   owner: '/owner',
   tenant: '/tenant',
   agent: '/agents',
   listings: '/marketplace',
-};
+} satisfies Record<Role, string>;
 
 /** Which roles may access each protected route prefix. */
 export const roleRouteMap: { path: string; roles: Role[] }[] = [

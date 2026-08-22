@@ -12,13 +12,17 @@ import type { OwnerListing } from '@/types/marketplace';
 
 type Tone = 'warning' | 'success' | 'default' | 'danger';
 
-const LISTING_TONE: Record<string, Tone> = {
+const LISTING_TONE = {
   pending_review: 'warning',
   published: 'success',
   rejected: 'danger',
-};
+} satisfies Record<string, Tone>;
 
-const statusTone = (status: string): Tone => LISTING_TONE[status] ?? 'default';
+const statusTone = (status: string): Tone =>
+  (status in LISTING_TONE
+    ? // SAFETY: Status string validated against LISTING_TONE keys
+      LISTING_TONE[status as keyof typeof LISTING_TONE]
+    : undefined) ?? 'default';
 
 /**
  * Owner "My Listings" — surfaces the draft/pending listings created via the
@@ -28,6 +32,9 @@ const statusTone = (status: string): Tone => LISTING_TONE[status] ?? 'default';
  */
 export default function OwnerListingsPage() {
   const t = useTranslations('Pages');
+  // SAFETY: Listing status string mapped to localized status key
+  const listingStatusLabel = (status: string): string =>
+    t(`listing_status_${status}` as 'listing_status_draft');
   const [rows, setRows] = useState<OwnerListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -61,9 +68,7 @@ export default function OwnerListingsPage() {
                 <span className="font-semibold text-foreground">
                   {row.name || t('my_listings_untitled')}
                 </span>
-                <Badge variant={statusTone(row.status)}>
-                  {t(`listing_status_${row.status}` as 'listing_status_draft')}
-                </Badge>
+                <Badge variant={statusTone(row.status)}>{listingStatusLabel(row.status)}</Badge>
               </div>
               <p className="text-sm text-muted-foreground">{row.address}</p>
               {row.status === 'rejected' && row.rejection_reason ? (

@@ -30,7 +30,7 @@ import { YandexMap } from '@/components/map/YandexMap';
 import { Link } from '@/libs/I18nNavigation';
 import { fetchListing } from '@/libs/marketplace';
 
-const AMENITY_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+const AMENITY_ICONS = {
   wifi: Wifi,
   snowflake: Snowflake,
   car: Car,
@@ -40,7 +40,7 @@ const AMENITY_ICONS: Record<string, React.ComponentType<{ className?: string }>>
   shield: Shield,
   flame: Flame,
   paw: PawPrint,
-};
+} satisfies Record<string, React.ComponentType<{ className?: string }>>;
 
 /**
  * A single fact card in the specs row (Figma 34:5): icon box + value + label.
@@ -81,6 +81,9 @@ export default async function ListingDetailPage(props: {
   const { locale, id } = await props.params;
   setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: 'ListingDetail' });
+  // SAFETY: Checklist item key mapped to localized verification item key
+  const verifiedCheckLabel = (key: string): string =>
+    t(`verified_check_${key}` as 'verified_check_ownership');
 
   const listing = await fetchListing(id);
   if (!listing) {
@@ -264,7 +267,7 @@ export default async function ListingDetailPage(props: {
                       <Check className="size-3" />
                     </span>
                     <Check className="size-4 shrink-0 md:hidden" />
-                    {t(`verified_check_${item.key}` as 'verified_check_ownership')}
+                    {verifiedCheckLabel(item.key)}
                   </li>
                 ))}
                 {/* Deposit folded into the checklist on phones (Figma 116:2) */}
@@ -287,7 +290,11 @@ export default async function ListingDetailPage(props: {
               </h2>
               <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3.5 max-md:mt-3 max-md:gap-x-3 max-md:gap-y-3 md:grid-cols-3">
                 {property.amenities.map((a) => {
-                  const Icon = AMENITY_ICONS[a.icon] ?? Check;
+                  const Icon =
+                    a.icon in AMENITY_ICONS
+                      ? // SAFETY: Amenity icon checked against AMENITY_ICONS lookup
+                        AMENITY_ICONS[a.icon as keyof typeof AMENITY_ICONS]
+                      : Check;
                   return (
                     <div
                       className="flex items-center gap-2.5 text-[14px] text-foreground"

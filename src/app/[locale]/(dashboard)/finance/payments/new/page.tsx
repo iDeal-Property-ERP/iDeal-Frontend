@@ -87,6 +87,7 @@ export default function NewPaymentPage() {
               {(field, invalid) => (
                 <LeaseSelect
                   id="lease_id"
+                  // SAFETY: Form field value for lease_id is number, null, or undefined
                   value={field.value as number | null | undefined}
                   onChange={(v) => field.onChange(v)}
                   aria-invalid={invalid}
@@ -97,6 +98,7 @@ export default function NewPaymentPage() {
               {(field, invalid) => (
                 <TenantSelect
                   id="tenant_id"
+                  // SAFETY: Form field value for tenant_id is number, null, or undefined
                   value={field.value as number | null | undefined}
                   onChange={(v) => field.onChange(v)}
                   aria-invalid={invalid}
@@ -107,6 +109,7 @@ export default function NewPaymentPage() {
               {(field, invalid) => (
                 <UserSelect
                   id="paid_by_id"
+                  // SAFETY: Form field value for paid_by_id is number, null, or undefined
                   value={field.value as number | null | undefined}
                   onChange={(v) => field.onChange(v)}
                   aria-invalid={invalid}

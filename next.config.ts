@@ -53,6 +53,24 @@ const baseConfig: NextConfig = {
   // The Django API requires trailing slashes (and POST can't follow an
   // APPEND_SLASH redirect). Don't let Next strip the slash before the rewrite.
   skipTrailingSlashRedirect: true,
+  async headers() {
+    const associationHeaders = await Promise.resolve([
+      { key: 'Content-Type', value: 'application/json; charset=utf-8' },
+      { key: 'Cache-Control', value: 'public, max-age=300, must-revalidate' },
+      { key: 'X-Content-Type-Options', value: 'nosniff' },
+    ]);
+
+    return [
+      {
+        source: '/.well-known/apple-app-site-association',
+        headers: associationHeaders,
+      },
+      {
+        source: '/.well-known/assetlinks.json',
+        headers: associationHeaders,
+      },
+    ];
+  },
   async rewrites() {
     const backend = await Promise.resolve(backendOrigin());
     return [

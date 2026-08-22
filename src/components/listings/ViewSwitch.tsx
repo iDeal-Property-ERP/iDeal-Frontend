@@ -8,11 +8,11 @@ import { DEFAULT_DISCOVERY_VIEW, DISCOVERY_VIEWS } from '@/libs/marketplace';
 import { cn } from '@/libs/utils';
 import type { DiscoveryView } from '@/types/marketplace';
 
-const ICONS: Record<DiscoveryView, LucideIcon> = {
+const ICONS = {
   list: LayoutGrid,
   split: Columns2,
   map: MapIcon,
-};
+} satisfies Record<DiscoveryView, LucideIcon>;
 
 type ViewSwitchProps = {
   view: DiscoveryView;
