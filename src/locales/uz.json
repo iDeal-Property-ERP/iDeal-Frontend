@@ -2249,6 +2249,24 @@
     "contact_body": "Maxfiylik siyosati bo'yicha savollaringiz bo'lsa, privacy@ideal.uz manzili orqali bog'lanishingiz mumkin.",
     "updated": "Oxirgi yangilanish: 2026-yil avgust"
   },
+  "TermsOfServicePage": {
+    "eyebrow": "Huquqiy ma'lumot",
+    "title": "Foydalanish shartlari",
+    "meta_title": "Foydalanish shartlari | iDeal",
+    "meta_description": "iDeal platformasidan foydalanish shartlari bilan tanishing.",
+    "intro": "Ushbu shartlar iDeal ko‘chmas mulk ijarasi va oldi-sotdisi platformasidan foydalanish qoidalarini belgilaydi.",
+    "draft_title": "Loyiha holatidagi hujjat:",
+    "draft_body": "Ushbu shartlar yuridik ko‘rib chiqish jarayonida va yangilanishi mumkin.",
+    "general_title": "Umumiy qoidalar",
+    "general_body": "iDeal ko‘chmas mulk ijarasi va oldi-sotdisi bo‘yicha xizmatlarni taqdim etadi. Platformadan foydalanish orqali siz ushbu shartlarga rozilik bildirasiz.",
+    "owners_title": "Mulkdorlar majburiyatlari",
+    "owners_body": "E’lon joylashtiruvchi har bir shaxs ma’lumotlarning to‘g‘riligi, dolzarbligi va mulkka qonuniy egalik qilish uchun shaxsan javobgardir.",
+    "bookings_title": "Bron qilish va to‘lovlar",
+    "bookings_body": "Platforma orqali amalga oshirilgan bron qilish va to‘lovlar xavfsiz to‘lov shlyuzlari orqali bajariladi hamda tegishli shartnoma bilan rasmiylashtiriladi.",
+    "privacy_title": "Maxfiylik va ma’lumotlar xavfsizligi",
+    "privacy_body": "Shaxsiy ma’lumotlar O‘zbekiston Respublikasi qonunchiligiga muvofiq himoyalanadi va xizmat ko‘rsatish yoki qonunga rioya qilish zarurati bo‘lmagan holda uchinchi shaxslarga berilmaydi.",
+    "updated": "Oxirgi yangilanish: 2026-yil avgust"
+  },
   "PaymentReturnPage": {
     "meta_title": "To'lov jarayoni | iDeal",
     "meta_description": "iDeal to'lovidan keyingi qaytish holati.",

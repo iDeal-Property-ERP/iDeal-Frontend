@@ -20,6 +20,7 @@ import {
   sendChatImageMessage,
   sendChatMessage,
 } from '@/libs/management/chatAdapter';
+import type { ChatRealtimeEvent } from '@/libs/management/useChatRealtime';
 import type {
   ChatConversationOutput,
   ChatConversationStateOutput,
@@ -57,6 +58,10 @@ function latestMessageId(messages: ChatMessageOutput[]): number | null {
   return latest;
 }
 
+function ignoreReadReceipt(_targetId: number | null): void {
+  return undefined;
+}
+
 /**
  * Renders the scrollback states and date-separated message bubbles.
  * @param props - Message state, labels, locale, history, and media callbacks.
@@ -75,6 +80,7 @@ function ThreadMessageList(props: {
   emptyLabel: string;
   olderLabel: string;
   onMediaLoad: () => void;
+  observeIncoming: (messageId: number) => (element: HTMLDivElement | null) => void;
 }) {
   const olderButton = props.hasMore ? (
     <Button
@@ -130,6 +136,7 @@ function ThreadMessageList(props: {
           <div
             className="flex flex-col gap-3"
             key={`${message.id}-${message.client_id ?? 'message'}`}
+            ref={message.is_mine ? undefined : props.observeIncoming(message.id)}
           >
             {showDate ? (
               <div className="flex items-center gap-3 py-1 text-[11px] font-medium text-muted-foreground">
@@ -151,7 +158,7 @@ function ThreadMessageList(props: {
 }
 
 /**
- * Renders one conversation thread, including guarded polling, history loading,
+ * Renders one conversation thread, including realtime-driven history loading,
  * read receipts, staff actions, and the optimistic reply composer.
  * @param props - Conversation data and management action callbacks.
  * @returns The conversation thread.
@@ -165,6 +172,8 @@ export function ChatThread(props: {
   onDelete: () => void;
   onConversationUpdate: (conversation: ChatConversationOutput) => void;
   onConversationState: (state: ChatConversationStateOutput) => void;
+  realtimeEvent: ChatRealtimeEvent | null;
+  onTyping: (isTyping: boolean) => void;
 }) {
   const t = useTranslations('ChatsPage');
   const locale = useLocale();
@@ -187,11 +196,54 @@ export function ChatThread(props: {
   const preserveScrollRef = useRef<{ element: HTMLDivElement; height: number } | null>(null);
   const scrollToBottomRef = useRef(false);
   const atBottomRef = useRef(true);
+  const markReadRef = useRef<(targetId: number | null) => void>(ignoreReadReceipt);
+  const visibilityObserverRef = useRef<IntersectionObserver | null>(null);
 
   messagesRef.current = messages;
   const conversationId = props.conversation.id;
   const initialLastMessageId = props.conversation.last_message_id;
   const { onConversationState, onConversationUpdate } = props;
+
+  useEffect(() => {
+    const root = scrollRef.current;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        let highestVisibleId: number | null = null;
+        for (const entry of entries) {
+          if (!entry.isIntersecting || entry.intersectionRatio < 0.6) {
+            continue;
+          }
+          // SAFETY: only message wrappers receive this observer ref and each
+          // wrapper sets data-message-id immediately before observation.
+          const id = Number((entry.target as HTMLElement).dataset.messageId);
+          if (
+            Number.isInteger(id) &&
+            id > 0 &&
+            (highestVisibleId === null || id > highestVisibleId)
+          ) {
+            highestVisibleId = id;
+          }
+        }
+        if (document.visibilityState === 'visible') {
+          markReadRef.current(highestVisibleId);
+        }
+      },
+      { root, threshold: [0.6] },
+    );
+    visibilityObserverRef.current = observer;
+    return () => {
+      observer.disconnect();
+      visibilityObserverRef.current = null;
+    };
+  }, []);
+
+  const observeIncoming = (messageId: number) => (element: HTMLDivElement | null) => {
+    if (!element) {
+      return;
+    }
+    element.dataset.messageId = String(messageId);
+    visibilityObserverRef.current?.observe(element);
+  };
 
   const handleMediaLoad = useCallback(() => {
     if (atBottomRef.current && scrollRef.current) {
@@ -212,7 +264,6 @@ export function ChatThread(props: {
     setThreadError(null);
 
     let active = true;
-    let timer: ReturnType<typeof setInterval> | null = null;
 
     const applyState = (nextState: ChatConversationStateOutput) => {
       if (!active || requestTokenRef.current !== token) {
@@ -237,7 +288,7 @@ export function ChatThread(props: {
           markedReadIdRef.current = null;
         });
     };
-
+    markReadRef.current = markRead;
     const loadInitial = async () => {
       if (requestInFlightRef.current) {
         return;
@@ -253,7 +304,6 @@ export function ChatThread(props: {
         const latestId = latestMessageId(response.messages);
         lastKnownIdRef.current = latestId;
         applyState(response.conversation);
-        markRead(latestId);
         scrollToBottomRef.current = true;
         atBottomRef.current = true;
       } catch {
@@ -268,80 +318,46 @@ export function ChatThread(props: {
       }
     };
 
-    const poll = async () => {
-      if (
-        !active ||
-        requestTokenRef.current !== token ||
-        document.visibilityState !== 'visible' ||
-        requestInFlightRef.current
-      ) {
-        return;
-      }
-      requestInFlightRef.current = true;
-      try {
-        const response = await getChatMessages(conversationId, {
-          afterId: lastKnownIdRef.current ?? undefined,
-          limit: 50,
-        });
-        if (!active || requestTokenRef.current !== token) {
-          return;
-        }
-        if (response.messages.length > 0) {
-          setMessages((current) => mergeChatMessages(current, response.messages));
-          if (atBottomRef.current) {
-            scrollToBottomRef.current = true;
-          }
-          const latestId = latestMessageId(response.messages);
-          if (
-            latestId !== null &&
-            (lastKnownIdRef.current === null || latestId > lastKnownIdRef.current)
-          ) {
-            lastKnownIdRef.current = latestId;
-          }
-          markRead(lastKnownIdRef.current);
-        }
-        applyState(response.conversation);
-      } catch {
-        // Polling is best effort; the visible thread remains usable.
-      } finally {
-        if (requestTokenRef.current === token) {
-          requestInFlightRef.current = false;
-        }
-      }
-    };
-
-    const stopTimer = () => {
-      if (timer !== null) {
-        clearInterval(timer);
-        timer = null;
-      }
-    };
-
-    const startTimer = () => {
-      if (timer === null && document.visibilityState === 'visible') {
-        timer = setInterval(() => void poll(), 2000);
-      }
-    };
-
-    const onVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') {
-        stopTimer();
-        return;
-      }
-      startTimer();
-      void poll();
-    };
-
     void loadInitial();
-    document.addEventListener('visibilitychange', onVisibilityChange);
-    startTimer();
 
     return () => {
       active = false;
-      stopTimer();
-      document.removeEventListener('visibilitychange', onVisibilityChange);
+      markReadRef.current = ignoreReadReceipt;
     };
   }, [conversationId, initialLastMessageId, onConversationState, onConversationUpdate, t]);
+
+  useEffect(() => {
+    if (
+      props.realtimeEvent === null ||
+      props.realtimeEvent.conversation_id !== conversationId ||
+      requestInFlightRef.current
+    ) {
+      return;
+    }
+    requestInFlightRef.current = true;
+    void getChatMessages(conversationId, {
+      afterId: lastKnownIdRef.current ?? undefined,
+      limit: 50,
+    })
+      .then((response) => {
+        setMessages((current) => mergeChatMessages(current, response.messages));
+        const latestId = latestMessageId(response.messages);
+        if (
+          latestId !== null &&
+          (lastKnownIdRef.current === null || latestId > lastKnownIdRef.current)
+        ) {
+          lastKnownIdRef.current = latestId;
+        }
+        setConversationState(response.conversation);
+        onConversationState(response.conversation);
+      })
+      .catch(() => {
+        // The durable socket cursor requests replay after a reconnect.
+      })
+      .finally(() => {
+        requestInFlightRef.current = false;
+      });
+  }, [conversationId, onConversationState, props.realtimeEvent]);
 
   useLayoutEffect(() => {
     if (scrollToBottomRef.current && scrollRef.current) {
@@ -606,6 +622,7 @@ export function ChatThread(props: {
             messages={messages}
             olderLabel={t('load_older')}
             onMediaLoad={handleMediaLoad}
+            observeIncoming={observeIncoming}
             peerLastReadMessageId={peerLastReadMessageId}
           />
         </div>
@@ -615,6 +632,7 @@ export function ChatThread(props: {
         disabled={readOnly}
         onSendImage={sendImage}
         onSendText={sendText}
+        onTyping={props.onTyping}
         sending={sending}
       />
     </div>

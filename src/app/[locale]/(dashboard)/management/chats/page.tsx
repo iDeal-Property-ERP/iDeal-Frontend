@@ -22,6 +22,8 @@ import {
   unarchiveChatConversation,
   unblockChatConversation,
 } from '@/libs/management/chatAdapter';
+import { useChatRealtime } from '@/libs/management/useChatRealtime';
+import type { ChatRealtimeEvent } from '@/libs/management/useChatRealtime';
 import type { ChatConversationOutput, ChatConversationStateOutput, ChatStatus } from '@/types/chat';
 
 /**
@@ -40,6 +42,7 @@ export default function ManagementChatsPage() {
   const [listError, setListError] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ChatConversationOutput | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
+  const [latestRealtimeEvent, setLatestRealtimeEvent] = useState<ChatRealtimeEvent | null>(null);
   const listRequestInFlightRef = useRef(false);
 
   const loadList = useCallback(
@@ -74,45 +77,20 @@ export default function ManagementChatsPage() {
   );
 
   useEffect(() => {
-    let timer: ReturnType<typeof setInterval> | null = null;
-
-    const stopTimer = () => {
-      if (timer !== null) {
-        clearInterval(timer);
-        timer = null;
-      }
-    };
-
-    const poll = () => {
-      if (document.visibilityState === 'visible') {
-        void loadList(true);
-      }
-    };
-
-    const startTimer = () => {
-      if (timer === null && document.visibilityState === 'visible') {
-        timer = setInterval(poll, 10_000);
-      }
-    };
-
-    const onVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') {
-        stopTimer();
-        return;
-      }
-      startTimer();
-      poll();
-    };
-
     void loadList();
-    document.addEventListener('visibilitychange', onVisibilityChange);
-    startTimer();
-
-    return () => {
-      stopTimer();
-      document.removeEventListener('visibilitychange', onVisibilityChange);
-    };
   }, [loadList]);
+
+  const chatRealtime = useChatRealtime(
+    useCallback(
+      (event: ChatRealtimeEvent) => {
+        setLatestRealtimeEvent(event);
+        // The socket is the change signal; REST remains the authoritative
+        // serializer for filtered/paginated inbox rows.
+        void loadList(true);
+      },
+      [loadList],
+    ),
+  );
 
   useEffect(() => {
     if (
@@ -252,6 +230,8 @@ export default function ManagementChatsPage() {
         onBlock={toggleBlock}
         onConversationState={applyConversationState}
         onConversationUpdate={replaceConversation}
+        onTyping={(isTyping) => chatRealtime.setTyping(selected.id, isTyping)}
+        realtimeEvent={latestRealtimeEvent}
         onDelete={() => requestDelete(selected)}
         onUnarchive={unarchive}
       />

@@ -3,7 +3,7 @@
 import { ImagePlus, Send } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type * as React from 'react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { validateChatImage, validateChatText } from '@/components/management/chats/chatUtils';
 import type {
   ChatImageValidationError,
@@ -59,15 +59,42 @@ export function ChatComposer(props: {
   sending: boolean;
   onSendText: (text: string, clientId: string) => Promise<void>;
   onSendImage: (image: File, clientId: string) => Promise<void>;
+  onTyping: (isTyping: boolean) => void;
 }) {
   const t = useTranslations('ChatsPage');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [text, setText] = useState('');
   const [error, setError] = useState<ComposerError | null>(null);
+  const typingRef = useRef(false);
+  const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onTypingRef = useRef(props.onTyping);
+
+  onTypingRef.current = props.onTyping;
+
+  const setTyping = (isTyping: boolean) => {
+    if (typingRef.current === isTyping) {
+      return;
+    }
+    typingRef.current = isTyping;
+    onTypingRef.current(isTyping);
+  };
+
+  useEffect(
+    () => () => {
+      if (typingTimerRef.current !== null) {
+        clearTimeout(typingTimerRef.current);
+      }
+      if (typingRef.current) {
+        typingRef.current = false;
+        onTypingRef.current(false);
+      }
+    },
+    [],
+  );
 
   const submitText = async (event: React.SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (props.disabled || props.sending) {
+    if (props.disabled) {
       return;
     }
     const value = text.trim();
@@ -78,6 +105,7 @@ export function ChatComposer(props: {
     }
     setError(null);
     setText('');
+    setTyping(false);
     try {
       await props.onSendText(value, crypto.randomUUID());
     } catch {
@@ -89,7 +117,7 @@ export function ChatComposer(props: {
   const selectImage = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const image = event.target.files?.[0];
     event.target.value = '';
-    if (!image || props.disabled || props.sending) {
+    if (!image || props.disabled) {
       return;
     }
     const validationError = validateChatImage(image);
@@ -111,11 +139,19 @@ export function ChatComposer(props: {
         <Textarea
           aria-label={t('composer_aria')}
           className="max-h-32 min-h-11 resize-none rounded-[12px] border-border bg-background py-3 text-sm"
-          disabled={props.disabled || props.sending}
+          disabled={props.disabled}
           maxLength={1024}
           onChange={(event) => {
-            setText(event.target.value);
+            const nextText = event.target.value;
+            setText(nextText);
             setError(null);
+            setTyping(nextText.trim().length > 0);
+            if (typingTimerRef.current !== null) {
+              clearTimeout(typingTimerRef.current);
+            }
+            if (nextText.trim().length > 0) {
+              typingTimerRef.current = setTimeout(() => setTyping(false), 4000);
+            }
           }}
           placeholder={t('composer_placeholder')}
           rows={1}
@@ -125,7 +161,7 @@ export function ChatComposer(props: {
           accept=".png,.jpg,.jpeg,.webp,.gif,image/png,image/jpeg,image/webp,image/gif"
           aria-label={t('attach_image')}
           className="hidden"
-          disabled={props.disabled || props.sending}
+          disabled={props.disabled}
           onChange={selectImage}
           ref={fileInputRef}
           type="file"
@@ -144,7 +180,7 @@ export function ChatComposer(props: {
         <Button
           aria-label={props.sending ? t('sending') : t('send')}
           className="size-11 rounded-[12px]"
-          disabled={props.disabled || props.sending || text.trim().length === 0}
+          disabled={props.disabled || text.trim().length === 0}
           size="icon-lg"
           type="submit"
         >

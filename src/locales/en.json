@@ -2249,6 +2249,24 @@
     "contact_body": "If you have any questions or concerns regarding this privacy policy, please reach out to us at privacy@ideal.uz.",
     "updated": "Last updated: August 2026"
   },
+  "TermsOfServicePage": {
+    "eyebrow": "Legal",
+    "title": "Terms of service",
+    "meta_title": "Terms of service | iDeal",
+    "meta_description": "Read the terms that govern your use of the iDeal platform.",
+    "intro": "These terms describe the rules for using iDeal's property rental and sale platform.",
+    "draft_title": "Draft terms notice:",
+    "draft_body": "These terms are currently pending final legal review and may be updated.",
+    "general_title": "General terms",
+    "general_body": "iDeal provides services for renting and buying real estate. By using the platform, you agree to these terms.",
+    "owners_title": "Owner responsibilities",
+    "owners_body": "Anyone who publishes a property listing is personally responsible for its accuracy, currency, and lawful ownership.",
+    "bookings_title": "Bookings and payments",
+    "bookings_body": "Bookings and payments made through the platform are processed through secure payment gateways and documented by the applicable agreement.",
+    "privacy_title": "Privacy and data security",
+    "privacy_body": "Personal data is protected in accordance with the laws of the Republic of Uzbekistan and is not disclosed to third parties except where needed to provide the service or comply with law.",
+    "updated": "Last updated: August 2026"
+  },
   "PaymentReturnPage": {
     "meta_title": "Payment processing | iDeal",
     "meta_description": "Return status for iDeal payments.",
