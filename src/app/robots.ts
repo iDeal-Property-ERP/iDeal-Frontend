@@ -6,7 +6,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: '/dashboard',
+      disallow: ['/dashboard', '/*/delete-account', '/delete-account'],
     },
     sitemap: `${getBaseUrl()}/sitemap.xml`,
   };
