@@ -34,7 +34,7 @@ function actTypeLabelOf(t: Translator, value: string): string {
 }
 
 /**
- * The mobile Inventory-acts workbench — drafts-first card list keyed on the
+ * The mobile Inventory-acts workbench — a card list keyed on the
  * property, with the act type and item count as the subtitle and a status pill;
  * a tapped row opens the shared act record panel full-screen.
  * @param props - Rows, chips, search, record slot, and handlers.
@@ -53,8 +53,8 @@ export function InventoryMobileView(props: {
   onSearch: (value: string) => void;
   statusLabel: (value: string) => string;
   onOpen: (row: InventoryActListOutput) => void;
-  /** Finalize (mark signed) a draft act. */
-  onSign: (row: InventoryActListOutput) => void;
+  /** Records counterparty acknowledgment for an unacknowledged act. */
+  onAcknowledge: (row: InventoryActListOutput) => void;
   /** Send/export a copy of the act (client CSV fallback). */
   onSendCopy: (row: InventoryActListOutput) => void;
   record?: ReactNode;
@@ -99,13 +99,13 @@ export function InventoryMobileView(props: {
     >
       {props.rows.map((row) => {
         const actions: SwipeAction[] =
-          row.status.toLowerCase() === 'draft'
+          row.acknowledged_at === null
             ? [
                 {
-                  label: t('inv_mark_signed'),
+                  label: t('inv_acknowledge'),
                   icon: CheckCircle2,
                   tone: 'success',
-                  onAction: () => props.onSign(row),
+                  onAction: () => props.onAcknowledge(row),
                 },
                 {
                   label: t('inv_send_copy'),

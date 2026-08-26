@@ -1,10 +1,6 @@
-import { apiFetch } from '@/libs/api';
+import { apiFetch, apiUpload } from '@/libs/api';
 import type { PaginatedData } from '@/types/api';
-import type {
-  InventoryActCreatePayload,
-  InventoryActListOutput,
-  InventoryActOutput,
-} from '@/types/management';
+import type { InventoryActListOutput, InventoryActOutput } from '@/types/management';
 
 /**
  * Inventory-acts data adapter — the single isolation point between the Inventory
@@ -13,7 +9,7 @@ import type {
  * `BACKEND-GAP`. No UI component talks to the API directly.
  */
 
-export const INVENTORY_STATUSES = ['draft', 'finalized'] as const;
+export const INVENTORY_STATUSES = ['finalized'] as const;
 export type InventoryStatus = (typeof INVENTORY_STATUSES)[number];
 
 export const ACT_TYPES = ['handover', 'return', 'general'] as const;
@@ -57,7 +53,6 @@ export async function listActs(params: ActListParams): Promise<ActListResult> {
 
 export type InventoryActStats = {
   counts: {
-    draft: number;
     finalized: number;
     awaiting_ack: number;
     all: number;
@@ -65,7 +60,7 @@ export type InventoryActStats = {
 };
 
 /**
- * Per-tab record counts for the saved-view tabs (Drafts · Finalized · Awaiting
+ * Per-tab record counts for the saved-view tabs (Finalized · Awaiting
  * acknowledgment · All) via `GET /inventory/acts/stats/`.
  * @returns The stats bundle with per-view counts.
  */
@@ -82,22 +77,62 @@ export async function getAct(id: number): Promise<InventoryActOutput> {
   return await apiFetch<InventoryActOutput>(`/inventory/acts/${id}/`);
 }
 
+export type InventoryActItemSubmitPayload = {
+  area: string;
+  condition?: string;
+  notes?: string | null;
+  sort_order?: number;
+};
+
+export type InventoryActSubmitPayload = {
+  property_id: number;
+  lease_id?: number | null;
+  act_type?: string;
+  notes?: string | null;
+  items: InventoryActItemSubmitPayload[];
+  photo_item_map?: Record<string, number>;
+  captions?: string[];
+  acknowledged_by_name?: string | null;
+  acknowledgment_note?: string | null;
+};
+
+export type InventoryActAcknowledgePayload = {
+  acknowledged_by_name: string;
+  acknowledgment_note?: string | null;
+};
+
 /**
- * Creates a draft act via `POST /inventory/acts/`.
- * @param payload - The act fields (property, type, optional lease, notes).
- * @returns The created act id.
+ * Submits a complete finalized inventory act with items and photos atomically via `POST /inventory/acts/`.
+ * @param payload - Act metadata, items, and mapping.
+ * @param images - Binary image files.
+ * @returns The created finalized act.
  */
-export async function createAct(payload: InventoryActCreatePayload): Promise<{ id: number }> {
-  return await apiFetch<{ id: number }>('/inventory/acts/', { method: 'POST', body: payload });
+export async function submitAct(
+  payload: InventoryActSubmitPayload,
+  images: File[],
+): Promise<InventoryActOutput> {
+  const form = new FormData();
+  form.append('payload', JSON.stringify(payload));
+  for (const image of images) {
+    form.append('images', image);
+  }
+  return await apiUpload<InventoryActOutput>('/inventory/acts/', form);
 }
 
 /**
- * Finalizes a draft act via `POST /inventory/acts/{id}/finalize/`.
- * @param id - The act id.
- * @returns The finalized act id.
+ * Acknowledges a finalized inventory act via `POST /inventory/acts/{id}/acknowledge/`.
+ * @param id - Act ID.
+ * @param payload - Acknowledger name and optional note.
+ * @returns The updated act.
  */
-export async function finalizeAct(id: number): Promise<{ id: number }> {
-  return await apiFetch<{ id: number }>(`/inventory/acts/${id}/finalize/`, { method: 'POST' });
+export async function acknowledgeAct(
+  id: number | string,
+  payload: InventoryActAcknowledgePayload,
+): Promise<InventoryActOutput> {
+  return await apiFetch<InventoryActOutput>(`/inventory/acts/${id}/acknowledge/`, {
+    method: 'POST',
+    body: payload,
+  });
 }
 
 /**

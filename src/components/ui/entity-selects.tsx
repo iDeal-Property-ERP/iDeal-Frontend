@@ -16,6 +16,7 @@ type EntitySelectProps = {
   id?: string;
   'aria-invalid'?: boolean;
   placeholder?: string;
+  query?: Record<string, string | number | boolean | undefined>;
 };
 
 function userLabel(user: UserOutput): string {

@@ -1,7 +1,7 @@
 'use client';
 
 import { ClipboardList, Download, Info, Plus } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { EntityCell } from '@/components/management/columns/EntityCell';
 import { NumericCell } from '@/components/management/columns/NumericCell';
@@ -11,7 +11,7 @@ import {
   inventoryTypeTone,
   StatusPill,
 } from '@/components/management/columns/StatusPill';
-import { FinalizeActDialog, NewActDialog } from '@/components/management/dialogs/InventoryDialogs';
+import { AcknowledgeActDialog } from '@/components/management/dialogs/InventoryDialogs';
 import { ManagementPageHeader } from '@/components/management/ManagementPageHeader';
 import { InventoryMobileView } from '@/components/management/mobile/InventoryMobileView';
 import { InventoryActRecordPanel } from '@/components/management/record-panel/InventoryActRecordPanel';
@@ -32,6 +32,7 @@ import { Button } from '@/components/ui/button';
 import { usePaginatedResource } from '@/hooks/management/usePaginatedResource';
 import { useRowSelection } from '@/hooks/management/useRowSelection';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Link } from '@/libs/I18nNavigation';
 import {
   ACT_TYPES,
   exportActsCsv,
@@ -44,10 +45,9 @@ import type { InventoryActListOutput } from '@/types/management';
 type ActCounts = InventoryActStats['counts'];
 
 const SAVED_VIEW_DEFS = [
-  { id: 'draft', labelKey: 'inv_view_drafts', countKey: 'draft' },
+  { id: 'all', labelKey: 'view_all', countKey: 'all' },
   { id: 'finalized', labelKey: 'inv_view_finalized', countKey: 'finalized' },
   { id: 'awaiting_ack', labelKey: 'inv_view_awaiting', countKey: 'awaiting_ack' },
-  { id: 'all', labelKey: 'view_all', countKey: 'all' },
 ] as const satisfies { id: string; labelKey: string; countKey: keyof ActCounts }[];
 
 export type InventoryViewQuery = { status?: string; awaiting_ack?: string };
@@ -84,15 +84,16 @@ function viewFromQuery(query: { status?: string; awaiting_ack?: string }): strin
 
 /**
  * Short date label ("Aug 31, 2026").
+ * @param format - The locale-aware next-intl formatter.
  * @param iso - The ISO date string.
  * @returns The formatted date, or an empty string when unparseable.
  */
-function shortDate(iso: string): string {
+function shortDate(format: ReturnType<typeof useFormatter>, iso: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) {
     return '';
   }
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  return format.dateTime(date, { dateStyle: 'medium' });
 }
 
 /**
@@ -104,6 +105,7 @@ function shortDate(iso: string): string {
  */
 export default function ManagementInventoryPage() {
   const t = useTranslations('Management');
+  const format = useFormatter();
   const isMobile = useIsMobile();
 
   const resource = usePaginatedResource<InventoryActListOutput>(
@@ -114,7 +116,7 @@ export default function ManagementInventoryPage() {
         status: query.status as string | undefined,
         awaitingAck: query.awaiting_ack === 'true',
       }),
-    { initialQuery: queryForView('draft') },
+    { initialQuery: queryForView('all') },
   );
 
   const view = viewFromQuery({
@@ -130,8 +132,7 @@ export default function ManagementInventoryPage() {
   const [propertyFilter, setPropertyFilter] = useState<string | null>(null);
   const [selected, setSelected] = useState<InventoryActListOutput | null>(null);
   const [counts, setCounts] = useState<ActCounts | null>(null);
-  const [newOpen, setNewOpen] = useState(false);
-  const [finalizeTarget, setFinalizeTarget] = useState<InventoryActListOutput | null>(null);
+  const [ackTarget, setAckTarget] = useState<InventoryActListOutput | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -153,9 +154,6 @@ export default function ManagementInventoryPage() {
 
   const statusLabel = (value: string): string => {
     const s = value.toLowerCase();
-    if (s === 'draft') {
-      return t('inv_status_draft');
-    }
     if (s === 'finalized') {
       return t('inv_status_finalized');
     }
@@ -235,7 +233,7 @@ export default function ManagementInventoryPage() {
   ];
 
   const activeFilterCount = [typeFilter, propertyFilter].filter(Boolean).length;
-  const hasQuery = [search, typeFilter, propertyFilter].some(Boolean) || view !== 'draft';
+  const hasQuery = [search, typeFilter, propertyFilter].some(Boolean) || view !== 'all';
 
   const clearAll = () => {
     setSearch('');
@@ -255,7 +253,7 @@ export default function ManagementInventoryPage() {
             </span>
           }
           name={t('inv_code', { id: row.id })}
-          secondary={t('inv_created_short', { date: shortDate(row.created_at) })}
+          secondary={t('inv_created_short', { date: shortDate(format, row.created_at) })}
         />
       ),
     },
@@ -305,15 +303,15 @@ export default function ManagementInventoryPage() {
     <RowActions
       onOpen={() => setSelected(row)}
       quickClassName="opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
-      labels={{ open: t('row_open'), edit: t('inv_finalize'), more: t('row_more') }}
-      onEdit={row.status.toLowerCase() === 'draft' ? () => setFinalizeTarget(row) : undefined}
+      labels={{ open: t('row_open'), edit: t('inv_acknowledge'), more: t('row_more') }}
+      onEdit={!row.acknowledged_at ? () => setAckTarget(row) : undefined}
       menuItems={[
         { id: 'open', label: t('row_open'), onSelect: () => setSelected(row) },
         {
-          id: 'finalize',
-          label: t('inv_finalize'),
-          onSelect: () => setFinalizeTarget(row),
-          disabled: row.status.toLowerCase() !== 'draft',
+          id: 'acknowledge',
+          label: t('inv_acknowledge'),
+          onSelect: () => setAckTarget(row),
+          disabled: Boolean(row.acknowledged_at),
         },
       ]}
     />
@@ -347,9 +345,11 @@ export default function ManagementInventoryPage() {
           title={t('inv_empty')}
           description={t('inv_empty_desc')}
           action={
-            <Button className="h-9 gap-2 rounded-[10px]" onClick={() => setNewOpen(true)}>
-              <Plus className="size-4" />
-              {t('inv_new')}
+            <Button asChild className="h-9 gap-2 rounded-[10px]">
+              <Link href="/management/inventory/new">
+                <Plus className="size-4" />
+                {t('inv_new')}
+              </Link>
             </Button>
           }
         />
@@ -381,7 +381,7 @@ export default function ManagementInventoryPage() {
       act={selected}
       open={Boolean(selected)}
       onClose={() => setSelected(null)}
-      onFinalize={() => selected && setFinalizeTarget(selected)}
+      onAcknowledge={() => selected && setAckTarget(selected)}
       statusLabel={statusLabel}
       typeLabel={typeLabel}
     />
@@ -399,17 +399,25 @@ export default function ManagementInventoryPage() {
 
   const dialogs = (
     <>
-      <NewActDialog
-        open={newOpen}
-        onOpenChange={setNewOpen}
-        onSuccess={() => resource.refetch()}
-        typeLabel={typeLabel}
-      />
-      <FinalizeActDialog
-        act={finalizeTarget}
-        open={Boolean(finalizeTarget)}
-        onOpenChange={(open) => !open && setFinalizeTarget(null)}
-        onSuccess={() => resource.refetch()}
+      <AcknowledgeActDialog
+        act={ackTarget}
+        open={Boolean(ackTarget)}
+        onOpenChange={(open) => !open && setAckTarget(null)}
+        onSuccess={(acknowledgedAct) => {
+          resource.refetch();
+          setSelected((current) =>
+            current?.id === acknowledgedAct.id
+              ? {
+                  ...current,
+                  acknowledged_at: acknowledgedAct.acknowledged_at,
+                  acknowledged_by_name: acknowledgedAct.acknowledged_by_name,
+                }
+              : current,
+          );
+          void getActStats()
+            .then((stats) => setCounts(stats.counts))
+            .catch(() => false);
+        }}
       />
     </>
   );
@@ -420,7 +428,7 @@ export default function ManagementInventoryPage() {
         <InventoryMobileView
           t={t}
           title={t('inv_title')}
-          subtitle={t('inv_subtitle', { draft: counts?.draft ?? 0 })}
+          subtitle={t('inv_subtitle_current')}
           searchPlaceholder={t('inv_search')}
           rows={rows}
           chips={savedViews.map((v) => ({ id: v.id, label: v.label, count: v.count }))}
@@ -430,7 +438,7 @@ export default function ManagementInventoryPage() {
           onSearch={setSearch}
           statusLabel={statusLabel}
           onOpen={setSelected}
-          onSign={(row) => setFinalizeTarget(row)}
+          onAcknowledge={(row) => setAckTarget(row)}
           onSendCopy={(row) => exportActsCsv([row], `act-${row.id}.csv`)}
           record={selected ? inventoryRecord : undefined}
           onCloseRecord={() => setSelected(null)}
@@ -448,7 +456,7 @@ export default function ManagementInventoryPage() {
         header={
           <ManagementPageHeader
             title={t('inv_title')}
-            subtitle={t('inv_subtitle', { draft: counts?.draft ?? 0 })}
+            subtitle={t('inv_subtitle_current')}
             showBell={false}
             actions={
               <div className="flex items-center gap-2.5">
@@ -460,12 +468,11 @@ export default function ManagementInventoryPage() {
                   <Download className="size-[17px]" />
                   {t('export')}
                 </Button>
-                <Button
-                  className="h-10 gap-2 rounded-[10px] px-4 text-[15px] shadow-sm"
-                  onClick={() => setNewOpen(true)}
-                >
-                  <Plus className="size-[17px]" />
-                  {t('inv_new')}
+                <Button asChild className="h-10 gap-2 rounded-[10px] px-4 text-[15px] shadow-sm">
+                  <Link href="/management/inventory/new">
+                    <Plus className="size-[17px]" />
+                    {t('inv_new')}
+                  </Link>
                 </Button>
               </div>
             }

@@ -75,7 +75,7 @@ export default function OwnerListingsPage() {
                 <p className="text-sm text-danger">{row.rejection_reason}</p>
               ) : null}
             </div>
-            {row.status === 'draft' || row.status === 'rejected' ? (
+            {row.status === 'rejected' ? (
               <Button asChild size="sm" variant="outline">
                 <Link href={`/list-your-property?listing=${row.id}`}>
                   {t('my_listings_resume')}

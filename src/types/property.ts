@@ -64,7 +64,7 @@ export type OneOffDealDetail = {
   seller_phone: string;
   seller_email: string | null;
   channel: 'marketplace' | 'off_market';
-  status: 'draft' | 'active' | 'paused' | 'closed_won' | 'closed_lost' | 'archived';
+  status: 'active' | 'paused' | 'closed_won' | 'closed_lost' | 'archived';
   commission_type: 'none' | 'fixed' | 'percentage';
   commission_fixed_amount: string | null;
   commission_percentage: string | null;
@@ -74,10 +74,9 @@ export type OneOffDealDetail = {
 };
 
 /**
- * The management property detail shape. Publish-required fields are nullable
- * because a DRAFT can be saved partially; includes photos, verification, and the
- * derived `is_verified` flag. Distinct from {@link PropertyOutput} (the legacy,
- * always-complete shape) so legacy pages stay untouched.
+ * The management property detail shape, including photos, verification, and the
+ * derived `is_verified` flag. Distinct from {@link PropertyOutput} so legacy pages
+ * stay untouched.
  */
 export type PropertyDetail = {
   id: number;
@@ -90,7 +89,7 @@ export type PropertyDetail = {
   total_floors: number | null;
   owner: OwnerBrief | null;
   engagement_type: 'managed' | 'one_off';
-  status: PropertyStatus | 'draft' | 'pending_review';
+  status: PropertyStatus | 'pending_review';
   is_verified: boolean;
   score: string;
   map_lat: string | null;

@@ -87,7 +87,6 @@ const SAVED_VIEW_DEFS = [
   { id: 'vacant', labelKey: 'view_vacant', countKey: 'vacant' },
   { id: 'maintenance', labelKey: 'view_maintenance', countKey: 'maintenance' },
   { id: 'pending', labelKey: 'view_pending', countKey: 'pending_review' },
-  { id: 'draft', labelKey: 'view_draft', countKey: 'draft' },
 ] as const satisfies { id: string; labelKey: string; countKey: keyof StatusCounts }[];
 
 /**
@@ -355,9 +354,6 @@ export default function ManagementPropertiesPage() {
 
   const statusLabel = (value: string): string => {
     const normalized = value.toLowerCase();
-    if (normalized === 'draft') {
-      return t('status_draft');
-    }
     if (/rent|active|occupied/u.test(normalized)) {
       return t('status_rented');
     }

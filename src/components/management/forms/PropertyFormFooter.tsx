@@ -27,7 +27,7 @@ type PropertyFormFooterProps = {
  * @returns The footer bar.
  */
 export function PropertyFormFooter(props: PropertyFormFooterProps) {
-  const { t, mode, note, attentionCount, submitting, onCancel, onSaveDraft, onPrimary } = props;
+  const { t, mode, note, attentionCount, submitting, onCancel, onPrimary } = props;
   return (
     <div className="flex flex-col gap-3 border-t border-border bg-background/95 px-1 py-3.5 backdrop-blur sm:flex-row sm:items-center sm:justify-between">
       <p className="text-sm text-muted-foreground">{note}</p>
@@ -38,31 +38,17 @@ export function PropertyFormFooter(props: PropertyFormFooterProps) {
             {t('form_needs_attention', { count: attentionCount })}
           </span>
         ) : null}
-        {mode === 'create' ? (
-          <>
-            <Button variant="outline" onClick={onSaveDraft} disabled={submitting}>
-              {t('form_save_draft')}
-            </Button>
-            <Button onClick={onPrimary} disabled={submitting} className="gap-2">
-              {submitting ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <CheckCircle2 className="size-4" />
-              )}
-              {t('form_save_publish')}
-            </Button>
-          </>
-        ) : (
-          <>
-            <Button variant="outline" onClick={onCancel} disabled={submitting}>
-              {t('cancel')}
-            </Button>
-            <Button onClick={onPrimary} disabled={submitting} className="gap-2">
-              {submitting ? <Loader2 className="size-4 animate-spin" /> : null}
-              {t('form_save_changes')}
-            </Button>
-          </>
-        )}
+        <Button variant="outline" onClick={onCancel} disabled={submitting}>
+          {t('cancel')}
+        </Button>
+        <Button onClick={onPrimary} disabled={submitting} className="gap-2">
+          {submitting ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <CheckCircle2 className="size-4" />
+          )}
+          {mode === 'create' ? t('form_save_publish') : t('form_save_changes')}
+        </Button>
       </div>
     </div>
   );

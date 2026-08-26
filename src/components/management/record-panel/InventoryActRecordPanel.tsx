@@ -8,7 +8,7 @@ import {
   PanelRightClose,
   Pencil,
 } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { AvatarInitials, initialsOf } from '@/components/management/columns/AvatarInitials';
@@ -36,10 +36,11 @@ const CONDITION_ORDER = ['excellent', 'good', 'fair', 'poor', 'damaged'] as cons
 
 /**
  * Formats an ISO date to a short "Jun 20, 2025" label.
+ * @param format - The locale-aware next-intl formatter.
  * @param iso - The ISO date string (or null).
  * @returns The formatted date, or an empty string when unparseable.
  */
-function longDate(iso: string | null): string {
+function longDate(format: ReturnType<typeof useFormatter>, iso: string | null): string {
   if (!iso) {
     return '';
   }
@@ -47,7 +48,7 @@ function longDate(iso: string | null): string {
   if (Number.isNaN(date.getTime())) {
     return '';
   }
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  return format.dateTime(date, { dateStyle: 'medium' });
 }
 
 /**
@@ -214,6 +215,7 @@ function InventoryActHeader(props: {
   onClose: () => void;
 }) {
   const t = useTranslations('Management');
+  const format = useFormatter();
   const { act, statusLabel, typeLabel, onClose } = props;
   return (
     <div className="flex items-start justify-between gap-3">
@@ -227,7 +229,7 @@ function InventoryActHeader(props: {
         </div>
         <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
           <span className="truncate">
-            {act.property_name} · {t('inv_created_on', { date: longDate(act.created_at) })}
+            {act.property_name} · {t('inv_created_on', { date: longDate(format, act.created_at) })}
           </span>
         </div>
       </div>
@@ -248,25 +250,24 @@ function InventoryActHeader(props: {
 }
 
 /**
- * The footer slot for the inventory-act record panel — finalize button (draft
- * only) and edit button.
- * @param props - Draft flag and finalize callback.
+ * The footer slot for the inventory-act record panel — acknowledgment and edit actions.
+ * @param props - Acknowledgment availability and callback.
  * @returns The footer element.
  */
-function InventoryActFooter(props: { isDraft: boolean; onFinalize: () => void }) {
+function InventoryActFooter(props: { canAcknowledge: boolean; onAcknowledge: () => void }) {
   const t = useTranslations('Management');
-  const { isDraft, onFinalize } = props;
+  const { canAcknowledge, onAcknowledge } = props;
   return (
     <div className="flex items-center justify-between gap-2">
       <div className="flex items-center gap-2.5">
-        {isDraft ? (
+        {canAcknowledge ? (
           <Button
             type="button"
             className="h-10 gap-2 rounded-[10px] px-4 text-[15px] shadow-sm"
-            onClick={onFinalize}
+            onClick={onAcknowledge}
           >
             <CheckCircle2 className="size-[15px]" />
-            {t('inv_finalize')}
+            {t('inv_acknowledge')}
           </Button>
         ) : null}
         <Button
@@ -304,6 +305,7 @@ function InventoryActBody(props: {
   activity: ActivityEvent[];
 }) {
   const t = useTranslations('Management');
+  const format = useFormatter();
   const {
     act,
     detail,
@@ -358,9 +360,11 @@ function InventoryActBody(props: {
         ownerLine={createdByName}
         detailLine={t('inv_owner_detail', {
           property: act.property_name,
-          date: longDate(act.created_at),
+          date: longDate(format, act.created_at),
         })}
-        statusLabel={detail?.acknowledged_by_name ? t('inv_acknowledged') : undefined}
+        statusLabel={
+          (detail?.acknowledged_at ?? act.acknowledged_at) ? t('inv_acknowledged') : undefined
+        }
       />
 
       <RecordPanelTabs
@@ -385,24 +389,70 @@ function InventoryActBody(props: {
   );
 }
 
+function buildActivityEvents(
+  act: InventoryActListOutput,
+  detail: InventoryActOutput | null,
+  t: (
+    key:
+      | 'inv_activity_created'
+      | 'inv_activity_updated'
+      | 'inv_activity_finalized'
+      | 'inv_activity_acknowledged',
+  ) => string,
+  format: ReturnType<typeof useFormatter>,
+): ActivityEvent[] {
+  const activity: ActivityEvent[] = [
+    {
+      id: 'created',
+      title: t('inv_activity_created'),
+      time: longDate(format, act.created_at),
+      tone: 'accent',
+    },
+    {
+      id: 'updated',
+      title: t('inv_activity_updated'),
+      time: longDate(format, act.updated_at),
+      tone: 'muted',
+    },
+  ];
+  if (detail?.finalized_at) {
+    activity.push({
+      id: 'finalized',
+      title: t('inv_activity_finalized'),
+      time: longDate(format, detail.finalized_at),
+      tone: 'success',
+    });
+  }
+  if (detail?.acknowledged_at) {
+    activity.push({
+      id: 'acknowledged',
+      title: t('inv_activity_acknowledged'),
+      time: longDate(format, detail.acknowledged_at),
+      tone: 'success',
+    });
+  }
+  return activity;
+}
+
 /**
  * The Inventory-act instance of the record panel (archetype D) — fills the
  * reusable RecordPanel with an act's header, property hero, items/condition/photos
  * trio, a flagged-items alert, the created-by card, tabs (overview, items, photos,
- * documents, activity), and a sticky Finalize / Edit footer. The full detail
+ * documents, activity), and a sticky Acknowledge / Edit footer. The full detail
  * (items + photos) is fetched per act on open.
- * @param props - The act row, open/close state, finalize callback, and labelers.
+ * @param props - The act row, open/close state, acknowledgment callback, and labelers.
  * @returns The inventory-act record panel element.
  */
 export function InventoryActRecordPanel(props: {
   act: InventoryActListOutput | null;
   open: boolean;
   onClose: () => void;
-  onFinalize: () => void;
+  onAcknowledge: () => void;
   statusLabel: (status: string) => string;
   typeLabel: (type: string) => string;
 }) {
   const t = useTranslations('Management');
+  const format = useFormatter();
   const { act } = props;
   const [detail, setDetail] = useState<InventoryActOutput | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
@@ -443,37 +493,16 @@ export function InventoryActRecordPanel(props: {
   const photos = detail?.photos ?? [];
   const itemCount = detail ? items.length : act.item_count;
   const photoCount = detail ? photos.length : act.photo_count;
-  const isDraft = act.status.toLowerCase() === 'draft';
+  const canAcknowledge = (detail?.acknowledged_at ?? act.acknowledged_at) === null;
   // SAFETY: Dynamic key passed to localized translator
   const conditionValue = computeConditionValue(items, (key) => t(key as 'inv_condition_good'));
   const flagged = computeFlagged(items);
 
-  const createdByName =
-    detail?.acknowledged_by_name ??
-    (detail ? t('inv_created_by', { id: detail.created_by_id }) : t('inv_created_by_unknown'));
+  const createdByName = detail
+    ? t('inv_created_by', { id: detail.created_by_id })
+    : t('inv_created_by_unknown');
 
-  const activity: ActivityEvent[] = [
-    {
-      id: 'created',
-      title: t('inv_activity_created'),
-      time: longDate(act.created_at),
-      tone: 'accent',
-    },
-    {
-      id: 'updated',
-      title: t('inv_activity_updated'),
-      time: longDate(act.updated_at),
-      tone: 'muted',
-    },
-  ];
-  if (detail?.finalized_at) {
-    activity.push({
-      id: 'finalized',
-      title: t('inv_activity_finalized'),
-      time: longDate(detail.finalized_at),
-      tone: 'success',
-    });
-  }
+  const activity = buildActivityEvents(act, detail, (k) => t(k), format);
 
   const header = (
     <InventoryActHeader
@@ -484,7 +513,9 @@ export function InventoryActRecordPanel(props: {
     />
   );
 
-  const footer = <InventoryActFooter isDraft={isDraft} onFinalize={props.onFinalize} />;
+  const footer = (
+    <InventoryActFooter canAcknowledge={canAcknowledge} onAcknowledge={props.onAcknowledge} />
+  );
 
   return (
     <RecordPanel

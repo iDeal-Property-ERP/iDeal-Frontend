@@ -33,7 +33,7 @@ export type OneOffPropertyDraftPayload = {
 
 /**
  * Fetches the full management property detail (nullable fields + photos +
- * verification). Backs both the Edit page load and the draft autosave lifecycle.
+ * verification). Backs the management property edit flow.
  * @param id - Property id.
  * @returns The property detail record.
  */
@@ -41,49 +41,58 @@ export async function fetchPropertyDetail(id: number | string): Promise<Property
   return await apiFetch<PropertyDetail>(`/properties/${id}/`);
 }
 
-/**
- * Creates a DRAFT property from any subset of touched fields. Wraps
- * `POST /properties/drafts/`.
- * @param payload - The partial field values.
- * @returns The created draft.
- */
-export async function createPropertyDraft(payload: PropertyDraftPayload): Promise<PropertyDetail> {
-  return await apiFetch<PropertyDetail>('/properties/drafts/', { method: 'POST', body: payload });
-}
+export type PropertySubmissionPayload = {
+  engagement_type?: 'managed' | 'one_off';
+  name?: string;
+  address?: string;
+  district_id: number;
+  property_type: string;
+  rooms: number;
+  area_sqm: number;
+  floor: number;
+  total_floors?: number;
+  furnishing: string;
+  owner_id?: number;
+  description?: string;
+  tariff?: string;
+  map_lat?: number;
+  map_lon?: number;
+  ask_price: string | number;
+  ask_currency?: string;
+  owner_guaranteed_price?: string | number;
+  owner_guaranteed_currency?: string;
+  tenant_charge_price?: string | number;
+  tenant_charge_currency?: string;
+  deposit_amount?: string | number;
+  deposit_currency?: string;
+  amenities?: string[];
+  captions?: string[];
+  minimum_stay?: number;
+  price_includes?: string[];
+  schedule_verification_at?: string;
+  brokerage?: OneOffBrokerageDraftPayload;
+};
 
 /**
- * Creates the shared property and its one-off brokerage draft atomically.
- * @param payload Shared property fields plus draft brokerage terms.
- * @returns The created one-off property detail.
+ * Submits a new property (managed or one-off) atomically via multipart `POST /properties/submit/`.
+ * @param payload - The structured property fields.
+ * @param images - Uploaded image files.
+ * @returns The created property detail.
  */
-export async function createOneOffPropertyDraft(
-  payload: OneOffPropertyDraftPayload,
+export async function submitProperty(
+  payload: PropertySubmissionPayload,
+  images: File[],
 ): Promise<PropertyDetail> {
-  return await apiFetch<PropertyDetail>('/properties/one-off-drafts/', {
-    method: 'POST',
-    body: payload,
-  });
+  const formData = new FormData();
+  formData.append('payload', JSON.stringify(payload));
+  for (const image of images) {
+    formData.append('images', image);
+  }
+  return await apiUpload<PropertyDetail>('/properties/submit/', formData);
 }
 
 /**
- * Atomically patches shared property fields and the draft-only brokerage branch.
- * @param id The one-off property identifier.
- * @param payload Shared property fields plus optional brokerage terms.
- * @returns The updated one-off property detail.
- */
-export async function updateOneOffProperty(
-  id: number | string,
-  payload: Partial<OneOffPropertyDraftPayload>,
-): Promise<PropertyDetail> {
-  return await apiFetch<PropertyDetail>(`/properties/${id}/one-off/`, {
-    method: 'PATCH',
-    body: payload,
-  });
-}
-
-/**
- * Patches a property (used for autosave and edit saves). Wraps
- * `PATCH /properties/{id}/`.
+ * Patches an existing property. Wraps `PATCH /properties/{id}/`.
  * @param id - Property id.
  * @param payload - The changed fields.
  * @returns The updated property.
@@ -95,39 +104,20 @@ export async function updateProperty(
   return await apiFetch<PropertyDetail>(`/properties/${id}/`, { method: 'PATCH', body: payload });
 }
 
-export type PublishResult =
-  | { ok: true; property: PropertyDetail }
-  | { ok: false; missing: string[] };
-
 /**
- * Publishes a draft (DRAFT → VACANT) with an optional verification visit. On an
- * incomplete draft the backend returns a 422 with machine-readable `missing`
- * field codes, surfaced here so the checklist can light the matching rows.
- * @param id - Property id.
- * @param scheduleVerificationAt - Optional ISO datetime for the verification visit.
- * @returns Success with the published property, or the missing-field codes.
+ * Atomically patches an existing one-off property and its brokerage terms.
+ * @param id - The one-off property identifier.
+ * @param payload - Shared property fields plus optional brokerage terms.
+ * @returns The updated one-off property detail.
  */
-export async function publishProperty(
+export async function updateOneOffProperty(
   id: number | string,
-  scheduleVerificationAt?: string,
-): Promise<PublishResult> {
-  try {
-    const property = await apiFetch<PropertyDetail>(`/properties/${id}/publish/`, {
-      method: 'POST',
-      body: scheduleVerificationAt ? { schedule_verification_at: scheduleVerificationAt } : {},
-    });
-    return { ok: true, property };
-  } catch (error) {
-    const { ApiError_ } = await import('@/libs/api');
-    if (error instanceof ApiError_) {
-      // SAFETY: ApiError body inspected for incomplete draft validation payload
-      const raw = error.body?.error as { code?: string; missing?: string[] } | undefined;
-      if (raw && raw.code === 'incomplete' && Array.isArray(raw.missing)) {
-        return { ok: false, missing: raw.missing };
-      }
-    }
-    throw error;
-  }
+  payload: Partial<OneOffPropertyDraftPayload>,
+): Promise<PropertyDetail> {
+  return await apiFetch<PropertyDetail>(`/properties/${id}/one-off/`, {
+    method: 'PATCH',
+    body: payload,
+  });
 }
 
 /**
@@ -259,7 +249,6 @@ export type StatusCounts = {
   vacant: number;
   maintenance: number;
   pending_review: number;
-  draft: number;
 };
 
 /**
@@ -288,15 +277,14 @@ export async function getStatusCounts(search?: string): Promise<StatusCounts> {
     }
   };
 
-  const [all, rented, vacant, maintenance, pendingReview, draft] = await Promise.all([
+  const [all, rented, vacant, maintenance, pendingReview] = await Promise.all([
     countOf(),
     countOf('rented'),
     countOf('vacant'),
     countOf('maintenance'),
     countOf('pending_review'),
-    countOf('draft'),
   ]);
-  return { all, rented, vacant, maintenance, pending_review: pendingReview, draft };
+  return { all, rented, vacant, maintenance, pending_review: pendingReview };
 }
 
 export type WorkbenchKpis = {

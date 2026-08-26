@@ -1,15 +1,74 @@
 import { apiFetch, apiUpload } from '@/libs/api';
-import type {
-  ListingPhoto,
-  OwnerListing,
-  OwnerListingCreatePayload,
-  OwnerListingUpdatePayload,
-} from '@/types/marketplace';
+import type { OwnerListing } from '@/types/marketplace';
 
 const BASE = '/owner/listings';
 
+export type OwnerListingSubmitPayload = {
+  property_type: string;
+  name?: string;
+  address?: string;
+  district_id: number;
+  rooms: number;
+  area_sqm: number;
+  floor: number;
+  total_floors?: number;
+  furnishing: string;
+  description?: string;
+  tariff?: string;
+  monthly_price: string | number;
+  deposit_amount?: string | number;
+  currency?: string;
+  minimum_stay?: number;
+  price_includes?: string[];
+  amenities?: string[];
+  captions?: string[];
+  contact?: {
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+    phone?: string;
+  };
+  accept_offer: true;
+};
+
+export type OwnerListingResubmitPayload = OwnerListingSubmitPayload & {
+  keep_photo_ids?: number[];
+};
+
+export type OwnerListingUploadPhoto = {
+  file?: File;
+  caption?: string | null;
+};
+
+export type OwnerListingUploadResult = {
+  images: File[];
+  captions: string[];
+};
+
 /**
- * Lists the current owner's draft/published listings.
+ * Selects the image files and positionally aligned captions for an owner submission.
+ * Resubmissions omit captions for retained server photos because the backend applies
+ * captions only to newly uploaded files.
+ * @param photos - The local photo sequence, including retained photos during resubmission.
+ * @param isResubmission - Whether the upload replaces a rejected listing.
+ * @returns New image files and captions aligned to the receiving upload sequence.
+ */
+export function prepareOwnerListingUpload(
+  photos: OwnerListingUploadPhoto[],
+  isResubmission: boolean,
+): OwnerListingUploadResult {
+  const newPhotos = photos.filter((photo): photo is OwnerListingUploadPhoto & { file: File } =>
+    Boolean(photo.file),
+  );
+  const captionPhotos = isResubmission ? newPhotos : photos;
+  return {
+    images: newPhotos.map((photo) => photo.file),
+    captions: captionPhotos.map((photo) => photo.caption ?? ''),
+  };
+}
+
+/**
+ * Lists the current owner's listings.
  * @returns The owner's listings.
  */
 export async function fetchOwnerListings(): Promise<OwnerListing[]> {
@@ -17,7 +76,7 @@ export async function fetchOwnerListings(): Promise<OwnerListing[]> {
 }
 
 /**
- * Retrieves a single owner listing draft (for resume).
+ * Retrieves a single owner listing (e.g. to inspect or resubmit a rejected listing).
  * @param id - The listing id.
  * @returns The owner listing.
  */
@@ -26,83 +85,41 @@ export async function fetchOwnerListing(id: number | string): Promise<OwnerListi
 }
 
 /**
- * Creates a new draft (wizard step 1).
- * @param payload - The step-1 details.
- * @returns The created draft.
+ * Submits a new owner listing atomically for review.
+ * @param payload - Structured form fields.
+ * @param images - Binary image files (5 to 12).
+ * @returns The created listing.
  */
-export async function createOwnerListing(
-  payload: OwnerListingCreatePayload,
+export async function submitOwnerListing(
+  payload: OwnerListingSubmitPayload,
+  images: File[],
 ): Promise<OwnerListing> {
-  return await apiFetch<OwnerListing>(`${BASE}/`, { method: 'POST', body: payload });
-}
-
-/**
- * Partially updates a draft (per-step save).
- * @param id - The listing id.
- * @param payload - The fields to update.
- * @returns The updated draft.
- */
-export async function updateOwnerListing(
-  id: number,
-  payload: OwnerListingUpdatePayload,
-): Promise<OwnerListing> {
-  return await apiFetch<OwnerListing>(`${BASE}/${id}/`, { method: 'PATCH', body: payload });
-}
-
-/**
- * Uploads photos (wizard step 2) as multipart form-data under the `images` field.
- * @param id - The listing id.
- * @param files - The image files to upload.
- * @returns The created photos.
- */
-export async function uploadOwnerListingPhotos(id: number, files: File[]): Promise<ListingPhoto[]> {
   const form = new FormData();
-  for (const file of files) {
-    form.append('images', file);
+  form.append('payload', JSON.stringify(payload));
+  for (const image of images) {
+    form.append('images', image);
   }
-  return await apiUpload<ListingPhoto[]>(`${BASE}/${id}/photos/`, form);
+  return await apiUpload<OwnerListing>(`${BASE}/submit/`, form);
 }
 
 /**
- * Reorders / re-flags listing photos.
- * @param id - The listing id.
- * @param items - The new ordering and primary flags.
- * @returns The updated listing.
+ * Atomically resubmits a previously rejected listing.
+ * @param id - The rejected listing id.
+ * @param payload - Replaced metadata + kept photo IDs.
+ * @param images - Additional new image files.
+ * @returns The updated listing in pending_review.
  */
-export async function reorderOwnerListingPhotos(
-  id: number,
-  items: { id: number; sort_order: number; is_primary: boolean; caption?: string | null }[],
+export async function resubmitOwnerListing(
+  id: number | string,
+  payload: OwnerListingResubmitPayload,
+  images: File[],
 ): Promise<OwnerListing> {
-  return await apiFetch<OwnerListing>(`${BASE}/${id}/photos/reorder/`, {
-    method: 'PATCH',
-    body: { items },
-  });
-}
-
-/**
- * Deletes a listing photo.
- * @param id - The listing id.
- * @param photoId - The photo id.
- * @returns Deletion result.
- */
-export async function deleteOwnerListingPhoto(
-  id: number,
-  photoId: number,
-): Promise<{ deleted: boolean }> {
-  return await apiFetch<{ deleted: boolean }>(`${BASE}/${id}/photos/${photoId}/`, {
-    method: 'DELETE',
-  });
-}
-
-/**
- * Submits a completed draft for review (wizard step 4).
- * @param id - The listing id.
- * @param acceptOffer - Whether the owner accepts the public offer.
- * @returns The submitted listing.
- */
-export async function submitOwnerListing(id: number, acceptOffer: boolean): Promise<OwnerListing> {
-  return await apiFetch<OwnerListing>(`${BASE}/${id}/submit/`, {
-    method: 'POST',
-    body: { accept_offer: acceptOffer },
+  const form = new FormData();
+  form.append('payload', JSON.stringify(payload));
+  for (const image of images) {
+    form.append('images', image);
+  }
+  return await apiUpload<OwnerListing>(`${BASE}/${id}/resubmit/`, form, {
+    method: 'PUT',
   });
 }

@@ -10,7 +10,7 @@ export type PropertyType = 'apartment' | 'house' | 'studio' | 'room';
 
 export type Furnishing = 'furnished' | 'semi_furnished' | 'unfurnished';
 
-export type ListingStatus = 'draft' | 'pending_review' | 'published' | 'rejected' | 'archived';
+export type ListingStatus = 'pending_review' | 'published' | 'rejected' | 'archived';
 
 export type ViewingTimeSlot = '10:00' | '13:00' | '15:00' | '18:00';
 
@@ -51,7 +51,7 @@ export type BookingStatus = 'requested' | 'approved' | 'rejected' | 'converted' 
 
 export type OnboardingStatus = 'submitted' | 'offer_accepted' | 'approved' | 'rejected';
 
-export type InventoryActStatus = 'draft' | 'finalized';
+export type InventoryActStatus = 'finalized';
 
 export type InventoryActType = 'handover' | 'return' | 'general';
 

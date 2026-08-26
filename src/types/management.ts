@@ -156,7 +156,7 @@ export type ManagementPropertyOutput = {
   id: number;
   name: string;
   address: string;
-  // Nullable: draft properties are saved partially until published (Phase 7).
+  // Nullable in the management API contract for legacy incomplete records.
   district_id: number | null;
   district_name: string | null;
   rooms: number | null;
@@ -190,13 +190,7 @@ export type ManagementPropertyOutput = {
   updated_at: string;
 };
 
-export type OneOffDealStatus =
-  | 'draft'
-  | 'active'
-  | 'paused'
-  | 'closed_won'
-  | 'closed_lost'
-  | 'archived';
+export type OneOffDealStatus = 'active' | 'paused' | 'closed_won' | 'closed_lost' | 'archived';
 export type OneOffChannel = 'marketplace' | 'off_market';
 export type BrokerageCommissionType = 'none' | 'fixed' | 'percentage';
 
@@ -668,6 +662,8 @@ export type InventoryActListOutput = {
   status: string;
   item_count: number;
   photo_count: number;
+  acknowledged_at: string | null;
+  acknowledged_by_name: string | null;
   created_at: string;
   updated_at: string;
 };

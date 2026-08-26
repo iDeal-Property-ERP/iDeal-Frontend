@@ -10,21 +10,15 @@ import type { Control } from 'react-hook-form';
 import { toast } from 'sonner';
 import { DangerConfirmDialog } from '@/components/management/dialogs/DangerConfirmDialog';
 import { Form } from '@/components/ui/form';
-import { useOneOffPropertyDraft } from '@/hooks/management/useOneOffPropertyDraft';
-import { usePropertyDraft } from '@/hooks/management/usePropertyDraft';
-import type { DraftState } from '@/hooks/management/usePropertyDraft';
 import { usePropertyPhotos } from '@/hooks/management/usePropertyPhotos';
 import type { UsePropertyPhotosResult } from '@/hooks/management/usePropertyPhotos';
 import { usePublishChecklist } from '@/hooks/management/usePublishChecklist';
 import type { ChecklistRow } from '@/hooks/management/usePublishChecklist';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useRouter } from '@/libs/I18nNavigation';
-import { activateOneOffDeal } from '@/libs/management/oneOffDealsAdapter';
 import {
-  fetchPropertyDetail,
   getDistricts,
-  publishProperty,
-  scheduleVerification,
+  submitProperty,
   updateOneOffProperty,
   updateProperty,
 } from '@/libs/management/propertiesAdapter';
@@ -32,15 +26,15 @@ import type {
   DistrictOption,
   OneOffPropertyDraftPayload,
   PropertyDraftPayload,
+  PropertySubmissionPayload,
 } from '@/libs/management/propertiesAdapter';
 import {
-  managementPropertyDraftSchema,
   managementOneOffActivateSchema,
+  managementPropertyDraftSchema,
   managementPropertyPublishSchema,
 } from '@/libs/schemas/managementProperty';
 import type { ManagementPropertyFormData } from '@/libs/schemas/managementProperty';
-import type { PropertyDetail } from '@/types/property';
-import { DraftSavedChip } from './DraftSavedChip';
+import type { PropertyDetail, PropertyPhoto } from '@/types/property';
 import { PropertyFormStepper } from './mobile/PropertyFormStepper';
 import { OneOffBrokerageCard } from './OneOffBrokerageCard';
 import { PropertyBasicsCard } from './PropertyBasicsCard';
@@ -195,46 +189,57 @@ function stepForCode(code: string): number {
   return 0;
 }
 
-type DraftChipLabels = { saving: string; saved: string; error: string; unsaved: string };
-
-/**
- * The header status chip: the autosave state in create, an unsaved-edits alert in
- * edit (only while dirty), nothing otherwise.
- * @param mode - The form mode.
- * @param draftState - The autosave lifecycle state.
- * @param hasUnsaved - Whether edit mode has pending changes.
- * @param labels - Localized chip labels.
- * @returns The chip node, or null.
- */
-/**
- * Returns the header status chip for the form mode.
- * @param mode - The form mode.
- * @param draftState - The autosave lifecycle state.
- * @param hasUnsaved - Whether edit mode has pending changes.
- * @param labels - Localized chip labels.
- * @returns The chip node, or null.
- */
-function headerChipFor(
-  mode: 'create' | 'edit',
-  draftState: DraftState,
-  hasUnsaved: boolean,
-  labels: DraftChipLabels,
-): ReactNode {
-  if (mode === 'create') {
-    return <DraftSavedChip state={draftState} labels={labels} />;
-  }
-  if (hasUnsaved) {
-    return <DraftSavedChip state="unsaved" labels={labels} />;
-  }
-  return null;
+function toBrokeragePayload(values: ManagementPropertyFormData) {
+  return {
+    seller_name: values.seller_name ?? '',
+    seller_phone: values.seller_phone ?? '',
+    seller_email: values.seller_email ?? undefined,
+    // SAFETY: channel/commission_type/currency are validated enum strings from the form
+    channel: values.channel ?? 'marketplace',
+    // SAFETY: Form validation ensures commission_type matches allowed types
+    commission_type: values.commission_type ?? 'none',
+    commission_fixed_amount: values.commission_fixed_amount ?? undefined,
+    commission_percentage: values.commission_percentage ?? undefined,
+    // SAFETY: Form validation ensures currency is USD or UZS
+    commission_currency: values.commission_currency ?? 'USD',
+  };
 }
 
-function getManagedDraftId(mode: 'create' | 'edit', initial?: PropertyDetail): number | undefined {
-  return mode === 'edit' && initial?.engagement_type !== 'one_off' ? initial?.id : undefined;
-}
-
-function getOneOffDraftId(mode: 'create' | 'edit', initial?: PropertyDetail): number | undefined {
-  return mode === 'edit' && initial?.engagement_type === 'one_off' ? initial?.id : undefined;
+function toSubmissionPayload(
+  values: ManagementPropertyFormData,
+  oneOff: boolean,
+  photos: PropertyPhoto[],
+  scheduledForIso?: string,
+): PropertySubmissionPayload {
+  const payload: PropertySubmissionPayload = {
+    engagement_type: oneOff ? 'one_off' : 'managed',
+    name: values.name ?? undefined,
+    address: values.address ?? undefined,
+    district_id: Number(values.district_id),
+    property_type: 'apartment',
+    rooms: Number(values.rooms),
+    area_sqm: Number(values.area_sqm),
+    floor: Number(values.floor),
+    total_floors: values.total_floors ? Number(values.total_floors) : undefined,
+    furnishing: 'unfurnished',
+    owner_id: values.owner_id ?? undefined,
+    description: values.description ?? undefined,
+    tariff: values.tariff ?? 'standard',
+    map_lat: values.map_lat ? Number(values.map_lat) : undefined,
+    map_lon: values.map_lon ? Number(values.map_lon) : undefined,
+    ask_price: values.ask_price ?? '0.00',
+    ask_currency: values.ask_currency ?? 'USD',
+    owner_guaranteed_price: values.owner_guaranteed_price ?? undefined,
+    owner_guaranteed_currency: values.owner_guaranteed_currency ?? undefined,
+    tenant_charge_price: values.tenant_charge_price ?? undefined,
+    tenant_charge_currency: values.tenant_charge_currency ?? undefined,
+    captions: photos.map((p) => p.caption ?? ''),
+    schedule_verification_at: scheduledForIso,
+  };
+  if (oneOff) {
+    payload.brokerage = toBrokeragePayload(values);
+  }
+  return payload;
 }
 
 function isClosedOneOff(initial?: PropertyDetail): boolean {
@@ -296,25 +301,6 @@ function resolveEngagement(
   return initial;
 }
 
-function triggerAutosave(
-  mode: 'create' | 'edit',
-  isDirty: boolean,
-  oneOff: boolean,
-  values: ManagementPropertyFormData,
-  scheduleManaged: (values: PropertyDraftPayload) => void,
-  scheduleOneOff: (values: OneOffPropertyDraftPayload) => void,
-): boolean {
-  if (mode !== 'create' || !isDirty) {
-    return false;
-  }
-  if (oneOff) {
-    scheduleOneOff(toOneOffPayload(values));
-  } else {
-    scheduleManaged(toPayload(values));
-  }
-  return true;
-}
-
 type FormEngagementToggleProps = {
   oneOff: boolean;
   immutableEngagement: string | null;
@@ -371,11 +357,9 @@ type DesktopFormBodyProps = {
   submitting: boolean;
   primaryAction: () => void;
   cancelAction: () => void;
-  saveDraftAction: () => void;
   secondCrumb: string;
   title: string;
   engagementControl: ReactNode;
-  headerChip: ReactNode;
 };
 
 function DesktopFormBody(props: DesktopFormBodyProps) {
@@ -394,11 +378,9 @@ function DesktopFormBody(props: DesktopFormBodyProps) {
     submitting,
     primaryAction,
     cancelAction,
-    saveDraftAction,
     secondCrumb,
     title,
     engagementControl,
-    headerChip,
   } = props;
 
   let note: string;
@@ -420,12 +402,7 @@ function DesktopFormBody(props: DesktopFormBodyProps) {
         </span>
       }
       title={title}
-      headerAside={
-        <div className="flex items-center gap-3">
-          {engagementControl}
-          {headerChip}
-        </div>
-      }
+      headerAside={<div className="flex items-center gap-3">{engagementControl}</div>}
       rail={
         <>
           {mode === 'create' && !oneOff ? <PublishChecklist rows={checklistRows} t={t} /> : null}
@@ -441,7 +418,6 @@ function DesktopFormBody(props: DesktopFormBodyProps) {
           attentionCount={attentionCount}
           submitting={submitting}
           onCancel={cancelAction}
-          onSaveDraft={saveDraftAction}
           onPrimary={primaryAction}
         />
       }
@@ -505,10 +481,7 @@ export function PropertyForm(props: PropertyFormProps) {
     initialEngagement,
   );
   const oneOff = engagement === 'one_off';
-  const managedDraft = usePropertyDraft(getManagedDraftId(mode, initial));
-  const oneOffDraft = useOneOffPropertyDraft(getOneOffDraftId(mode, initial));
-  const activeDraft = oneOff ? oneOffDraft : managedDraft;
-  const propertyId = activeDraft.draftId ?? initial?.id ?? null;
+  const propertyId = mode === 'edit' && initial ? initial.id : null;
 
   const photos = usePropertyPhotos(propertyId, initial?.photos ?? [], {
     uploadError: t('form_photo_error'),
@@ -539,27 +512,7 @@ export function PropertyForm(props: PropertyFormProps) {
     };
   }, []);
 
-  // Autosave (create only): debounce a draft PATCH whenever the form changes.
-  const serialized = JSON.stringify(values);
-  const dirtyRef = useRef(false);
-  useEffect(() => {
-    if (
-      triggerAutosave(
-        mode,
-        form.formState.isDirty,
-        oneOff,
-        values,
-        managedDraft.schedule,
-        oneOffDraft.schedule,
-      )
-    ) {
-      dirtyRef.current = true;
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [serialized, mode, oneOff]);
-
-  // Edit mode with pending edits: navigating away must confirm first.
-  const hasUnsaved = mode === 'edit' && form.formState.isDirty;
+  const hasUnsaved = form.formState.isDirty || photos.localFiles.length > 0;
   const pendingHref = useRef('/management/properties');
 
   // Guard browser/full-page navigation while there are unsaved edits.
@@ -583,15 +536,6 @@ export function PropertyForm(props: PropertyFormProps) {
     } else {
       router.push(href);
     }
-  };
-
-  const saveDraftAndLeave = async () => {
-    if (mode === 'create' && dirtyRef.current) {
-      await (oneOff
-        ? oneOffDraft.flush(toOneOffPayload(form.getValues()))
-        : managedDraft.flush(toPayload(form.getValues())));
-    }
-    router.push('/management/properties');
   };
 
   const showPublishErrors = (): boolean => {
@@ -619,57 +563,20 @@ export function PropertyForm(props: PropertyFormProps) {
     return true;
   };
 
-  const runPublish = async (scheduledForIso?: string) => {
+  const runSubmit = async (scheduledForIso?: string) => {
     if (showPublishErrors()) {
+      setScheduleOpen(false);
+      return;
+    }
+    if ((!oneOff || form.getValues('channel') === 'marketplace') && photos.photos.length < 5) {
+      toast.error(t('form_photo_error'));
       setScheduleOpen(false);
       return;
     }
     setPublishing(true);
     try {
-      const id = await managedDraft.flush(toPayload(form.getValues()));
-      if (id === null) {
-        toast.error(t('form_publish_failed'));
-        return;
-      }
-      const result = await publishProperty(id, scheduledForIso);
-      if (result.ok) {
-        toast.success(t('form_published'));
-        router.push('/management/properties');
-      } else {
-        setServerMissing(new Set(result.missing));
-        setErrorStep(result.missing.length ? Math.min(...result.missing.map(stepForCode)) : 0);
-        toast.error(t('form_publish_incomplete'));
-      }
-    } catch {
-      toast.error(t('form_publish_failed'));
-    } finally {
-      setPublishing(false);
-      setScheduleOpen(false);
-    }
-  };
-
-  const runOneOffActivation = async (scheduledForIso?: string) => {
-    if (showPublishErrors()) {
-      setScheduleOpen(false);
-      return;
-    }
-    setPublishing(true);
-    try {
-      const id = await oneOffDraft.flush(toOneOffPayload(form.getValues()));
-      if (id === null) {
-        toast.error(t('form_publish_failed'));
-        return;
-      }
-      // One-off properties skip verification scheduling — only managed
-      // properties use verification visits.
-      if (!oneOff && form.getValues('channel') === 'marketplace' && scheduledForIso) {
-        await scheduleVerification(id, scheduledForIso);
-      }
-      const refreshed = await fetchPropertyDetail(id);
-      if (!refreshed.one_off_deal) {
-        throw new Error('One-off deal missing');
-      }
-      await activateOneOffDeal(refreshed.one_off_deal.id);
+      const payload = toSubmissionPayload(form.getValues(), oneOff, photos.photos, scheduledForIso);
+      await submitProperty(payload, photos.localFiles);
       toast.success(t('form_published'));
       router.push('/management/properties');
     } catch {
@@ -684,17 +591,17 @@ export function PropertyForm(props: PropertyFormProps) {
     if (!initial) {
       return;
     }
+    if (showPublishErrors()) {
+      return;
+    }
     setPublishing(true);
     try {
       if (initial.engagement_type === 'one_off') {
-        await updateOneOffProperty(
-          initial.id,
-          isClosedOneOff(initial) ? toPayload(form.getValues()) : toOneOffPayload(form.getValues()),
-        );
+        const payload = isClosedOneOff(initial)
+          ? toPayload(form.getValues())
+          : toOneOffPayload(form.getValues());
+        await updateOneOffProperty(initial.id, payload);
       } else {
-        if (showPublishErrors()) {
-          return;
-        }
         await updateProperty(initial.id, toPayload(form.getValues()));
       }
       toast.success(t('form_saved'));
@@ -709,27 +616,15 @@ export function PropertyForm(props: PropertyFormProps) {
   const onPrimary = () => {
     if (mode === 'edit') {
       void saveEdit();
-    } else if (oneOff) {
-      void runOneOffActivation();
+    } else if (oneOff && form.getValues('channel') === 'off_market') {
+      void runSubmit();
     } else {
       setScheduleOpen(true);
     }
   };
 
-  // Read errors directly in render so the RHF formState proxy subscribes and the
-  // count re-renders when validation sets/clears field errors (a useMemo keyed on
-  // the errors object misses in-place proxy updates).
   const { errors } = form.formState;
   const attentionCount = Object.keys(errors).length;
-
-  const draftLabels = {
-    saving: t('draft_saving'),
-    saved: t('draft_saved'),
-    error: t('draft_error'),
-    unsaved: t('draft_unsaved'),
-  };
-
-  const headerChip = headerChipFor(mode, activeDraft.state, hasUnsaved, draftLabels);
 
   const body = isMobile ? (
     <PropertyFormStepper
@@ -769,7 +664,6 @@ export function PropertyForm(props: PropertyFormProps) {
       submitting={publishing}
       primaryAction={onPrimary}
       cancelAction={() => navigateGuarded('/management/properties')}
-      saveDraftAction={() => void saveDraftAndLeave()}
       secondCrumb={getSecondCrumb(mode, initial, t)}
       title={getFormTitle(mode, t)}
       engagementControl={
@@ -780,7 +674,6 @@ export function PropertyForm(props: PropertyFormProps) {
           form={form}
         />
       }
-      headerChip={headerChip}
     />
   );
 
@@ -792,7 +685,7 @@ export function PropertyForm(props: PropertyFormProps) {
         onOpenChange={setScheduleOpen}
         t={t}
         submitting={publishing}
-        onConfirm={(iso) => void (oneOff ? runOneOffActivation() : runPublish(iso))}
+        onConfirm={(iso) => void runSubmit(iso)}
       />
       <DangerConfirmDialog
         open={discardOpen}

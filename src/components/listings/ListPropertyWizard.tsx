@@ -2,6 +2,7 @@
 
 import { Building2, Check, Loader2, Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { useSearchParams } from 'next/navigation';
 import { Fragment, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -15,15 +16,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useAuth } from '@/libs/auth';
+import { getApiErrorMessage } from '@/libs/forms';
 import { Link } from '@/libs/I18nNavigation';
 import { fetchAmenities, fetchDistricts, formatPrice } from '@/libs/marketplace';
 import {
-  createOwnerListing,
-  deleteOwnerListingPhoto,
-  reorderOwnerListingPhotos,
+  fetchOwnerListing,
+  prepareOwnerListingUpload,
+  resubmitOwnerListing,
   submitOwnerListing,
-  updateOwnerListing,
-  uploadOwnerListingPhotos,
 } from '@/libs/ownerListings';
 import { submitPublicListing } from '@/libs/publicListings';
 import { cn } from '@/libs/utils';
@@ -69,6 +69,15 @@ type PricingForm = {
   currency: string;
   minimum_stay: number;
   price_includes: string[];
+};
+
+type LocalPhoto = {
+  id: number;
+  file?: File;
+  previewUrl: string;
+  caption?: string;
+  is_primary: boolean;
+  sort_order: number;
 };
 
 type TFn = (key: string, values?: Record<string, string | number>) => string;
@@ -254,7 +263,10 @@ function DetailsStep(props: {
           // SAFETY: Select option values match PropertyType union
           onChange={(v) => setDetails((d) => ({ ...d, property_type: v as PropertyType }))}
           value={details.property_type}
-          options={PROPERTY_TYPES.map((pt) => ({ value: pt, label: t(`type_${pt}`) }))}
+          options={PROPERTY_TYPES.map((pt) => ({
+            value: pt,
+            label: t(`type_${pt}`),
+          }))}
         />
       </WizField>
       <WizField label={t('listing_title')}>
@@ -269,7 +281,10 @@ function DetailsStep(props: {
           onChange={(v) => setDetails((d) => ({ ...d, district_id: v }))}
           value={details.district_id}
           placeholder={t('select_district')}
-          options={districts.map((d) => ({ value: String(d.id), label: `${d.name}, ${d.city}` }))}
+          options={districts.map((d) => ({
+            value: String(d.id),
+            label: `${d.name}, ${d.city}`,
+          }))}
         />
       </WizField>
       <div className="grid grid-cols-3 gap-3 lg:gap-4">
@@ -277,7 +292,10 @@ function DetailsStep(props: {
           <FilledSelect
             onChange={(v) => setDetails((d) => ({ ...d, rooms: v }))}
             value={details.rooms}
-            options={['1', '2', '3', '4', '5', '6'].map((n) => ({ value: n, label: n }))}
+            options={['1', '2', '3', '4', '5', '6'].map((n) => ({
+              value: n,
+              label: n,
+            }))}
           />
         </WizField>
         <WizField label={t('floor')}>
@@ -477,7 +495,10 @@ function PricingStep(props: {
             <FilledSelect
               onChange={(v) => setPricing((p) => ({ ...p, minimum_stay: Number(v) }))}
               value={String(pricing.minimum_stay)}
-              options={MIN_STAYS.map((m) => ({ value: String(m), label: t(`stay_${m}`) }))}
+              options={MIN_STAYS.map((m) => ({
+                value: String(m),
+                label: t(`stay_${m}`),
+              }))}
             />
           </WizField>
         </div>
@@ -832,10 +853,14 @@ export function ListPropertyWizard() {
   const isAuthenticated = _isAuth && user?.role === 'owner';
 
   const [step, setStep] = useState(0);
-  const [draft, setDraft] = useState<OwnerListing | null>(null);
   const [districts, setDistricts] = useState<DistrictOption[]>([]);
   const [amenityOptions, setAmenityOptions] = useState<AmenityOption[]>([]);
   const [busy, setBusy] = useState(false);
+  const [rejectedListingId, setRejectedListingId] = useState<number | null>(null);
+  const [initialRejectionReason, setInitialRejectionReason] = useState<string | null>(null);
+  const [localPhotos, setLocalPhotos] = useState<LocalPhoto[]>([]);
+  const nextLocalPhotoId = useRef(-1);
+  const objectUrls = useRef(new Map<number, string>());
 
   const [details, setDetails] = useState<DetailsForm>({
     property_type: 'apartment',
@@ -863,13 +888,76 @@ export function ListPropertyWizard() {
     email: '',
     phone: '',
   });
-  const [guestPhotos, setGuestPhotos] = useState<File[]>([]);
-  const [guestCaptions, setGuestCaptions] = useState<Record<number, string>>({});
+
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const urls = objectUrls.current;
+    return () => {
+      for (const url of urls.values()) {
+        URL.revokeObjectURL(url);
+      }
+      urls.clear();
+    };
+  }, []);
 
   useEffect(() => {
     fetchDistricts().then(setDistricts);
     fetchAmenities().then(setAmenityOptions);
-  }, []);
+
+    const loadRejected = async () => {
+      const listingParam = searchParams.get('listing');
+      if (!listingParam) {
+        return;
+      }
+      const id = Number(listingParam);
+      if (!id) {
+        return;
+      }
+      try {
+        const l = await fetchOwnerListing(id);
+        if (l.status === 'rejected') {
+          setRejectedListingId(l.id);
+          setInitialRejectionReason(l.rejection_reason);
+          setDetails({
+            property_type: l.property_type,
+            name: l.name ?? '',
+            district_id: l.district_id ? String(l.district_id) : '',
+            rooms: l.rooms ? String(l.rooms) : '1',
+            floor: l.floor !== null && l.floor !== undefined ? String(l.floor) : '',
+            total_floors:
+              l.total_floors !== null && l.total_floors !== undefined ? String(l.total_floors) : '',
+            area_sqm: l.area_sqm ? String(l.area_sqm) : '',
+            furnishing: l.furnishing,
+            description: l.description ?? '',
+            amenities: l.amenities.map((a) => a.slug),
+          });
+          setPricing({
+            monthly_price: l.monthly_price ?? '',
+            deposit_amount: l.deposit_amount ?? '',
+            currency: l.currency ?? 'USD',
+            minimum_stay: l.minimum_stay ?? 6,
+            price_includes: l.price_includes ?? [],
+          });
+          if (l.photos) {
+            setLocalPhotos(
+              l.photos.map((p, idx) => ({
+                id: p.id,
+                previewUrl: p.image_url,
+                caption: p.caption ?? undefined,
+                is_primary: p.is_primary,
+                sort_order: p.sort_order ?? idx,
+              })),
+            );
+          }
+        }
+      } catch (error) {
+        toast.error(getApiErrorMessage(error, 'Failed to load rejected listing'));
+      }
+    };
+
+    void loadRejected();
+  }, [searchParams]);
 
   useEffect(() => {
     if (user && !contact.email) {
@@ -888,6 +976,49 @@ export function ListPropertyWizard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
+  const draft = ((): OwnerListing => {
+    const photoObjects = localPhotos.map((p, i) => ({
+      id: p.id,
+      image_url: p.previewUrl,
+      caption: p.caption ?? null,
+      is_primary: p.is_primary || (localPhotos.every((x) => !x.is_primary) && i === 0),
+      sort_order: p.sort_order ?? i,
+    }));
+    return {
+      id: rejectedListingId ?? 0,
+      status: rejectedListingId ? 'rejected' : 'pending_review',
+      property_id: 0,
+      property_type: details.property_type,
+      name: details.name,
+      address: '',
+      district_id: Number(details.district_id) || 0,
+      district_name: districts.find((d) => String(d.id) === details.district_id)?.name ?? null,
+      rooms: Number(details.rooms) || 0,
+      floor: Number(details.floor) || 0,
+      total_floors: Number(details.total_floors) || null,
+      area_sqm: Number(details.area_sqm) || 0,
+      furnishing: details.furnishing,
+      tariff: 'standard',
+      description: details.description,
+      amenities: amenityOptions.filter((a) => details.amenities.includes(a.slug)),
+      monthly_price: pricing.monthly_price,
+      deposit_amount: pricing.deposit_amount,
+      // SAFETY: PricingForm currency matches Currency enum
+      currency: pricing.currency as Currency,
+      minimum_stay: pricing.minimum_stay,
+      price_includes: pricing.price_includes,
+      photos: photoObjects,
+      completeness: {
+        has_5_photos: localPhotos.length >= 5,
+        has_price: !!pricing.monthly_price && !!pricing.deposit_amount,
+        has_ownership: false,
+      },
+      rejection_reason: initialRejectionReason,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+  })();
+
   if (isLoading) {
     return <CenteredCard>{t('loading')}</CenteredCard>;
   }
@@ -900,55 +1031,6 @@ export function ListPropertyWizard() {
         : [...d.amenities, slug],
     }));
 
-  function syncGuestDraft(
-    currentDetails: DetailsForm,
-    currentPricing: PricingForm,
-    photos: File[],
-    captions: Record<number, string>,
-  ) {
-    const photoObjects = photos.map((file, i) => ({
-      id: i,
-      image_url: URL.createObjectURL(file),
-      caption: captions[i] ?? null,
-      is_primary: i === 0,
-      sort_order: i,
-    }));
-    setDraft({
-      id: 0,
-      status: 'draft',
-      property_id: 0,
-      property_type: currentDetails.property_type,
-      name: currentDetails.name,
-      address: '',
-      district_id: Number(currentDetails.district_id) || 0,
-      district_name:
-        districts.find((d) => String(d.id) === currentDetails.district_id)?.name ?? null,
-      rooms: Number(currentDetails.rooms) || 0,
-      floor: Number(currentDetails.floor) || 0,
-      total_floors: Number(currentDetails.total_floors) || null,
-      area_sqm: Number(currentDetails.area_sqm) || 0,
-      furnishing: currentDetails.furnishing,
-      tariff: 'standard',
-      description: currentDetails.description,
-      amenities: amenityOptions.filter((a) => currentDetails.amenities.includes(a.slug)),
-      monthly_price: currentPricing.monthly_price,
-      deposit_amount: currentPricing.deposit_amount,
-      // SAFETY: PricingForm currency matches Currency enum
-      currency: currentPricing.currency as Currency,
-      minimum_stay: currentPricing.minimum_stay,
-      price_includes: currentPricing.price_includes,
-      photos: photoObjects,
-      completeness: {
-        has_5_photos: photos.length >= 5,
-        has_price: !!currentPricing.monthly_price && !!currentPricing.deposit_amount,
-        has_ownership: false,
-      },
-      rejection_reason: null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    });
-  }
-
   const togglePriceInclude = (slug: string) =>
     setPricing((p) => ({
       ...p,
@@ -957,160 +1039,63 @@ export function ListPropertyWizard() {
         : [...p.price_includes, slug],
     }));
 
-  async function saveDetails(advance: boolean) {
+  function saveDetails(advance: boolean) {
     if (!(details.name && details.district_id && details.area_sqm)) {
       toast.error(t('error_required'));
       return;
     }
-    setBusy(true);
-    try {
-      const payload = {
-        property_type: details.property_type,
-        name: details.name,
-        district_id: Number(details.district_id),
-        rooms: Number(details.rooms),
-        floor: Number(details.floor) || 0,
-        total_floors: Number(details.total_floors) || null,
-        area_sqm: Number(details.area_sqm),
-        furnishing: details.furnishing,
-        description: details.description || null,
-        amenities: details.amenities,
+    if (advance) {
+      setStep(1);
+    }
+  }
+
+  function onUpload(files: FileList | null) {
+    if (!files || files.length === 0) {
+      return;
+    }
+    const newItems: LocalPhoto[] = [...files].map((file, idx) => {
+      const id = nextLocalPhotoId.current;
+      nextLocalPhotoId.current -= 1;
+      const previewUrl = URL.createObjectURL(file);
+      objectUrls.current.set(id, previewUrl);
+      return {
+        id,
+        file,
+        previewUrl,
+        is_primary: localPhotos.length === 0 && idx === 0,
+        sort_order: localPhotos.length + idx,
+        caption: '',
       };
-      if (!isAuthenticated) {
-        syncGuestDraft(details, pricing, guestPhotos, guestCaptions);
-        toast.success(t('saved'));
-        setBusy(false);
-        if (advance) {
-          setStep(1);
-        }
-        return;
-      }
-      const result = draft
-        ? await updateOwnerListing(draft.id, payload)
-        : await createOwnerListing(payload);
-      setDraft(result);
-      toast.success(t('saved'));
-      if (advance) {
-        setStep(1);
-      }
-    } catch {
-      toast.error(t('error_generic'));
-    } finally {
-      setBusy(false);
-    }
+    });
+    setLocalPhotos((prev) => [...prev, ...newItems]);
   }
 
-  async function onUpload(files: FileList | null) {
-    if (!(draft && files && files.length > 0)) {
-      return;
+  function removePhoto(photoId: number) {
+    const objectUrl = objectUrls.current.get(photoId);
+    if (objectUrl) {
+      URL.revokeObjectURL(objectUrl);
+      objectUrls.current.delete(photoId);
     }
-    setBusy(true);
-    try {
-      if (!isAuthenticated) {
-        const newPhotos = [...guestPhotos, ...files];
-        setGuestPhotos(newPhotos);
-        syncGuestDraft(details, pricing, newPhotos, guestCaptions);
-        setBusy(false);
-        return;
+    setLocalPhotos((prev) => {
+      const next = prev.filter((p) => p.id !== photoId);
+      if (next.length > 0 && !next.some((p) => p.is_primary) && next[0]) {
+        next[0].is_primary = true;
       }
-      await uploadOwnerListingPhotos(draft.id, [...files]);
-      if (!isAuthenticated) {
-        toast.success(t('saved'));
-        setBusy(false);
-        return;
-      }
-      const refreshed = await updateOwnerListing(draft.id, {});
-      setDraft(refreshed);
-    } catch {
-      toast.error(t('error_upload'));
-    } finally {
-      setBusy(false);
-    }
+      return next;
+    });
   }
 
-  async function removePhoto(photoId: number) {
-    if (!draft) {
-      return;
-    }
-    if (!isAuthenticated) {
-      const newPhotos = guestPhotos.filter((_, i) => i !== photoId);
-      setGuestPhotos(newPhotos);
-      syncGuestDraft(details, pricing, newPhotos, guestCaptions);
-      return;
-    }
-    await deleteOwnerListingPhoto(draft.id, photoId);
-    if (!isAuthenticated) {
-      toast.success(t('saved'));
-      setBusy(false);
-      return;
-    }
-    const refreshed = await updateOwnerListing(draft.id, {});
-    setDraft(refreshed);
+  function setCaption(photoId: number, caption: string) {
+    setLocalPhotos((prev) => prev.map((p) => (p.id === photoId ? { ...p, caption } : p)));
   }
 
-  async function setCaption(photoId: number, caption: string) {
-    if (!draft) {
-      return;
-    }
-    const photo = draft.photos.find((p) => p.id === photoId);
-    if (!photo || (photo.caption ?? '') === caption) {
-      return;
-    }
-    if (!isAuthenticated) {
-      const newCaptions = { ...guestCaptions, [photoId]: caption };
-      setGuestCaptions(newCaptions);
-      syncGuestDraft(details, pricing, guestPhotos, newCaptions);
-      return;
-    }
-    const refreshed = await reorderOwnerListingPhotos(draft.id, [
-      { id: photoId, sort_order: photo.sort_order, is_primary: photo.is_primary, caption },
-    ]);
-    setDraft(refreshed);
-  }
-
-  async function savePricing(advance: boolean) {
-    if (!draft) {
-      return;
-    }
+  function savePricing(advance: boolean) {
     if (!(pricing.monthly_price && pricing.deposit_amount)) {
       toast.error(t('error_required'));
       return;
     }
-    setBusy(true);
-    try {
-      if (!isAuthenticated) {
-        const p = {
-          monthly_price: pricing.monthly_price,
-          deposit_amount: pricing.deposit_amount,
-          currency: pricing.currency,
-          minimum_stay: pricing.minimum_stay,
-          price_includes: pricing.price_includes,
-        };
-        syncGuestDraft(details, p, guestPhotos, guestCaptions);
-        toast.success(t('saved'));
-        setBusy(false);
-        if (advance) {
-          setStep(3);
-        }
-        return;
-      }
-      const result = await updateOwnerListing(draft.id, {
-        monthly_price: pricing.monthly_price,
-        deposit_amount: pricing.deposit_amount,
-        // SAFETY: PricingForm currency matches Currency enum
-        currency: pricing.currency as Currency,
-        minimum_stay: pricing.minimum_stay,
-        price_includes: pricing.price_includes,
-      });
-      setDraft(result);
-      toast.success(t('saved'));
-      if (advance) {
-        setStep(3);
-      }
-    } catch {
-      toast.error(t('error_generic'));
-    } finally {
-      setBusy(false);
+    if (advance) {
+      setStep(isAuthenticated ? 4 : 3);
     }
   }
 
@@ -1124,38 +1109,48 @@ export function ListPropertyWizard() {
     }
   }
 
-  async function saveAndStay() {
-    if (!draft) {
-      return;
-    }
-    setBusy(true);
-    try {
-      if (!isAuthenticated) {
-        toast.success(t('saved'));
-        setBusy(false);
-        return;
-      }
-      const refreshed = await updateOwnerListing(draft.id, {});
-      setDraft(refreshed);
-      toast.success(t('saved'));
-    } catch {
-      toast.error(t('error_generic'));
-    } finally {
-      setBusy(false);
-    }
-  }
-
   async function publish() {
-    if (!draft && isAuthenticated) {
-      return;
-    }
     if (!acceptOffer) {
       toast.error(t('accept_offer_required'));
       return;
     }
+    if (localPhotos.length < 5) {
+      toast.error(t('error_photos_min') || 'At least 5 photos are required');
+      return;
+    }
     setBusy(true);
     try {
-      if (!isAuthenticated) {
+      const upload = prepareOwnerListingUpload(localPhotos, rejectedListingId !== null);
+      const payload = {
+        property_type: details.property_type,
+        name: details.name,
+        district_id: Number(details.district_id),
+        rooms: Number(details.rooms),
+        floor: Number(details.floor) || 0,
+        total_floors: Number(details.total_floors) || undefined,
+        area_sqm: Number(details.area_sqm),
+        furnishing: details.furnishing,
+        description: details.description || undefined,
+        amenities: details.amenities,
+        monthly_price: pricing.monthly_price,
+        deposit_amount: pricing.deposit_amount,
+        currency: pricing.currency,
+        minimum_stay: pricing.minimum_stay,
+        price_includes: pricing.price_includes,
+        captions: upload.captions,
+        accept_offer: true as const,
+      };
+
+      if (rejectedListingId) {
+        const keep_photo_ids = localPhotos.filter((p) => !p.file).map((p) => p.id);
+        await resubmitOwnerListing(
+          rejectedListingId,
+          { ...payload, keep_photo_ids },
+          upload.images,
+        );
+      } else if (isAuthenticated) {
+        await submitOwnerListing(payload, upload.images);
+      } else {
         if (!contact.first_name || !contact.email || !contact.phone) {
           toast.error(t('error_required'));
           setBusy(false);
@@ -1163,35 +1158,16 @@ export function ListPropertyWizard() {
         }
         await submitPublicListing(
           {
+            ...payload,
             contact: {
               first_name: contact.first_name,
-              last_name: contact.last_name || null,
+              last_name: contact.last_name || undefined,
               email: contact.email,
               phone: contact.phone,
             },
-            property_type: details.property_type,
-            name: details.name,
-            district_id: Number(details.district_id),
-            rooms: Number(details.rooms),
-            floor: Number(details.floor) || 0,
-            total_floors: Number(details.total_floors) || null,
-            area_sqm: Number(details.area_sqm),
-            furnishing: details.furnishing,
-            description: details.description || null,
-            amenities: details.amenities,
-            monthly_price: pricing.monthly_price,
-            deposit_amount: pricing.deposit_amount,
-            currency: pricing.currency,
-            minimum_stay: pricing.minimum_stay,
-            price_includes: pricing.price_includes,
           },
-          guestPhotos,
+          upload.images,
         );
-      } else {
-        if (!draft) {
-          return;
-        }
-        await submitOwnerListing(draft.id, true);
       }
       toast.success(t('published'));
       setStep(5);
@@ -1205,26 +1181,34 @@ export function ListPropertyWizard() {
   // Per-step footer config: which secondary action to show and what the primary does.
   const actions = [
     {
-      saveDraft: async () => {
-        await saveDetails(false);
-      },
-      primary: async () => {
-        await saveDetails(true);
+      primary: () => {
+        saveDetails(true);
       },
       primaryLabel: t('continue'),
     },
-    { saveDraft: null, primary: () => setStep(2), primaryLabel: t('continue') },
     {
-      saveDraft: async () => {
-        await savePricing(false);
-      },
-      primary: async () => {
-        await savePricing(true);
+      primary: () => {
+        if (localPhotos.length < 5) {
+          toast.error(t('error_photos_min') || 'At least 5 photos are required');
+          return;
+        }
+        setStep(2);
       },
       primaryLabel: t('continue'),
     },
-    { saveDraft: saveAndStay, primary: () => saveContact(true), primaryLabel: t('continue') },
-    { saveDraft: saveAndStay, primary: publish, primaryLabel: t('publish_listing') },
+    {
+      primary: () => {
+        savePricing(true);
+      },
+      primaryLabel: t('continue'),
+    },
+    { primary: () => saveContact(true), primaryLabel: t('continue') },
+    {
+      primary: () => {
+        void publish();
+      },
+      primaryLabel: t('publish_listing'),
+    },
   ][step];
 
   const backBtn = (
@@ -1236,18 +1220,6 @@ export function ListPropertyWizard() {
       {t('back')}
     </Button>
   );
-  const saveDraftBtn = actions?.saveDraft ? (
-    <Button
-      className="min-w-[120px]"
-      disabled={busy}
-      onClick={() => {
-        void actions.saveDraft();
-      }}
-      variant="outline"
-    >
-      {t('save_draft')}
-    </Button>
-  ) : null;
   const primaryBtn = (
     <Button className="min-w-[120px]" disabled={busy} onClick={actions?.primary}>
       {busy && <Loader2 className="size-4 animate-spin" />}
@@ -1297,9 +1269,7 @@ export function ListPropertyWizard() {
                 draft={draft}
                 goTo={setStep}
                 isAuthenticated={isAuthenticated}
-                onUpload={(files) => {
-                  void onUpload(files);
-                }}
+                onUpload={(files) => onUpload(files)}
                 pricing={pricing}
                 removePhoto={removePhoto}
                 setAcceptOffer={setAcceptOffer}
@@ -1316,10 +1286,7 @@ export function ListPropertyWizard() {
               {/* Desktop footer (inside card) */}
               <div className="mt-7 hidden items-center justify-between border-t border-border pt-5 lg:flex">
                 {backBtn}
-                <div className="flex gap-3">
-                  {saveDraftBtn}
-                  {primaryBtn}
-                </div>
+                <div className="flex gap-3">{primaryBtn}</div>
               </div>
             </div>
 
@@ -1341,20 +1308,7 @@ export function ListPropertyWizard() {
                 >
                   {t('back')}
                 </Button>
-                {actions?.saveDraft ? (
-                  <Button
-                    className="h-11"
-                    disabled={busy}
-                    onClick={() => {
-                      void actions.saveDraft();
-                    }}
-                    variant="outline"
-                  >
-                    {t('save_draft')}
-                  </Button>
-                ) : (
-                  <span />
-                )}
+                <span />
               </div>
             </div>
           </div>
