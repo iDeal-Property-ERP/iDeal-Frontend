@@ -49,7 +49,7 @@ export function MarketingFooter() {
   const t = useTranslations('Marketing');
 
   return (
-    <footer className="border-t border-border bg-muted">
+    <footer className="hide-on-embed border-t border-border bg-muted">
       <div className="container-page flex flex-col gap-6 pt-10 pb-6 lg:flex-row lg:justify-between lg:gap-12 lg:py-14">
         <div className="max-w-sm">
           <Link

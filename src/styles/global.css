@@ -330,6 +330,11 @@ html:not(.dark) .theme-landing {
   }
 }
 
+/* Hide marketing chrome when rendered in a webview with ?embedded=true */
+.is-embedded .hide-on-embed {
+  display: none !important;
+}
+
 /* ─── Yandex map dark mode ────────────────────────────────────────────────── */
 /* JS API v2.1 has no native dark scheme, so in dark mode invert just the tile ground-pane —
    placemarks, the balloon and controls live in other panes and stay un-inverted. Scoped to the

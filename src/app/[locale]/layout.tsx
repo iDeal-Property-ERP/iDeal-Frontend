@@ -71,6 +71,13 @@ export default async function RootLayout(props: {
       suppressHydrationWarning
       className={`${GeistSans.variable} ${bricolage.variable}`}
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `if (new URLSearchParams(window.location.search).get('embedded') === 'true') { document.documentElement.classList.add('is-embedded'); }`,
+          }}
+        />
+      </head>
       <body>
         <ThemeProvider>
           <NextIntlClientProvider>

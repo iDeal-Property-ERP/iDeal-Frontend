@@ -38,7 +38,7 @@ export function MarketingHeader() {
   );
 
   return (
-    <header className="sticky top-0 z-30 border-b border-border bg-card/80 backdrop-blur">
+    <header className="hide-on-embed sticky top-0 z-30 border-b border-border bg-card/80 backdrop-blur">
       <div className="container-page flex items-center justify-between gap-4 py-3">
         <Link
           href="/"
