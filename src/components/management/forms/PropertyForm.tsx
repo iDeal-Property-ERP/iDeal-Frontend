@@ -34,7 +34,7 @@ import {
   managementPropertyPublishSchema,
 } from '@/libs/schemas/managementProperty';
 import type { ManagementPropertyFormData } from '@/libs/schemas/managementProperty';
-import type { PropertyDetail, PropertyPhoto } from '@/types/property';
+import type { PropertyDetail, PropertyPhoto, PropertyTranslationMap } from '@/types/property';
 import { PropertyFormStepper } from './mobile/PropertyFormStepper';
 import { OneOffBrokerageCard } from './OneOffBrokerageCard';
 import { PropertyBasicsCard } from './PropertyBasicsCard';
@@ -90,6 +90,62 @@ function toDealValues(deal: PropertyDetail['one_off_deal']): Partial<ManagementP
   };
 }
 
+/**
+ * Extracts a single locale entry from form translations.
+ * @param translations - Form translation object.
+ * @param lang - Target language.
+ * @param fallbackName - Fallback name.
+ * @param fallbackDesc - Fallback description.
+ * @returns The translation item.
+ */
+function getTranslationItem(
+  translations: ManagementPropertyFormData['translations'],
+  lang: 'en' | 'uz' | 'ru',
+  fallbackName?: string | null,
+  fallbackDesc?: string | null,
+) {
+  const entry = translations?.[lang];
+  return {
+    name: entry?.name ?? fallbackName ?? null,
+    description: entry?.description ?? fallbackDesc ?? null,
+  };
+}
+
+/**
+ * Maps loaded translations into initial form translation map.
+ * @param property - Loaded property.
+ * @returns The initial translation values.
+ */
+function toFormTranslations(property: PropertyDetail): ManagementPropertyFormData['translations'] {
+  return {
+    en: {
+      name: property.translations?.en?.name ?? property.name,
+      description: property.translations?.en?.description ?? property.description ?? '',
+    },
+    uz: {
+      name: property.translations?.uz?.name ?? '',
+      description: property.translations?.uz?.description ?? '',
+    },
+    ru: {
+      name: property.translations?.ru?.name ?? '',
+      description: property.translations?.ru?.description ?? '',
+    },
+  };
+}
+
+/**
+ * Extracts normalized multilingual translation map from form values.
+ * @param values - Form values.
+ * @returns The translation map payload.
+ */
+function toTranslationPayload(values: ManagementPropertyFormData): PropertyTranslationMap {
+  return {
+    en: getTranslationItem(values.translations, 'en', values.name, values.description),
+    uz: getTranslationItem(values.translations, 'uz'),
+    ru: getTranslationItem(values.translations, 'ru'),
+  };
+}
+
 function toFormValues(property: PropertyDetail): ManagementPropertyFormData {
   return {
     name: property.name,
@@ -108,9 +164,23 @@ function toFormValues(property: PropertyDetail): ManagementPropertyFormData {
     map_lat: property.map_lat ?? undefined,
     map_lon: property.map_lon ?? undefined,
     engagement_type: property.engagement_type,
+    translations: toFormTranslations(property),
     ...toDealValues(property.one_off_deal),
   };
 }
+
+const EXCLUDED_DRAFT_KEYS = new Set([
+  'engagement_type',
+  'seller_name',
+  'seller_phone',
+  'seller_email',
+  'channel',
+  'commission_type',
+  'commission_fixed_amount',
+  'commission_percentage',
+  'commission_currency',
+  'translations',
+]);
 
 /**
  * Strips empty/null values into a clean backend payload (the backend coerces
@@ -120,21 +190,13 @@ function toFormValues(property: PropertyDetail): ManagementPropertyFormData {
  */
 function toPayload(values: ManagementPropertyFormData): PropertyDraftPayload {
   const payload: PropertyDraftPayload = {};
-  const excluded = new Set([
-    'engagement_type',
-    'seller_name',
-    'seller_phone',
-    'seller_email',
-    'channel',
-    'commission_type',
-    'commission_fixed_amount',
-    'commission_percentage',
-    'commission_currency',
-  ]);
   for (const [key, value] of Object.entries(values)) {
-    if (!excluded.has(key) && value !== undefined && value !== '' && value !== null) {
+    if (!EXCLUDED_DRAFT_KEYS.has(key) && value !== undefined && value !== '' && value !== null) {
       payload[key] = value;
     }
+  }
+  if (values.translations || values.name || values.description) {
+    payload.translations = toTranslationPayload(values);
   }
   return payload;
 }
@@ -232,9 +294,9 @@ function toSubmissionPayload(
     owner_guaranteed_price: values.owner_guaranteed_price ?? undefined,
     owner_guaranteed_currency: values.owner_guaranteed_currency ?? undefined,
     tenant_charge_price: values.tenant_charge_price ?? undefined,
-    tenant_charge_currency: values.tenant_charge_currency ?? undefined,
     captions: photos.map((p) => p.caption ?? ''),
     schedule_verification_at: scheduledForIso,
+    translations: toTranslationPayload(values),
   };
   if (oneOff) {
     payload.brokerage = toBrokeragePayload(values);

@@ -1,7 +1,7 @@
 import { apiFetch, apiUpload } from '@/libs/api';
 import type { PaginatedData } from '@/types/api';
 import type { ManagementDashboardOutput, ManagementPropertyOutput } from '@/types/management';
-import type { PropertyDetail } from '@/types/property';
+import type { PropertyDetail, PropertyTranslationMap } from '@/types/property';
 
 /**
  * Properties data adapter — the single isolation point between the Properties
@@ -13,7 +13,16 @@ import type { PropertyDetail } from '@/types/property';
 export const PROPERTY_STATUSES = ['rented', 'vacant', 'maintenance', 'pending_review'] as const;
 export type PropertyStatus = (typeof PROPERTY_STATUSES)[number];
 
-export type PropertyDraftPayload = Record<string, string | number | undefined>;
+export type PropertyDraftValue =
+  | string
+  | number
+  | boolean
+  | null
+  | undefined
+  | PropertyTranslationMap
+  | OneOffBrokerageDraftPayload;
+
+export type PropertyDraftPayload = Record<string, PropertyDraftValue>;
 
 export type OneOffBrokerageDraftPayload = {
   seller_name?: string;
@@ -26,9 +35,8 @@ export type OneOffBrokerageDraftPayload = {
   commission_currency?: 'USD' | 'UZS';
 };
 
-export type OneOffPropertyDraftPayload = {
+export type OneOffPropertyDraftPayload = PropertyDraftPayload & {
   brokerage: OneOffBrokerageDraftPayload;
-  [key: string]: string | number | undefined | OneOffBrokerageDraftPayload;
 };
 
 /**
@@ -70,6 +78,7 @@ export type PropertySubmissionPayload = {
   minimum_stay?: number;
   price_includes?: string[];
   schedule_verification_at?: string;
+  translations?: PropertyTranslationMap;
   brokerage?: OneOffBrokerageDraftPayload;
 };
 

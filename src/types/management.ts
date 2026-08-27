@@ -767,3 +767,156 @@ export type UserInvitePayload = {
   is_active?: boolean;
   is_verified?: boolean;
 };
+
+// --- Management Localization Workspace ---
+
+export type DistrictTranslationItem = {
+  name?: string | null;
+  city?: string | null;
+};
+
+export type DistrictTranslationMap = {
+  en?: DistrictTranslationItem;
+  uz?: DistrictTranslationItem;
+  ru?: DistrictTranslationItem;
+};
+
+export type ManagementDistrict = {
+  id: number;
+  name: string;
+  city: string;
+  translations: DistrictTranslationMap;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ManagementDistrictInput = {
+  translations: {
+    en: { name: string; city: string };
+    uz: { name: string; city: string };
+    ru: { name: string; city: string };
+  };
+};
+
+export type AmenityTranslationItem = {
+  name?: string | null;
+};
+
+export type AmenityTranslationMap = {
+  en?: AmenityTranslationItem;
+  uz?: AmenityTranslationItem;
+  ru?: AmenityTranslationItem;
+};
+
+export type ManagementAmenity = {
+  id: number;
+  slug: string;
+  name: string;
+  icon: string | null;
+  sort_order: number;
+  is_active: boolean;
+  translations: AmenityTranslationMap;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ManagementAmenityInput = {
+  slug?: string | null;
+  icon?: string | null;
+  sort_order?: number;
+  is_active?: boolean;
+  translations: {
+    en: { name: string };
+    uz: { name: string };
+    ru: { name: string };
+  };
+};
+
+export type FaqTranslationItem = {
+  question?: string | null;
+  answer?: string | null;
+};
+
+export type FaqTranslationMap = {
+  en?: FaqTranslationItem;
+  uz?: FaqTranslationItem;
+  ru?: FaqTranslationItem;
+};
+
+export type ManagementFaq = {
+  id: number;
+  question: string;
+  answer: string;
+  sort_order: number;
+  is_active: boolean;
+  translations: FaqTranslationMap;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ManagementFaqInput = {
+  sort_order?: number;
+  is_active?: boolean;
+  translations: {
+    en: { question: string; answer: string };
+    uz: { question: string; answer: string };
+    ru: { question: string; answer: string };
+  };
+};
+
+export type PublicOfferTranslationItem = {
+  body?: string | null;
+};
+
+export type PublicOfferTranslationMap = {
+  en?: PublicOfferTranslationItem;
+  uz?: PublicOfferTranslationItem;
+  ru?: PublicOfferTranslationItem;
+};
+
+export type ManagementPublicOffer = {
+  id: number;
+  version: string;
+  body: string;
+  is_active: boolean;
+  translations: PublicOfferTranslationMap;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ManagementPublicOfferInput = {
+  version: string;
+  is_active?: boolean;
+  translations: {
+    en: { body: string };
+    uz: { body: string };
+    ru: { body: string };
+  };
+};
+
+export type ResourceIncompleteItem = {
+  id: number;
+  identifier: string;
+  missing_by_language: Record<string, string[]>;
+};
+
+export type ResourceLocalizationStatus = {
+  total_count: number;
+  complete_count: number;
+  incomplete_count: number;
+  missing_by_language: {
+    en: number;
+    uz: number;
+    ru: number;
+  };
+  incomplete_items: ResourceIncompleteItem[];
+};
+
+export type LocalizationStatusReport = {
+  properties: ResourceLocalizationStatus;
+  districts: ResourceLocalizationStatus;
+  amenities: ResourceLocalizationStatus;
+  faqs: ResourceLocalizationStatus;
+  public_offers: ResourceLocalizationStatus;
+  vas_catalog_items: ResourceLocalizationStatus;
+};

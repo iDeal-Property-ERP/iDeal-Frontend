@@ -89,7 +89,6 @@ export type ListingDetail = ListingOutput & {
     currency: Currency;
     minimum_stay: number | null;
     price_includes: string[];
-    response_time: string;
   };
   verification: {
     is_verified: boolean;

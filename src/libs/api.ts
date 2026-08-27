@@ -119,6 +119,9 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
     if (!headers.has('Content-Type')) {
       headers.set('Content-Type', 'application/json');
     }
+    if (globalThis.document?.documentElement?.lang && !headers.has('Accept-Language')) {
+      headers.set('Accept-Language', globalThis.document.documentElement.lang);
+    }
     return await fetch(url, {
       ...rest,
       headers,
@@ -148,13 +151,18 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
 export async function apiUpload<T>(
   path: string,
   formData: FormData,
-  options: { method?: string } = {},
+  options: { method?: string; headers?: HeadersInit } = {},
 ): Promise<T> {
   const url = buildUrl(path);
   const method = options.method ?? 'POST';
 
-  const send = async (): Promise<Response> =>
-    await fetch(url, { method, body: formData, credentials: 'include' });
+  const send = async (): Promise<Response> => {
+    const headers = new Headers(options.headers);
+    if (globalThis.document?.documentElement?.lang && !headers.has('Accept-Language')) {
+      headers.set('Accept-Language', globalThis.document.documentElement.lang);
+    }
+    return await fetch(url, { method, headers, body: formData, credentials: 'include' });
+  };
 
   let res = await send();
   if (res.status === 401 && (await refreshSession())) {

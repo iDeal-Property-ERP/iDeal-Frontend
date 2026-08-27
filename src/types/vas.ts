@@ -1,5 +1,16 @@
 import type { Currency, VASOrderStatus, VASServiceType } from './enums';
 
+export type VASTranslationItem = {
+  name?: string | null;
+  description?: string | null;
+};
+
+export type VASTranslationMap = {
+  en?: VASTranslationItem;
+  uz?: VASTranslationItem;
+  ru?: VASTranslationItem;
+};
+
 export type ServiceCatalogItemOutput = {
   id: number;
   service_type: VASServiceType;
@@ -11,6 +22,7 @@ export type ServiceCatalogItemOutput = {
   commission_rate: string;
   cashback_rate: string;
   is_active: boolean;
+  translations?: VASTranslationMap | null;
   created_at: string;
   updated_at: string;
 };
@@ -25,6 +37,7 @@ export type ServiceCatalogItemCreatePayload = {
   commission_rate?: string;
   cashback_rate?: string;
   is_active?: boolean;
+  translations?: VASTranslationMap | null;
 };
 
 export type ServiceOrderOutput = {

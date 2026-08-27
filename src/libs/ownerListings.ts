@@ -29,6 +29,7 @@ export type OwnerListingSubmitPayload = {
     phone?: string;
   };
   accept_offer: true;
+  content_locale?: string;
 };
 
 export type OwnerListingResubmitPayload = OwnerListingSubmitPayload & {

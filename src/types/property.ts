@@ -1,5 +1,28 @@
 import type { PropertyStatus, Tariff, Currency } from './enums';
 
+export type SupportedLocale = 'en' | 'uz' | 'ru';
+
+export type PropertyTranslationItem = {
+  name?: string | null;
+  description?: string | null;
+};
+
+export type PropertyTranslationMap = {
+  en?: PropertyTranslationItem;
+  uz?: PropertyTranslationItem;
+  ru?: PropertyTranslationItem;
+};
+
+export type PropertyPhotoTranslationItem = {
+  caption?: string | null;
+};
+
+export type PropertyPhotoTranslationMap = {
+  en?: PropertyPhotoTranslationItem;
+  uz?: PropertyPhotoTranslationItem;
+  ru?: PropertyPhotoTranslationItem;
+};
+
 export type DistrictOutput = {
   id: number;
   name: string;
@@ -36,6 +59,7 @@ export type PropertyOutput = {
   tenant_charge_currency: Currency;
   vacant_since: string | null;
   vacant_days: number;
+  translations?: PropertyTranslationMap | null;
   // The detail endpoint returns the property's photos (primary-first ordering).
   photos: PropertyPhoto[];
   created_at: string;
@@ -48,6 +72,7 @@ export type PropertyPhoto = {
   caption: string | null;
   is_primary: boolean;
   sort_order: number;
+  translations?: PropertyPhotoTranslationMap | null;
 };
 
 export type VerificationVisit = {
@@ -107,6 +132,7 @@ export type PropertyDetail = {
   photos: PropertyPhoto[];
   verification: VerificationVisit | null;
   one_off_deal: OneOffDealDetail | null;
+  translations?: PropertyTranslationMap | null;
   created_at: string;
   updated_at: string;
 };
@@ -134,6 +160,8 @@ export type PropertyCreatePayload = {
   tenant_charge_currency?: Currency;
   vacant_since?: string;
   vacant_days?: number;
+  translations?: PropertyTranslationMap | null;
+  content_locale?: SupportedLocale;
 };
 
 export type PropertyUpdatePayload = Partial<PropertyCreatePayload>;

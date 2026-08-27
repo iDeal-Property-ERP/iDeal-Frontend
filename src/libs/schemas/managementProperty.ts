@@ -36,6 +36,28 @@ export const managementPropertyDraftSchema = z.object({
   commission_fixed_amount: z.string().optional(),
   commission_percentage: z.string().optional(),
   commission_currency: z.enum(['USD', 'UZS']).optional(),
+  translations: z
+    .object({
+      en: z
+        .object({
+          name: z.string().nullable().optional(),
+          description: z.string().nullable().optional(),
+        })
+        .optional(),
+      uz: z
+        .object({
+          name: z.string().nullable().optional(),
+          description: z.string().nullable().optional(),
+        })
+        .optional(),
+      ru: z
+        .object({
+          name: z.string().nullable().optional(),
+          description: z.string().nullable().optional(),
+        })
+        .optional(),
+    })
+    .optional(),
 });
 
 const requiredString = (message: string) => z.string().trim().min(1, message);
