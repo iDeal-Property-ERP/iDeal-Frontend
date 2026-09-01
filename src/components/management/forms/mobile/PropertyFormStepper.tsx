@@ -13,6 +13,7 @@ import type { ManagementPropertyFormData } from '@/libs/schemas/managementProper
 import { cn } from '@/libs/utils';
 import { OneOffBrokerageCard } from '../OneOffBrokerageCard';
 import { PropertyBasicsCard } from '../PropertyBasicsCard';
+import { PropertyMapCard } from '../PropertyMapCard';
 import { PropertyOwnerCard } from '../PropertyOwnerCard';
 import { PropertyPhotosCard } from '../PropertyPhotosCard';
 import { PropertyPricingCard } from '../PropertyPricingCard';
@@ -154,6 +155,7 @@ export function PropertyFormStepper(props: PropertyFormStepperProps) {
             ) : (
               <OneOffBrokerageCard control={control} t={t} disabled={brokerageLocked} />
             )}
+            <PropertyMapCard control={control} t={t} />
           </>
         ) : null}
         {step === 1 ? (
