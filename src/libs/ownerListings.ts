@@ -7,6 +7,7 @@ export type OwnerListingSubmitPayload = {
   property_type: string;
   name?: string;
   address?: string;
+  landmark?: string;
   district_id: number;
   rooms: number;
   area_sqm: number;

@@ -12,6 +12,13 @@ export const managementPropertyDraftSchema = z.object({
   engagement_type: z.enum(['managed', 'one_off']).optional(),
   name: z.string().optional(),
   address: z.string().optional(),
+  landmark: z
+    .string()
+    .max(100, 'Landmark cannot exceed 100 characters')
+    .optional()
+    .refine((val) => !val || val.trim().split(/\s+/u).filter(Boolean).length <= 5, {
+      message: 'Landmark cannot exceed 5 words',
+    }),
   district_id: z.string().optional(),
   owner_id: z.number().nullable().optional(),
   rooms: z.string().optional(),
@@ -42,18 +49,21 @@ export const managementPropertyDraftSchema = z.object({
         .object({
           name: z.string().nullable().optional(),
           description: z.string().nullable().optional(),
+          landmark: z.string().nullable().optional(),
         })
         .optional(),
       uz: z
         .object({
           name: z.string().nullable().optional(),
           description: z.string().nullable().optional(),
+          landmark: z.string().nullable().optional(),
         })
         .optional(),
       ru: z
         .object({
           name: z.string().nullable().optional(),
           description: z.string().nullable().optional(),
+          landmark: z.string().nullable().optional(),
         })
         .optional(),
     })

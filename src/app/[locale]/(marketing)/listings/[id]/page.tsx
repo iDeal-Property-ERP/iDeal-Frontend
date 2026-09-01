@@ -154,6 +154,12 @@ export default async function ListingDetailPage(props: {
               <MapPin className="size-[15px] shrink-0" />
               {district}
             </div>
+            {property.landmark && (
+              <div className="mt-1 flex items-center gap-1.5 text-[13px] text-muted-foreground md:hidden">
+                <MapPin className="size-3.5 shrink-0" />
+                <span>{t('landmark_label', { value: property.landmark })}</span>
+              </div>
+            )}
             <div className="mt-2 hidden flex-wrap items-center gap-x-3.5 gap-y-1.5 text-[14px] md:flex">
               <span className="flex items-center gap-1.5 text-[16px] text-muted-foreground">
                 <MapPin className="size-4" />
@@ -175,6 +181,12 @@ export default async function ListingDetailPage(props: {
                 </span>
               )}
             </div>
+            {property.landmark && (
+              <div className="mt-1.5 hidden items-center gap-1.5 text-[14px] text-muted-foreground md:flex">
+                <MapPin className="size-3.5 shrink-0" />
+                <span>{t('landmark_label', { value: property.landmark })}</span>
+              </div>
+            )}
           </div>
           <div className="hidden lg:block">
             <ListingHeaderActions listingId={listing.id} name={property.name} />

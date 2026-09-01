@@ -104,6 +104,30 @@ export function PropertyBasicsCard(props: PropertyBasicsCardProps) {
           />
           <TextField control={control} name="address" label={t('form_address')} required />
         </div>
+        <div className={activeLang !== 'en' ? 'hidden' : undefined}>
+          <TextField
+            control={control}
+            name="landmark"
+            label={`${t('form_landmark')} (EN)`}
+            description={t('form_landmark_hint')}
+          />
+        </div>
+        <div className={activeLang !== 'uz' ? 'hidden' : undefined}>
+          <TextField
+            control={control}
+            name="translations.uz.landmark"
+            label={`${t('form_landmark')} (UZ)`}
+            description={t('form_landmark_hint')}
+          />
+        </div>
+        <div className={activeLang !== 'ru' ? 'hidden' : undefined}>
+          <TextField
+            control={control}
+            name="translations.ru.landmark"
+            label={`${t('form_landmark')} (RU)`}
+            description={t('form_landmark_hint')}
+          />
+        </div>
         <div className="grid grid-cols-2 gap-5 lg:grid-cols-5">
           <TextField
             control={control}

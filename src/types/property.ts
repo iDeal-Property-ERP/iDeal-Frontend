@@ -5,6 +5,7 @@ export type SupportedLocale = 'en' | 'uz' | 'ru';
 export type PropertyTranslationItem = {
   name?: string | null;
   description?: string | null;
+  landmark?: string | null;
 };
 
 export type PropertyTranslationMap = {
@@ -39,6 +40,7 @@ export type PropertyOutput = {
   id: number;
   name: string;
   address: string;
+  landmark?: string | null;
   district: DistrictOutput;
   rooms: number;
   area_sqm: number;
@@ -107,6 +109,7 @@ export type PropertyDetail = {
   id: number;
   name: string;
   address: string;
+  landmark: string | null;
   district: DistrictOutput | null;
   rooms: number | null;
   area_sqm: number | null;
@@ -140,6 +143,7 @@ export type PropertyDetail = {
 export type PropertyCreatePayload = {
   name: string;
   address: string;
+  landmark?: string | null;
   district_id: number;
   rooms: number;
   area_sqm: number;

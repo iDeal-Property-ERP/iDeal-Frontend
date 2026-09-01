@@ -18,6 +18,7 @@ export type PropertyBrief = {
   id: number;
   name: string;
   address: string;
+  landmark: string | null;
   district_id: number;
   district_name: string | null;
   property_type: PropertyType;
@@ -216,6 +217,7 @@ export type OwnerListing = {
   property_type: PropertyType;
   name: string;
   address: string;
+  landmark?: string | null;
   district_id: number;
   district_name: string | null;
   rooms: number;
@@ -246,6 +248,7 @@ export type OwnerListingCreatePayload = {
   property_type: PropertyType;
   name: string;
   address?: string | null;
+  landmark?: string | null;
   district_id: number;
   rooms: number;
   area_sqm: number;
@@ -260,6 +263,7 @@ export type OwnerListingUpdatePayload = Partial<{
   property_type: PropertyType;
   name: string;
   address: string;
+  landmark?: string | null;
   district_id: number;
   rooms: number;
   area_sqm: number;

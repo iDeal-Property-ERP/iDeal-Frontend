@@ -53,6 +53,7 @@ export type PropertySubmissionPayload = {
   engagement_type?: 'managed' | 'one_off';
   name?: string;
   address?: string;
+  landmark?: string;
   district_id: number;
   property_type: string;
   rooms: number;

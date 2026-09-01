@@ -47,6 +47,7 @@ type DetailsForm = {
   property_type: PropertyType;
   name: string;
   district_id: string;
+  landmark: string;
   rooms: string;
   floor: string;
   total_floors: string;
@@ -285,6 +286,14 @@ function DetailsStep(props: {
             value: String(d.id),
             label: `${d.name}, ${d.city}`,
           }))}
+        />
+      </WizField>
+      <WizField label={t('landmark')}>
+        <input
+          className={FILLED}
+          placeholder={t('landmark_hint')}
+          onChange={(e) => setDetails((d) => ({ ...d, landmark: e.target.value }))}
+          value={details.landmark}
         />
       </WizField>
       <div className="grid grid-cols-3 gap-3 lg:gap-4">
@@ -631,6 +640,7 @@ function ReviewStep(props: {
         </ReviewRow>
         <ReviewRow editLabel={t('edit')} label={t('review_location')} onEdit={() => goTo(0)}>
           <p className="font-medium text-foreground">{draft.district_name ?? '—'}</p>
+          {draft.landmark && <p className="text-[13px] text-muted-foreground">{draft.landmark}</p>}
         </ReviewRow>
         <ReviewRow editLabel={t('edit')} label={t('review_photos')} onEdit={() => goTo(1)}>
           <p className="font-medium text-foreground">
@@ -700,7 +710,10 @@ function PreviewCard(props: {
         <p className="text-[16px] font-semibold text-foreground">
           {details.name || t('your_listing')}
         </p>
-        <p className="text-[13px] text-muted-foreground">{districtName ?? '—'}</p>
+        <p className="text-[13px] text-muted-foreground">
+          {districtName ?? '—'}
+          {details.landmark ? ` • ${details.landmark}` : ''}
+        </p>
         {pricing.monthly_price && (
           <p className="font-display text-[22px] font-bold tracking-[-0.4px] text-primary">
             {formatPrice(pricing.monthly_price, currency)} {t('per_month')}
@@ -845,6 +858,33 @@ function StepContent(props: {
   );
 }
 
+function toRejectedDetails(l: OwnerListing): DetailsForm {
+  return {
+    property_type: l.property_type,
+    name: l.name ?? '',
+    district_id: l.district_id ? String(l.district_id) : '',
+    landmark: l.landmark ?? '',
+    rooms: l.rooms ? String(l.rooms) : '1',
+    floor: l.floor !== null && l.floor !== undefined ? String(l.floor) : '',
+    total_floors:
+      l.total_floors !== null && l.total_floors !== undefined ? String(l.total_floors) : '',
+    area_sqm: l.area_sqm ? String(l.area_sqm) : '',
+    furnishing: l.furnishing,
+    description: l.description ?? '',
+    amenities: l.amenities.map((a) => a.slug),
+  };
+}
+
+function toRejectedPricing(l: OwnerListing): PricingForm {
+  return {
+    monthly_price: l.monthly_price ?? '',
+    deposit_amount: l.deposit_amount ?? '',
+    currency: l.currency ?? 'USD',
+    minimum_stay: l.minimum_stay ?? 6,
+    price_includes: l.price_includes ?? [],
+  };
+}
+
 export function ListPropertyWizard() {
   const baseT = useTranslations('ListProperty');
   // SAFETY: Wrapper adapts typed translator for dynamic key construction
@@ -866,6 +906,7 @@ export function ListPropertyWizard() {
     property_type: 'apartment',
     name: '',
     district_id: '',
+    landmark: '',
     rooms: '1',
     floor: '',
     total_floors: '',
@@ -919,26 +960,8 @@ export function ListPropertyWizard() {
         if (l.status === 'rejected') {
           setRejectedListingId(l.id);
           setInitialRejectionReason(l.rejection_reason);
-          setDetails({
-            property_type: l.property_type,
-            name: l.name ?? '',
-            district_id: l.district_id ? String(l.district_id) : '',
-            rooms: l.rooms ? String(l.rooms) : '1',
-            floor: l.floor !== null && l.floor !== undefined ? String(l.floor) : '',
-            total_floors:
-              l.total_floors !== null && l.total_floors !== undefined ? String(l.total_floors) : '',
-            area_sqm: l.area_sqm ? String(l.area_sqm) : '',
-            furnishing: l.furnishing,
-            description: l.description ?? '',
-            amenities: l.amenities.map((a) => a.slug),
-          });
-          setPricing({
-            monthly_price: l.monthly_price ?? '',
-            deposit_amount: l.deposit_amount ?? '',
-            currency: l.currency ?? 'USD',
-            minimum_stay: l.minimum_stay ?? 6,
-            price_includes: l.price_includes ?? [],
-          });
+          setDetails(toRejectedDetails(l));
+          setPricing(toRejectedPricing(l));
           if (l.photos) {
             setLocalPhotos(
               l.photos.map((p, idx) => ({
@@ -991,6 +1014,7 @@ export function ListPropertyWizard() {
       property_type: details.property_type,
       name: details.name,
       address: '',
+      landmark: details.landmark.trim() || null,
       district_id: Number(details.district_id) || 0,
       district_name: districts.find((d) => String(d.id) === details.district_id)?.name ?? null,
       rooms: Number(details.rooms) || 0,
@@ -1042,6 +1066,14 @@ export function ListPropertyWizard() {
   function saveDetails(advance: boolean) {
     if (!(details.name && details.district_id && details.area_sqm)) {
       toast.error(t('error_required'));
+      return;
+    }
+    if (details.landmark && details.landmark.trim().split(/\s+/u).filter(Boolean).length > 5) {
+      toast.error(t('error_landmark_words') || 'Landmark cannot exceed 5 words');
+      return;
+    }
+    if (details.landmark && details.landmark.trim().length > 100) {
+      toast.error(t('error_landmark_length') || 'Landmark cannot exceed 100 characters');
       return;
     }
     if (advance) {
@@ -1125,6 +1157,7 @@ export function ListPropertyWizard() {
         property_type: details.property_type,
         name: details.name,
         district_id: Number(details.district_id),
+        landmark: details.landmark.trim() || undefined,
         rooms: Number(details.rooms),
         floor: Number(details.floor) || 0,
         total_floors: Number(details.total_floors) || undefined,

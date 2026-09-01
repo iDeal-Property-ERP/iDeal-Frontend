@@ -96,6 +96,7 @@ function toDealValues(deal: PropertyDetail['one_off_deal']): Partial<ManagementP
  * @param lang - Target language.
  * @param fallbackName - Fallback name.
  * @param fallbackDesc - Fallback description.
+ * @param fallbackLandmark - Fallback landmark.
  * @returns The translation item.
  */
 function getTranslationItem(
@@ -103,11 +104,29 @@ function getTranslationItem(
   lang: 'en' | 'uz' | 'ru',
   fallbackName?: string | null,
   fallbackDesc?: string | null,
+  fallbackLandmark?: string | null,
 ) {
   const entry = translations?.[lang];
   return {
     name: entry?.name ?? fallbackName ?? null,
     description: entry?.description ?? fallbackDesc ?? null,
+    landmark: entry?.landmark ?? fallbackLandmark ?? null,
+  };
+}
+
+function toLocaleTranslation(property: PropertyDetail, lang: 'en' | 'uz' | 'ru') {
+  const trans = property.translations?.[lang];
+  if (lang === 'en') {
+    return {
+      name: trans?.name ?? property.name,
+      description: trans?.description ?? property.description ?? '',
+      landmark: trans?.landmark ?? property.landmark ?? '',
+    };
+  }
+  return {
+    name: trans?.name ?? '',
+    description: trans?.description ?? '',
+    landmark: trans?.landmark ?? '',
   };
 }
 
@@ -118,18 +137,9 @@ function getTranslationItem(
  */
 function toFormTranslations(property: PropertyDetail): ManagementPropertyFormData['translations'] {
   return {
-    en: {
-      name: property.translations?.en?.name ?? property.name,
-      description: property.translations?.en?.description ?? property.description ?? '',
-    },
-    uz: {
-      name: property.translations?.uz?.name ?? '',
-      description: property.translations?.uz?.description ?? '',
-    },
-    ru: {
-      name: property.translations?.ru?.name ?? '',
-      description: property.translations?.ru?.description ?? '',
-    },
+    en: toLocaleTranslation(property, 'en'),
+    uz: toLocaleTranslation(property, 'uz'),
+    ru: toLocaleTranslation(property, 'ru'),
   };
 }
 
@@ -140,7 +150,13 @@ function toFormTranslations(property: PropertyDetail): ManagementPropertyFormDat
  */
 function toTranslationPayload(values: ManagementPropertyFormData): PropertyTranslationMap {
   return {
-    en: getTranslationItem(values.translations, 'en', values.name, values.description),
+    en: getTranslationItem(
+      values.translations,
+      'en',
+      values.name,
+      values.description,
+      values.landmark,
+    ),
     uz: getTranslationItem(values.translations, 'uz'),
     ru: getTranslationItem(values.translations, 'ru'),
   };
@@ -150,6 +166,7 @@ function toFormValues(property: PropertyDetail): ManagementPropertyFormData {
   return {
     name: property.name,
     address: property.address,
+    landmark: property.landmark ?? '',
     district_id: numToStr(property.district?.id ?? null),
     owner_id: property.owner?.id ?? null,
     rooms: numToStr(property.rooms),
@@ -191,6 +208,10 @@ const EXCLUDED_DRAFT_KEYS = new Set([
 function toPayload(values: ManagementPropertyFormData): PropertyDraftPayload {
   const payload: PropertyDraftPayload = {};
   for (const [key, value] of Object.entries(values)) {
+    if (key === 'landmark') {
+      payload.landmark = values.landmark?.trim() ? values.landmark.trim() : null;
+      continue;
+    }
     if (!EXCLUDED_DRAFT_KEYS.has(key) && value !== undefined && value !== '' && value !== null) {
       payload[key] = value;
     }
@@ -277,6 +298,7 @@ function toSubmissionPayload(
     engagement_type: oneOff ? 'one_off' : 'managed',
     name: values.name ?? undefined,
     address: values.address ?? undefined,
+    landmark: values.landmark?.trim() ? values.landmark.trim() : undefined,
     district_id: Number(values.district_id),
     property_type: 'apartment',
     rooms: Number(values.rooms),

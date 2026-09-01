@@ -11,6 +11,7 @@ export type PublicListingPayload = {
   contact: PublicListingContactPayload;
   property_type: string;
   name: string;
+  landmark?: string;
   district_id: number;
   rooms: number;
   area_sqm: number;
