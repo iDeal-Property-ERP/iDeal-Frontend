@@ -3,11 +3,12 @@
 import type { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import type { Control } from 'react-hook-form';
-import { SelectField, TextareaField, TextField } from '@/components/ui/form-fields';
+import { SelectField, TextField } from '@/components/ui/form-fields';
 import type { DistrictOption } from '@/libs/management/propertiesAdapter';
 import type { ManagementPropertyFormData } from '@/libs/schemas/managementProperty';
 import { cn } from '@/libs/utils';
 import { FormSectionCard } from './FormSectionCard';
+import { RichTextEditorField } from './RichTextEditorField';
 
 type Translator = ReturnType<typeof useTranslations>;
 
@@ -183,27 +184,24 @@ export function PropertyBasicsCard(props: PropertyBasicsCardProps) {
         </div>
 
         <div className={activeLang !== 'en' ? 'hidden' : undefined}>
-          <TextareaField
+          <RichTextEditorField
             control={control}
             name="description"
             label={`${t('form_description')} (EN)`}
-            rows={3}
           />
         </div>
         <div className={activeLang !== 'uz' ? 'hidden' : undefined}>
-          <TextareaField
+          <RichTextEditorField
             control={control}
             name="translations.uz.description"
             label={`${t('form_description')} (UZ)`}
-            rows={3}
           />
         </div>
         <div className={activeLang !== 'ru' ? 'hidden' : undefined}>
-          <TextareaField
+          <RichTextEditorField
             control={control}
             name="translations.ru.description"
             label={`${t('form_description')} (RU)`}
-            rows={3}
           />
         </div>
       </div>
