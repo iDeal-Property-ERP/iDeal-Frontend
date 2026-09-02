@@ -79,6 +79,7 @@ export type PropertySubmissionPayload = {
   minimum_stay?: number;
   price_includes?: string[];
   schedule_verification_at?: string;
+  contact_phone?: string;
   translations?: PropertyTranslationMap;
   brokerage?: OneOffBrokerageDraftPayload;
 };

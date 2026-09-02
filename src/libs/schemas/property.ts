@@ -25,6 +25,7 @@ export const propertySchema = z.object({
   score: z.string().optional(),
   map_lat: z.string().optional(),
   map_lon: z.string().optional(),
+  contact_phone: z.string().optional(),
   vacant_since: z.string().optional(),
   vacant_days: z.coerce.number().min(0, 'Vacant days must be 0 or more').optional(),
 });

@@ -1646,6 +1646,8 @@
     "form_address": "Manzil",
     "form_landmark": "Mo‘ljal",
     "form_landmark_hint": "Ixtiyoriy / 5 tagacha so‘z",
+    "form_contact_phone": "E'lon uchun aloqa telefoni",
+    "form_contact_phone_hint": "Qo'ng'iroqlar va so'rovlar uchun aloqa raqami",
     "form_rooms": "Xonalar",
     "form_area": "Maydon (m²)",
     "form_floor": "Qavat",

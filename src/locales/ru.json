@@ -1646,6 +1646,8 @@
     "form_address": "Адрес",
     "form_landmark": "Ориентир",
     "form_landmark_hint": "Необязательно / до 5 слов",
+    "form_contact_phone": "Контактный телефон объявления",
+    "form_contact_phone_hint": "Контактный номер для звонков и обращений",
     "form_rooms": "Комнаты",
     "form_area": "Площадь (м²)",
     "form_floor": "Этаж",

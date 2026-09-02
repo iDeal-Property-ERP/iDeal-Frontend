@@ -15,6 +15,7 @@ import type { UsePropertyPhotosResult } from '@/hooks/management/usePropertyPhot
 import { usePublishChecklist } from '@/hooks/management/usePublishChecklist';
 import type { ChecklistRow } from '@/hooks/management/usePublishChecklist';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useAuth } from '@/libs/auth';
 import { useRouter } from '@/libs/I18nNavigation';
 import {
   getDistricts,
@@ -167,6 +168,7 @@ function toFormValues(property: PropertyDetail): ManagementPropertyFormData {
     name: property.name,
     address: property.address,
     landmark: property.landmark ?? '',
+    contact_phone: property.contact_phone ?? '',
     district_id: numToStr(property.district?.id ?? null),
     owner_id: property.owner?.id ?? null,
     rooms: numToStr(property.rooms),
@@ -210,6 +212,10 @@ function toPayload(values: ManagementPropertyFormData): PropertyDraftPayload {
   for (const [key, value] of Object.entries(values)) {
     if (key === 'landmark') {
       payload.landmark = values.landmark?.trim() ? values.landmark.trim() : null;
+      continue;
+    }
+    if (key === 'contact_phone') {
+      payload.contact_phone = values.contact_phone?.trim() ? values.contact_phone.trim() : null;
       continue;
     }
     if (!EXCLUDED_DRAFT_KEYS.has(key) && value !== undefined && value !== '' && value !== null) {
@@ -316,6 +322,7 @@ function toSubmissionPayload(
     owner_guaranteed_price: values.owner_guaranteed_price ?? undefined,
     owner_guaranteed_currency: values.owner_guaranteed_currency ?? undefined,
     tenant_charge_price: values.tenant_charge_price ?? undefined,
+    contact_phone: values.contact_phone?.trim() ? values.contact_phone.trim() : undefined,
     captions: photos.map((p) => p.caption ?? ''),
     schedule_verification_at: scheduledForIso,
     translations: toTranslationPayload(values),
@@ -535,6 +542,7 @@ export function PropertyForm(props: PropertyFormProps) {
   const t = useTranslations('Management');
   const router = useRouter();
   const isMobile = useIsMobile();
+  const { user } = useAuth();
 
   const [districts, setDistricts] = useState<DistrictOption[]>([]);
   const [serverMissing, setServerMissing] = useState<Set<string>>(new Set());
@@ -553,11 +561,23 @@ export function PropertyForm(props: PropertyFormProps) {
       : {
           tariff: 'standard',
           engagement_type: initialEngagement,
+          contact_phone: user?.phone ?? '',
           channel: 'marketplace',
           commission_type: 'none',
           commission_currency: 'USD',
         },
   });
+
+  useEffect(() => {
+    if (
+      mode === 'create' &&
+      user?.phone &&
+      !form.formState.dirtyFields.contact_phone &&
+      !form.getValues('contact_phone')
+    ) {
+      form.setValue('contact_phone', user.phone, { shouldDirty: false });
+    }
+  }, [mode, user?.phone, form]);
 
   const engagement = resolveEngagement(
     immutableEngagement,

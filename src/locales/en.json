@@ -1646,6 +1646,8 @@
     "form_address": "Address",
     "form_landmark": "Landmark",
     "form_landmark_hint": "Optional / up to 5 words",
+    "form_contact_phone": "Listing contact phone",
+    "form_contact_phone_hint": "Listing contact number for calls & inquiries",
     "form_rooms": "Rooms",
     "form_area": "Area (m²)",
     "form_floor": "Floor",

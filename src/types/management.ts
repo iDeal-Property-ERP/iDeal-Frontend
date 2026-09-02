@@ -184,6 +184,9 @@ export type ManagementPropertyOutput = {
   map_lon: string | null;
   description: string | null;
   score: string;
+  created_by_id?: number | null;
+  created_by_name?: string | null;
+  contact_phone?: string | null;
   // Absolute URL of the primary photo for the row thumbnail; null when none.
   cover_image_url: string | null;
   created_at: string;

@@ -41,7 +41,17 @@ const STEP_COUNT = 3;
 
 /** The form fields owned by each stepper step (for the per-step error hint). */
 const STEP_FIELDS: (keyof ManagementPropertyFormData)[][] = [
-  ['name', 'address', 'district_id', 'rooms', 'area_sqm', 'floor', 'total_floors', 'owner_id'],
+  [
+    'name',
+    'address',
+    'district_id',
+    'rooms',
+    'area_sqm',
+    'floor',
+    'total_floors',
+    'owner_id',
+    'contact_phone',
+  ],
   ['ask_price', 'owner_guaranteed_price', 'tenant_charge_price'],
   [],
 ];

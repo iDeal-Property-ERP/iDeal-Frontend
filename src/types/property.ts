@@ -61,6 +61,9 @@ export type PropertyOutput = {
   tenant_charge_currency: Currency;
   vacant_since: string | null;
   vacant_days: number;
+  created_by_id?: number | null;
+  created_by_name?: string | null;
+  contact_phone?: string | null;
   translations?: PropertyTranslationMap | null;
   // The detail endpoint returns the property's photos (primary-first ordering).
   photos: PropertyPhoto[];
@@ -132,6 +135,9 @@ export type PropertyDetail = {
   tenant_charge_currency: Currency;
   vacant_since: string | null;
   vacant_days: number;
+  created_by_id?: number | null;
+  created_by_name?: string | null;
+  contact_phone?: string | null;
   photos: PropertyPhoto[];
   verification: VerificationVisit | null;
   one_off_deal: OneOffDealDetail | null;
@@ -164,6 +170,7 @@ export type PropertyCreatePayload = {
   tenant_charge_currency?: Currency;
   vacant_since?: string;
   vacant_days?: number;
+  contact_phone?: string | null;
   translations?: PropertyTranslationMap | null;
   content_locale?: SupportedLocale;
 };

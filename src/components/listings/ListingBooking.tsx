@@ -68,7 +68,7 @@ export function ListingBooking(props: {
 
   const phoneHref = useMemo(() => {
     if (!contactPhone) {
-      return 'tel:+998937244041';
+      return null;
     }
     const cleanNumber = contactPhone.replaceAll(/\s+/gu, '');
     return cleanNumber.startsWith('tel:') ? cleanNumber : `tel:${cleanNumber}`;
@@ -105,14 +105,16 @@ export function ListingBooking(props: {
               <span className="text-[15px] text-muted-foreground">{t('per_month')}</span>
             </div>
             <div className="flex items-center gap-2">
-              <a
-                href={phoneHref}
-                aria-label={t('call')}
-                className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-3 text-[13px] font-medium text-foreground transition hover:bg-muted"
-              >
-                <Phone className="size-3.5" />
-                <span>{t('call')}</span>
-              </a>
+              {phoneHref && (
+                <a
+                  href={phoneHref}
+                  aria-label={t('call')}
+                  className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-3 text-[13px] font-medium text-foreground transition hover:bg-muted"
+                >
+                  <Phone className="size-3.5" />
+                  <span>{t('call')}</span>
+                </a>
+              )}
               <InquiryModal
                 listingId={listingId}
                 trigger={
@@ -200,14 +202,16 @@ export function ListingBooking(props: {
           <span className="text-[13px] text-muted-foreground">{t('per_month')}</span>
         </p>
         <div className="flex items-center gap-2">
-          <a
-            href={phoneHref}
-            aria-label={t('call')}
-            className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-3 text-[13px] font-medium text-foreground transition hover:bg-muted"
-          >
-            <Phone className="size-3.5" />
-            <span>{t('call')}</span>
-          </a>
+          {phoneHref && (
+            <a
+              href={phoneHref}
+              aria-label={t('call')}
+              className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-3 text-[13px] font-medium text-foreground transition hover:bg-muted"
+            >
+              <Phone className="size-3.5" />
+              <span>{t('call')}</span>
+            </a>
+          )}
           <InquiryModal
             listingId={listingId}
             trigger={

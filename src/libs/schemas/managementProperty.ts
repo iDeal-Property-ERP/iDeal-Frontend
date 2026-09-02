@@ -33,6 +33,21 @@ export const managementPropertyDraftSchema = z.object({
   owner_guaranteed_currency: z.string().optional(),
   tenant_charge_currency: z.string().optional(),
   description: z.string().optional(),
+  contact_phone: z
+    .string()
+    .optional()
+    .refine(
+      (val) => {
+        if (!val || !val.trim()) {
+          return true;
+        }
+        const normalized = val.replaceAll(/[\s\-()]/gu, '');
+        return /^(?:\+?998\d{9}|00998\d{9})$/u.test(normalized);
+      },
+      {
+        message: 'Invalid Uzbekistan phone number (+998XXXXXXXXX)',
+      },
+    ),
   map_lat: z.string().optional(),
   map_lon: z.string().optional(),
   seller_name: z.string().optional(),

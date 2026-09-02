@@ -128,6 +128,17 @@ export function PropertyBasicsCard(props: PropertyBasicsCardProps) {
             description={t('form_landmark_hint')}
           />
         </div>
+
+        <div className="grid gap-5 sm:grid-cols-2">
+          <TextField
+            control={control}
+            name="contact_phone"
+            label={t('form_contact_phone')}
+            description={t('form_contact_phone_hint')}
+            placeholder="+998901234567"
+          />
+        </div>
+
         <div className="grid grid-cols-2 gap-5 lg:grid-cols-5">
           <TextField
             control={control}

@@ -38,4 +38,27 @@ describe('managementPropertyDraftSchema landmark validation', () => {
     });
     expect(result.success).toBeFalsy();
   });
+
+  it('accepts valid uzbekistan contact phone numbers or empty strings', () => {
+    expect(managementPropertyDraftSchema.safeParse({ contact_phone: '' }).success).toBeTruthy();
+    expect(
+      managementPropertyDraftSchema.safeParse({ contact_phone: '+998901234567' }).success,
+    ).toBeTruthy();
+    expect(
+      managementPropertyDraftSchema.safeParse({ contact_phone: '+998 (90) 123-45-67' }).success,
+    ).toBeTruthy();
+    expect(
+      managementPropertyDraftSchema.safeParse({ contact_phone: '998901234567' }).success,
+    ).toBeTruthy();
+  });
+
+  it('rejects invalid contact phone numbers', () => {
+    const result = managementPropertyDraftSchema.safeParse({
+      contact_phone: '12345',
+    });
+    expect(result.success).toBeFalsy();
+    expect(result.error?.issues[0]?.message).toBe(
+      'Invalid Uzbekistan phone number (+998XXXXXXXXX)',
+    );
+  });
 });
