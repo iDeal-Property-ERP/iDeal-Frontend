@@ -9,8 +9,6 @@ import type { Currency } from '@/types/enums';
 
 const BOOK_BTN =
   'flex h-[52px] w-full items-center justify-center rounded-[12px] bg-primary font-medium text-[15px] text-primary-foreground transition hover:opacity-90';
-const MSG_BTN =
-  'flex h-[52px] w-full items-center justify-center gap-2 rounded-[12px] border border-border bg-card font-medium text-[15px] text-foreground transition hover:bg-muted';
 
 /**
  * Format a price string as a whole number with its currency (Figma shows no cents).
@@ -92,12 +90,6 @@ export function ListingBooking(props: {
       {t('book_viewing')}
     </button>
   );
-  const messageButton = (
-    <button className={MSG_BTN} type="button">
-      <MessageCircle className="size-[17px]" />
-      {t('message_ideal')}
-    </button>
-  );
 
   return (
     <>
@@ -158,7 +150,28 @@ export function ListingBooking(props: {
                 }
               />
               <BookViewingModal listingId={listingId} trigger={bookButton} />
-              <InquiryModal listingId={listingId} trigger={messageButton} />
+              <div className="flex items-center gap-2">
+                <InquiryModal
+                  listingId={listingId}
+                  trigger={
+                    <button
+                      className="flex h-[52px] flex-1 items-center justify-center gap-2 rounded-[12px] border border-border bg-card text-[15px] font-medium text-foreground transition hover:bg-muted"
+                      type="button"
+                    >
+                      <MessageCircle className="size-[17px]" />
+                      {t('message_ideal')}
+                    </button>
+                  }
+                />
+                <a
+                  href={phoneHref}
+                  aria-label={t('call')}
+                  className="inline-flex h-[52px] shrink-0 items-center justify-center gap-2 rounded-[12px] border border-border bg-card px-4 text-[15px] font-medium text-foreground transition hover:bg-muted"
+                >
+                  <Phone className="size-[18px]" />
+                  <span>{t('call')}</span>
+                </a>
+              </div>
             </>
           )}
           <p className="text-center text-[12px] leading-4 text-muted-foreground">
@@ -216,6 +229,14 @@ export function ListingBooking(props: {
             </>
           ) : (
             <>
+              <a
+                href={phoneHref}
+                aria-label={t('call')}
+                className="inline-flex h-12 items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-3 text-[14px] font-medium text-foreground transition hover:bg-muted"
+              >
+                <Phone className="size-4" />
+                <span>{t('call')}</span>
+              </a>
               <InquiryModal
                 listingId={listingId}
                 trigger={
@@ -232,7 +253,7 @@ export function ListingBooking(props: {
                 listingId={listingId}
                 trigger={
                   <button
-                    className="inline-flex h-12 items-center justify-center rounded-xl bg-primary px-5 text-[15px] font-medium text-primary-foreground transition hover:opacity-90"
+                    className="inline-flex h-12 items-center justify-center rounded-xl bg-primary px-4 text-[14px] font-medium text-primary-foreground transition hover:opacity-90"
                     type="button"
                   >
                     {t('book_viewing')}
