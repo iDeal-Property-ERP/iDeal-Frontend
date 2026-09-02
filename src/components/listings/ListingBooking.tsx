@@ -1,6 +1,6 @@
 'use client';
 
-import { CalendarDays, Check, Clock, MessageCircle, ShieldCheck, Phone } from 'lucide-react';
+import { CalendarDays, Clock, MessageCircle, Phone, ShieldCheck } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useMemo } from 'react';
 import { BookViewingModal } from '@/components/listings/BookViewingModal';
@@ -47,9 +47,9 @@ function ReassuranceRow(props: { icon: React.ReactNode; title: string; sub: stri
 }
 
 /**
- * Listing booking panel (Figma 34:124 desktop side card + 119:82 mobile sticky bar).
- * Desktop: sticky price card (price, all-inclusive, preferred-date field, Book/Message,
- * footer) + a muted reassurance card. Mobile: a fixed bottom bar with price + Message + Book.
+ * Listing booking panel (desktop side card + mobile sticky bar).
+ * Desktop: sticky price card (price + Call/Message in header, preferred date, Book CTA)
+ * + a muted reassurance card. Mobile: sticky bottom bar with Book CTA hovering above price + Call/Message.
  * @param props - The listing id and the monthly price + currency.
  * @returns The responsive booking panel.
  */
@@ -73,6 +73,7 @@ export function ListingBooking(props: {
     const cleanNumber = contactPhone.replaceAll(/\s+/gu, '');
     return cleanNumber.startsWith('tel:') ? cleanNumber : `tel:${cleanNumber}`;
   }, [contactPhone]);
+
   // Next-available slot for the preferred-date preview — computed from current date + locale.
   const slot = useMemo(() => {
     const d = new Date();
@@ -96,41 +97,38 @@ export function ListingBooking(props: {
       {/* Desktop side panel */}
       <div className="sticky top-24 hidden space-y-4 lg:block">
         <div className="space-y-4 rounded-[20px] border border-border bg-card p-6 shadow-lg">
-          <div className="flex items-baseline gap-1.5">
-            <span className="font-display text-[40px] leading-[44px] font-extrabold tracking-[-0.4px] text-foreground">
-              {price}
-            </span>
-            <span className="text-[16px] text-muted-foreground">{t('per_month')}</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Check className="size-3.5 text-muted-foreground" />
-            <span className="text-[14px] text-muted-foreground">{t('all_inclusive')}</span>
-          </div>
-          <div className="h-px w-full bg-border" />
-          {isOneOff ? (
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-baseline gap-1.5">
+              <span className="font-display text-[34px] leading-[38px] font-extrabold tracking-[-0.4px] text-foreground">
+                {price}
+              </span>
+              <span className="text-[15px] text-muted-foreground">{t('per_month')}</span>
+            </div>
             <div className="flex items-center gap-2">
+              <a
+                href={phoneHref}
+                aria-label={t('call')}
+                className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-3 text-[13px] font-medium text-foreground transition hover:bg-muted"
+              >
+                <Phone className="size-3.5" />
+                <span>{t('call')}</span>
+              </a>
               <InquiryModal
                 listingId={listingId}
                 trigger={
                   <button
-                    className="flex h-[52px] flex-1 items-center justify-center gap-2 rounded-[12px] bg-primary text-[15px] font-medium text-primary-foreground transition hover:opacity-90"
+                    className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-3 text-[13px] font-medium text-foreground transition hover:bg-muted"
                     type="button"
                   >
-                    <MessageCircle className="size-[17px]" />
-                    {t('message_ideal')}
+                    <MessageCircle className="size-3.5" />
+                    <span>{t('message_ideal')}</span>
                   </button>
                 }
               />
-              <a
-                href={phoneHref}
-                aria-label={t('call')}
-                className="inline-flex h-[52px] shrink-0 items-center justify-center gap-2 rounded-[12px] border border-border bg-card px-4 text-[15px] font-medium text-foreground transition hover:bg-muted"
-              >
-                <Phone className="size-[18px]" />
-                <span>{t('call')}</span>
-              </a>
             </div>
-          ) : (
+          </div>
+          <div className="h-px w-full bg-border" />
+          {!isOneOff && (
             <>
               <BookViewingModal
                 listingId={listingId}
@@ -150,33 +148,11 @@ export function ListingBooking(props: {
                 }
               />
               <BookViewingModal listingId={listingId} trigger={bookButton} />
-              <div className="flex items-center gap-2">
-                <InquiryModal
-                  listingId={listingId}
-                  trigger={
-                    <button
-                      className="flex h-[52px] flex-1 items-center justify-center gap-2 rounded-[12px] border border-border bg-card text-[15px] font-medium text-foreground transition hover:bg-muted"
-                      type="button"
-                    >
-                      <MessageCircle className="size-[17px]" />
-                      {t('message_ideal')}
-                    </button>
-                  }
-                />
-                <a
-                  href={phoneHref}
-                  aria-label={t('call')}
-                  className="inline-flex h-[52px] shrink-0 items-center justify-center gap-2 rounded-[12px] border border-border bg-card px-4 text-[15px] font-medium text-foreground transition hover:bg-muted"
-                >
-                  <Phone className="size-[18px]" />
-                  <span>{t('call')}</span>
-                </a>
-              </div>
+              <p className="text-center text-[12px] leading-4 text-muted-foreground">
+                {t('book_footer')}
+              </p>
             </>
           )}
-          <p className="text-center text-[12px] leading-4 text-muted-foreground">
-            {t('book_footer')}
-          </p>
         </div>
         <div className="space-y-3 rounded-[18px] bg-muted p-5">
           <ReassuranceRow
@@ -193,75 +169,50 @@ export function ListingBooking(props: {
       </div>
 
       {/* Mobile sticky bottom bar */}
-      <div className="fixed inset-x-0 bottom-0 z-40 flex flex-wrap items-center justify-between gap-3 border-t border-border bg-card px-4 py-3 lg:hidden">
-        <div className="min-w-0">
+      <div className="fixed inset-x-0 bottom-0 z-40 flex flex-col gap-2.5 border-t border-border bg-card/95 p-3.5 backdrop-blur-md lg:hidden">
+        {!isOneOff && (
+          <BookViewingModal
+            listingId={listingId}
+            trigger={
+              <button
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary text-[15px] font-semibold text-primary-foreground shadow-sm transition hover:opacity-90"
+                type="button"
+              >
+                <CalendarDays className="size-[18px]" />
+                {t('book_viewing')}
+              </button>
+            }
+          />
+        )}
+        <div className="flex items-center justify-between gap-3">
           <p className="flex items-baseline gap-1">
             <span className="font-display text-[22px] font-extrabold tracking-[-0.4px] text-foreground">
               {price}
             </span>
             <span className="text-[13px] text-muted-foreground">{t('per_month')}</span>
           </p>
-          <p className="truncate text-[12px] text-muted-foreground">{t('all_inclusive')}</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {isOneOff ? (
-            <>
-              <a
-                href={phoneHref}
-                aria-label={t('call')}
-                className="inline-flex h-12 items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-3.5 text-[14px] font-medium text-foreground transition hover:bg-muted"
-              >
-                <Phone className="size-4" />
-                <span>{t('call')}</span>
-              </a>
-              <InquiryModal
-                listingId={listingId}
-                trigger={
-                  <button
-                    className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-[14px] font-medium text-primary-foreground transition hover:opacity-90"
-                    type="button"
-                  >
-                    <MessageCircle className="size-[17px]" />
-                    {t('message_ideal')}
-                  </button>
-                }
-              />
-            </>
-          ) : (
-            <>
-              <a
-                href={phoneHref}
-                aria-label={t('call')}
-                className="inline-flex h-12 items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-3 text-[14px] font-medium text-foreground transition hover:bg-muted"
-              >
-                <Phone className="size-4" />
-                <span>{t('call')}</span>
-              </a>
-              <InquiryModal
-                listingId={listingId}
-                trigger={
-                  <button
-                    aria-label={t('message_ideal')}
-                    className="inline-flex size-12 items-center justify-center rounded-xl border border-border bg-card text-foreground transition hover:bg-muted"
-                    type="button"
-                  >
-                    <MessageCircle className="size-5" />
-                  </button>
-                }
-              />
-              <BookViewingModal
-                listingId={listingId}
-                trigger={
-                  <button
-                    className="inline-flex h-12 items-center justify-center rounded-xl bg-primary px-4 text-[14px] font-medium text-primary-foreground transition hover:opacity-90"
-                    type="button"
-                  >
-                    {t('book_viewing')}
-                  </button>
-                }
-              />
-            </>
-          )}
+          <div className="flex items-center gap-2">
+            <a
+              href={phoneHref}
+              aria-label={t('call')}
+              className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-3 text-[13px] font-medium text-foreground transition hover:bg-muted"
+            >
+              <Phone className="size-3.5" />
+              <span>{t('call')}</span>
+            </a>
+            <InquiryModal
+              listingId={listingId}
+              trigger={
+                <button
+                  className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-3 text-[13px] font-medium text-foreground transition hover:bg-muted"
+                  type="button"
+                >
+                  <MessageCircle className="size-3.5" />
+                  <span>{t('message_ideal')}</span>
+                </button>
+              }
+            />
+          </div>
         </div>
       </div>
     </>
