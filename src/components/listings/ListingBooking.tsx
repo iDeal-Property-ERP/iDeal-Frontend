@@ -168,51 +168,58 @@ export function ListingBooking(props: {
         </div>
       </div>
 
-      {/* Mobile sticky bottom bar */}
-      <div className="fixed inset-x-0 bottom-0 z-40 flex flex-col gap-2.5 border-t border-border bg-card/95 p-3.5 backdrop-blur-md lg:hidden">
-        {!isOneOff && (
+      {/* Mobile floating "Book a viewing" action button */}
+      {!isOneOff && (
+        <div className="fixed right-4 bottom-[72px] z-40 lg:hidden">
           <BookViewingModal
             listingId={listingId}
             trigger={
               <button
-                className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary text-[15px] font-semibold text-primary-foreground shadow-sm transition hover:opacity-90"
+                aria-label={t('book_viewing')}
+                className="group flex h-12 items-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/25 transition-all duration-300 ease-out hover:pr-4 focus-visible:pr-4 active:pr-4"
                 type="button"
               >
-                <CalendarDays className="size-[18px]" />
-                {t('book_viewing')}
+                <span className="grid size-12 shrink-0 place-items-center">
+                  <CalendarDays className="size-5" />
+                </span>
+                <span className="max-w-0 overflow-hidden text-[14px] font-semibold whitespace-nowrap transition-all duration-300 ease-out group-hover:max-w-xs group-focus-visible:max-w-xs group-active:max-w-xs">
+                  {t('book_viewing')}
+                </span>
               </button>
             }
           />
-        )}
-        <div className="flex items-center justify-between gap-3">
-          <p className="flex items-baseline gap-1">
-            <span className="font-display text-[22px] font-extrabold tracking-[-0.4px] text-foreground">
-              {price}
-            </span>
-            <span className="text-[13px] text-muted-foreground">{t('per_month')}</span>
-          </p>
-          <div className="flex items-center gap-2">
-            <a
-              href={phoneHref}
-              aria-label={t('call')}
-              className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-3 text-[13px] font-medium text-foreground transition hover:bg-muted"
-            >
-              <Phone className="size-3.5" />
-              <span>{t('call')}</span>
-            </a>
-            <InquiryModal
-              listingId={listingId}
-              trigger={
-                <button
-                  className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-3 text-[13px] font-medium text-foreground transition hover:bg-muted"
-                  type="button"
-                >
-                  <MessageCircle className="size-3.5" />
-                  <span>{t('message_ideal')}</span>
-                </button>
-              }
-            />
-          </div>
+        </div>
+      )}
+
+      {/* Mobile sticky bottom bar */}
+      <div className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-between gap-3 border-t border-border bg-card/95 px-4 py-3 backdrop-blur-md lg:hidden">
+        <p className="flex items-baseline gap-1">
+          <span className="font-display text-[22px] font-extrabold tracking-[-0.4px] text-foreground">
+            {price}
+          </span>
+          <span className="text-[13px] text-muted-foreground">{t('per_month')}</span>
+        </p>
+        <div className="flex items-center gap-2">
+          <a
+            href={phoneHref}
+            aria-label={t('call')}
+            className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-3 text-[13px] font-medium text-foreground transition hover:bg-muted"
+          >
+            <Phone className="size-3.5" />
+            <span>{t('call')}</span>
+          </a>
+          <InquiryModal
+            listingId={listingId}
+            trigger={
+              <button
+                className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-3 text-[13px] font-medium text-foreground transition hover:bg-muted"
+                type="button"
+              >
+                <MessageCircle className="size-3.5" />
+                <span>{t('message_ideal')}</span>
+              </button>
+            }
+          />
         </div>
       </div>
     </>

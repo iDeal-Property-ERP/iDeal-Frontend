@@ -110,7 +110,7 @@ export default async function ListingDetailPage(props: {
     : [];
 
   return (
-    <div className="container-page pt-6 pb-44 sm:pb-36 lg:pb-12">
+    <div className="container-page pt-6 pb-28 lg:pb-12">
       {/* Breadcrumb (desktop) */}
       <nav className="mb-5 hidden items-center gap-2 text-[14px] text-muted-foreground lg:flex">
         <Link className="hover:text-foreground" href="/listings">
