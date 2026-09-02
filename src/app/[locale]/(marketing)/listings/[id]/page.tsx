@@ -110,7 +110,7 @@ export default async function ListingDetailPage(props: {
     : [];
 
   return (
-    <div className="container-page pt-6 pb-28 lg:pb-12">
+    <div className="container-page pt-6 pb-36 sm:pb-28 lg:pb-12">
       {/* Breadcrumb (desktop) */}
       <nav className="mb-5 hidden items-center gap-2 text-[14px] text-muted-foreground lg:flex">
         <Link className="hover:text-foreground" href="/listings">
@@ -347,6 +347,7 @@ export default async function ListingDetailPage(props: {
 
         {/* Booking panel (desktop side card + mobile sticky bar) */}
         <ListingBooking
+          contactPhone={listing.contact_phone}
           currency={price_card.currency}
           engagementType={property.engagement_type}
           listingId={listing.id}

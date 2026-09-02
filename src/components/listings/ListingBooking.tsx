@@ -60,12 +60,21 @@ export function ListingBooking(props: {
   monthlyPrice: string | null;
   currency: Currency;
   engagementType?: string;
+  contactPhone?: string | null;
 }) {
-  const { listingId, monthlyPrice, currency, engagementType } = props;
+  const { listingId, monthlyPrice, currency, engagementType, contactPhone } = props;
   const t = useTranslations('ListingDetail');
   const locale = useLocale();
   const isOneOff = engagementType === 'one_off';
   const price = formatWhole(monthlyPrice, currency);
+
+  const phoneHref = useMemo(() => {
+    if (!contactPhone) {
+      return 'tel:+998937244041';
+    }
+    const cleanNumber = contactPhone.replaceAll(/\s+/gu, '');
+    return cleanNumber.startsWith('tel:') ? cleanNumber : `tel:${cleanNumber}`;
+  }, [contactPhone]);
   // Next-available slot for the preferred-date preview — computed from current date + locale.
   const slot = useMemo(() => {
     const d = new Date();
@@ -121,11 +130,12 @@ export function ListingBooking(props: {
                 }
               />
               <a
-                href="tel:+998991299710"
-                aria-label="Call"
-                className="inline-flex size-[52px] shrink-0 items-center justify-center rounded-[12px] border border-border bg-card text-foreground transition hover:bg-muted"
+                href={phoneHref}
+                aria-label={t('call')}
+                className="inline-flex h-[52px] shrink-0 items-center justify-center gap-2 rounded-[12px] border border-border bg-card px-4 text-[15px] font-medium text-foreground transition hover:bg-muted"
               >
-                <Phone className="size-[20px]" />
+                <Phone className="size-[18px]" />
+                <span>{t('call')}</span>
               </a>
             </div>
           ) : (
@@ -170,7 +180,7 @@ export function ListingBooking(props: {
       </div>
 
       {/* Mobile sticky bottom bar */}
-      <div className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-between gap-3 border-t border-border bg-card px-4 py-3 lg:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-40 flex flex-wrap items-center justify-between gap-3 border-t border-border bg-card px-4 py-3 lg:hidden">
         <div className="min-w-0">
           <p className="flex items-baseline gap-1">
             <span className="font-display text-[22px] font-extrabold tracking-[-0.4px] text-foreground">
@@ -180,21 +190,22 @@ export function ListingBooking(props: {
           </p>
           <p className="truncate text-[12px] text-muted-foreground">{t('all_inclusive')}</p>
         </div>
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {isOneOff ? (
             <>
               <a
-                href="tel:+998991299710"
-                aria-label="Call"
-                className="inline-flex size-12 items-center justify-center rounded-xl border border-border bg-card text-foreground transition hover:bg-muted"
+                href={phoneHref}
+                aria-label={t('call')}
+                className="inline-flex h-12 items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-3.5 text-[14px] font-medium text-foreground transition hover:bg-muted"
               >
-                <Phone className="size-5" />
+                <Phone className="size-4" />
+                <span>{t('call')}</span>
               </a>
               <InquiryModal
                 listingId={listingId}
                 trigger={
                   <button
-                    className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-[15px] font-medium text-primary-foreground transition hover:opacity-90"
+                    className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-[14px] font-medium text-primary-foreground transition hover:opacity-90"
                     type="button"
                   >
                     <MessageCircle className="size-[17px]" />

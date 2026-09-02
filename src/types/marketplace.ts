@@ -74,6 +74,7 @@ export type VerificationChecklistItem = {
 
 /** Enriched listing detail returned by GET /marketplace/listings/{id}/. */
 export type ListingDetail = ListingOutput & {
+  contact_phone?: string | null;
   photos: ListingPhoto[];
   specs: {
     property_type: PropertyType;

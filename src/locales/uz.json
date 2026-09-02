@@ -2001,7 +2001,11 @@
     "deposit_protected": "Garov himoyalangan",
     "deposit_protected_sub": "Ko'chib o'tguncha eskrouda saqlanadi",
     "avg_response": "O'rtacha javob 1 soat",
-    "avg_response_sub": "iDeal jamoasi, haftada 7 kun"
+    "avg_response_sub": "iDeal jamoasi, haftada 7 kun",
+    "call": "Qo'ng'iroq",
+    "error_title": "E'lon mavjud emas",
+    "error_description": "E'lonni yuklab bo'lmadi. Qayta urinib ko'ring.",
+    "retry": "Qayta urinish"
   },
   "BookViewing": {
     "title": "Ko'rishga yozilish",

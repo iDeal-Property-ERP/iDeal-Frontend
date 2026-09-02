@@ -2001,7 +2001,11 @@
     "deposit_protected": "Deposit protected",
     "deposit_protected_sub": "Held in escrow until move-in",
     "avg_response": "Avg. response 1 hr",
-    "avg_response_sub": "iDeal team, 7 days a week"
+    "avg_response_sub": "iDeal team, 7 days a week",
+    "call": "Call",
+    "error_title": "Listing unavailable",
+    "error_description": "We couldn't load this listing right now. Please try again.",
+    "retry": "Retry"
   },
   "BookViewing": {
     "title": "Book a viewing",

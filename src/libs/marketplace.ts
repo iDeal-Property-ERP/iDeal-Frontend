@@ -16,6 +16,16 @@ import type {
 } from '@/types/marketplace';
 import { Env } from './Env';
 
+export class MarketplaceFetchError extends Error {
+  readonly status?: number;
+
+  constructor(message: string, status?: number) {
+    super(message);
+    this.name = 'MarketplaceFetchError';
+    this.status = status;
+  }
+}
+
 type Envelope<T> = { success: boolean; data: T };
 
 const BASE = `${Env.NEXT_PUBLIC_API_URL}/marketplace`;
@@ -169,22 +179,50 @@ export async function fetchListingsPage(
 }
 
 /**
- * Fetches a single enriched listing detail. Returns null on failure / 404.
+ * Fetches a single enriched listing detail. Returns null on 404, throws MarketplaceFetchError on other failures.
  * @param id - The listing id.
- * @returns The listing detail, or null.
+ * @returns The listing detail, or null when not found.
  */
 export async function fetchListing(id: string | number): Promise<ListingDetail | null> {
+  let res: Response;
   try {
-    const res = await fetch(`${BASE}/listings/${id}/`);
-    if (!res.ok) {
-      return null;
-    }
-    // SAFETY: Marketplace response json conforms to listing detail envelope
-    const json = (await res.json()) as Envelope<ListingDetail>;
-    return json.data ?? null;
-  } catch {
+    res = await fetch(`${BASE}/listings/${id}/`);
+  } catch (error) {
+    throw new MarketplaceFetchError(
+      `Network error while fetching listing ${id}: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+
+  if (res.status === 404) {
     return null;
   }
+
+  if (!res.ok) {
+    throw new MarketplaceFetchError(
+      `Failed to fetch listing ${id} (status: ${res.status} ${res.statusText})`,
+      res.status,
+    );
+  }
+
+  let json: Envelope<ListingDetail>;
+  try {
+    // SAFETY: Marketplace response json conforms to listing detail envelope
+    json = (await res.json()) as Envelope<ListingDetail>;
+  } catch (error) {
+    throw new MarketplaceFetchError(
+      `Invalid JSON received for listing ${id}: ${error instanceof Error ? error.message : String(error)}`,
+      res.status,
+    );
+  }
+
+  if (!json?.data) {
+    throw new MarketplaceFetchError(
+      `Malformed listing response structure for listing ${id}`,
+      res.status,
+    );
+  }
+
+  return json.data;
 }
 
 /**

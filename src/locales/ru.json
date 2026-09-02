@@ -2001,7 +2001,11 @@
     "deposit_protected": "Залог защищён",
     "deposit_protected_sub": "Хранится на эскроу до заселения",
     "avg_response": "Ответ в среднем за 1 ч",
-    "avg_response_sub": "Команда iDeal, 7 дней в неделю"
+    "avg_response_sub": "Команда iDeal, 7 дней в неделю",
+    "call": "Позвонить",
+    "error_title": "Объявление недоступно",
+    "error_description": "Не удалось загрузить объявление. Попробуйте еще раз.",
+    "retry": "Повторить"
   },
   "BookViewing": {
     "title": "Записаться на просмотр",
