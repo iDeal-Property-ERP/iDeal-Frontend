@@ -22,5 +22,20 @@
       "package_name": "com.ideal.mobile.stage",
       "sha256_cert_fingerprints": ["REPLACE_WITH_STAGE_RELEASE_SHA256_FINGERPRINT"]
     }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.get_login_creds"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.ideal.uz",
+      "sha256_cert_fingerprints": [
+        "32:D7:4E:AA:F4:62:82:CA:EA:6D:F0:17:6F:DC:58:D7:52:F8:12:D6:82:9F:9C:3B:FF:FD:E8:34:1D:87:60:79",
+        "18:07:59:0F:03:09:34:3A:0C:35:A9:DA:0A:3E:C9:61:7C:54:F9:AC:82:D5:D4:F9:96:FC:89:86:52:41:03:1F",
+        "05:30:C3:34:0C:99:81:63:A6:CA:38:99:DA:A8:4C:1E:77:3B:27:B2:7A:B9:AC:89:F9:27:1A:84:8D:68:0B:58"
+      ]
+    }
   }
 ]
