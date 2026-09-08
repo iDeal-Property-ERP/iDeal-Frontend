@@ -25,7 +25,7 @@ const COLUMNS = [
     links: [
       { href: '/', key: 'link_about' },
       { href: '/', key: 'link_careers' },
-      { href: '/', key: 'link_contact' },
+      { href: '/support', key: 'link_contact' },
       { href: '/', key: 'link_blog' },
     ],
   },
@@ -94,6 +94,9 @@ export function MarketingFooter() {
             </Link>
             <Link href="/tos" className="transition-colors hover:text-foreground">
               {t('link_terms')}
+            </Link>
+            <Link href="/support" className="transition-colors hover:text-foreground">
+              {t('link_contact')}
             </Link>
           </div>
         </div>
