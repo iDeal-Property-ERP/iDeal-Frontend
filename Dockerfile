@@ -12,15 +12,28 @@ RUN npm install --no-audit --no-fund
 # ---- Stage 2: Builder ----
 FROM node:24-alpine AS builder
 
-ENV NEXT_TELEMETRY_DISABLED=1 \
-    NEXT_PUBLIC_SENTRY_DISABLED=true
+ARG BACKEND_ORIGIN
+ARG NEXT_PUBLIC_APP_URL
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_YANDEX_MAPS_API_KEY
+ARG NEXT_PUBLIC_LOGGING_LEVEL
+
+ENV NODE_ENV=production \
+    IDEAL_PRODUCTION_BUILD=true \
+    NEXT_TELEMETRY_DISABLED=1 \
+    NEXT_PUBLIC_SENTRY_DISABLED=true \
+    BACKEND_ORIGIN=${BACKEND_ORIGIN} \
+    NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL} \
+    NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL} \
+    NEXT_PUBLIC_YANDEX_MAPS_API_KEY=${NEXT_PUBLIC_YANDEX_MAPS_API_KEY} \
+    NEXT_PUBLIC_LOGGING_LEVEL=${NEXT_PUBLIC_LOGGING_LEVEL}
 
 WORKDIR /app
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-RUN npm run build
+RUN node scripts/validate-production-env.mjs && npm run build
 
 # ---- Stage 3: Runner ----
 FROM node:24-alpine AS runner

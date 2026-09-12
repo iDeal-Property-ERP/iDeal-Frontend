@@ -21,6 +21,7 @@ services:
     networks:
       - network-default
     restart: unless-stopped
+    # Runtime values do not replace BACKEND_ORIGIN or NEXT_PUBLIC_* built into the image.
     env_file:
       - .env
 
