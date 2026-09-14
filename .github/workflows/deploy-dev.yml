@@ -5,11 +5,24 @@ on:
     branches: [development]
   repository_dispatch:
     types: [trigger-deploy]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-frontend-development
+  cancel-in-progress: false
+
+permissions:
+  contents: read
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
+  quality:
+    uses: ./.github/workflows/ci.yml
 
+  deploy:
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: development
     env:
       LOCATION: ${{ secrets.LOCATION }}
       SSH_HOST: ${{ secrets.SSH_HOST }}
@@ -37,4 +50,17 @@ jobs:
             git reset --hard "origin/$DEPLOY_BRANCH"
             git clean -fd
 
-            docker compose up -d --build
+            IMAGE_TAG="${{ github.sha }}" docker compose up -d --build
+
+            healthy=0
+            for _ in $(seq 1 36); do
+              if docker compose exec -T web node -e "fetch('http://localhost:3000/').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"; then
+                healthy=1
+                break
+              fi
+              sleep 5
+            done
+            if [ "$healthy" -ne 1 ]; then
+              echo "Readiness probe failed"
+              exit 1
+            fi

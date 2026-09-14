@@ -232,7 +232,7 @@ const tenantSections: NavSection[] = [
   },
 ];
 
-const listingsSections: NavSection[] = [
+const agentSections: NavSection[] = [
   {
     sectionKey: 'sec_find_a_home',
     items: [
@@ -246,11 +246,16 @@ const roleNavMap = {
   mgmt: mgmtSections,
   owner: ownerSections,
   tenant: tenantSections,
-  listings: listingsSections,
-} satisfies Record<Exclude<Role, 'agent'>, NavSection[]>;
+  agent: agentSections,
+} satisfies Record<Role, NavSection[]>;
 
 function isItemActive(href: string, pathname: string): boolean {
-  if (href === '/management' || href === '/owner' || href === '/tenant') {
+  if (
+    href === '/management' ||
+    href === '/owner' ||
+    href === '/tenant' ||
+    href === '/marketplace'
+  ) {
     return pathname === href;
   }
   return pathname.startsWith(href);
@@ -385,7 +390,7 @@ export function AppSidebar(props: { role: Role; counts?: Record<string, number> 
   const t = useTranslations('Dashboard');
   const { setOpenMobile, isMobile } = useSidebar();
 
-  const sections = props.role === 'agent' ? [] : roleNavMap[props.role];
+  const sections = roleNavMap[props.role];
   const counts = props.counts ?? {};
 
   return (

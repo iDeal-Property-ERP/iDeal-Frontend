@@ -20,6 +20,7 @@ const FILTER_KEYS = [
   'flexibility_days',
   'price_min',
   'price_max',
+  'currency',
   'rooms_min',
   'rooms_max',
   'area_min',

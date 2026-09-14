@@ -1,5 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { fetchListing, MarketplaceFetchError } from './marketplace';
+import {
+  currencyForPriceFilter,
+  fetchListing,
+  filtersFromSearchParams,
+  formatFilterPrice,
+  listingPriceSteps,
+  MarketplaceFetchError,
+} from './marketplace';
 
 describe(fetchListing, () => {
   afterEach(() => {
@@ -53,5 +60,30 @@ describe(fetchListing, () => {
     );
 
     await expect(fetchListing(123)).rejects.toThrow(MarketplaceFetchError);
+  });
+});
+
+describe('listing price currency helpers', () => {
+  it('requires a currency when a price bound is set', () => {
+    expect(currencyForPriceFilter('', '500', '')).toBe('USD');
+    expect(currencyForPriceFilter('UZS', '500', '')).toBe('UZS');
+    expect(currencyForPriceFilter('', '', '')).toBeUndefined();
+  });
+
+  it('reads currency from discovery search params', () => {
+    const filters = filtersFromSearchParams(
+      new URLSearchParams('price_min=500&price_max=900&currency=UZS'),
+    );
+    expect(filters).toMatchObject({
+      price_min: '500',
+      price_max: '900',
+      currency: 'UZS',
+    });
+  });
+
+  it('formats filter prices for the selected currency', () => {
+    expect(formatFilterPrice('500', 'USD')).toBe('$500');
+    expect(formatFilterPrice('5000000', 'UZS')).toBe('5000000 UZS');
+    expect(listingPriceSteps('UZS')[1]).toBe('2000000');
   });
 });

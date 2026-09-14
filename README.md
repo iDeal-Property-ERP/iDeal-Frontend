@@ -1,5 +1,10 @@
 # Boilerplate and Starter for Next.js 16+, Tailwind CSS 4, and TypeScript.
 
+> **iDeal local setup:** Follow [docs/local-setup.md](docs/local-setup.md) for the
+> existing seeded Django backend, cookie authentication, and local chat. The
+> upstream boilerplate instructions below about Clerk and frontend databases
+> do not describe the current application.
+
 <p align="center">
   <a href="https://demo.nextjs-boilerplate.com">
     <img

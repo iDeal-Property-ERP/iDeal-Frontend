@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { ApiError_ } from '@/libs/api';
 import { useAuth } from '@/libs/auth';
 import { getApiErrorMessage } from '@/libs/forms';
 import { Link } from '@/libs/I18nNavigation';
@@ -25,10 +26,11 @@ import {
   resubmitOwnerListing,
   submitOwnerListing,
 } from '@/libs/ownerListings';
-import { submitPublicListing } from '@/libs/publicListings';
+import { fetchPublicOffer, submitPublicListing, toOfferAcceptance } from '@/libs/publicListings';
 import { cn } from '@/libs/utils';
 import type { Currency, Furnishing, PropertyType } from '@/types/enums';
 import type { AmenityOption, DistrictOption, OwnerListing } from '@/types/marketplace';
+import type { PublicOfferOutput } from '@/types/owner';
 
 const STEPS = ['details', 'photos', 'pricing', 'contact', 'review'] as const;
 const PROPERTY_TYPES: PropertyType[] = ['apartment', 'house', 'studio', 'room'];
@@ -923,6 +925,7 @@ export function ListPropertyWizard() {
     price_includes: [],
   });
   const [acceptOffer, setAcceptOffer] = useState(false);
+  const [offer, setOffer] = useState<PublicOfferOutput | null>(null);
   const [contact, setContact] = useState<ContactForm>({
     first_name: '',
     last_name: '',
@@ -940,6 +943,14 @@ export function ListPropertyWizard() {
       }
       urls.clear();
     };
+  }, []);
+
+  useEffect(() => {
+    fetchPublicOffer()
+      .then(setOffer)
+      .catch(() => {
+        setOffer(null);
+      });
   }, []);
 
   useEffect(() => {
@@ -1146,6 +1157,11 @@ export function ListPropertyWizard() {
       toast.error(t('accept_offer_required'));
       return;
     }
+    const offerFields = toOfferAcceptance(offer);
+    if (!offerFields) {
+      toast.error(t('error_offer_unavailable'));
+      return;
+    }
     if (localPhotos.length < 5) {
       toast.error(t('error_photos_min') || 'At least 5 photos are required');
       return;
@@ -1172,6 +1188,7 @@ export function ListPropertyWizard() {
         price_includes: pricing.price_includes,
         captions: upload.captions,
         accept_offer: true as const,
+        ...offerFields,
       };
 
       if (rejectedListingId) {
@@ -1204,8 +1221,12 @@ export function ListPropertyWizard() {
       }
       toast.success(t('published'));
       setStep(5);
-    } catch {
-      toast.error(t('error_incomplete'));
+    } catch (error) {
+      const fallback =
+        error instanceof ApiError_ && error.status === 409
+          ? t('error_account_exists')
+          : t('error_incomplete');
+      toast.error(getApiErrorMessage(error, fallback));
     } finally {
       setBusy(false);
     }
@@ -1253,8 +1274,13 @@ export function ListPropertyWizard() {
       {t('back')}
     </Button>
   );
+  const canPublish = toOfferAcceptance(offer) !== null;
   const primaryBtn = (
-    <Button className="min-w-[120px]" disabled={busy} onClick={actions?.primary}>
+    <Button
+      className="min-w-[120px]"
+      disabled={busy || (step === 4 && !canPublish)}
+      onClick={actions?.primary}
+    >
       {busy && <Loader2 className="size-4 animate-spin" />}
       {actions?.primaryLabel}
     </Button>

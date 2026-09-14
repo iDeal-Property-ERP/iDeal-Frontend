@@ -1,4 +1,5 @@
-import { apiUpload } from '@/libs/api';
+import { apiFetch, apiUpload } from '@/libs/api';
+import type { PublicOfferOutput } from '@/types/owner';
 
 export type PublicListingContactPayload = {
   first_name: string;
@@ -25,7 +26,40 @@ export type PublicListingPayload = {
   currency: string;
   minimum_stay: number;
   price_includes: string[];
+  offer_id: number;
+  offer_version: string;
+  offer_hash: string;
 };
+
+type PublicOfferAcceptance = {
+  offer_id: number;
+  offer_version: string;
+  offer_hash: string;
+};
+
+/**
+ * Fetches the active marketplace public offer.
+ * @returns The active offer, or a payload of nulls when none exists.
+ */
+export async function fetchPublicOffer(): Promise<PublicOfferOutput> {
+  return await apiFetch<PublicOfferOutput>('/marketplace/public-offer/');
+}
+
+/**
+ * Maps a public-offer response to the listing-submit acceptance fields.
+ * @param offer - The active public offer, or null when none is loaded.
+ * @returns The three required offer fields, or null when any value is missing.
+ */
+export function toOfferAcceptance(offer: PublicOfferOutput | null): PublicOfferAcceptance | null {
+  if (!(offer?.id && offer.version && offer.content_hash)) {
+    return null;
+  }
+  return {
+    offer_id: offer.id,
+    offer_version: offer.version,
+    offer_hash: offer.content_hash,
+  };
+}
 
 /**
  * Submits a completed public (guest) listing draft for review.

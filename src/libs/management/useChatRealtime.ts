@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { z } from 'zod';
+import { Env } from '@/libs/Env';
 
 const chatRealtimeEventSchema = z.object({
   type: z.string(),
@@ -20,9 +21,21 @@ export type ChatRealtimeConnection = {
   setTyping: (conversationId: number, isTyping: boolean) => void;
 };
 
-function websocketUrl(): string {
-  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  return `${protocol}//${window.location.host}/ws/v1/chat/`;
+/**
+ * Resolves the chat endpoint while preserving same-origin deployment defaults.
+ * @param location - The browser's protocol and host.
+ * @param configuredUrl - The validated override, or an empty string for same-origin chat.
+ * @returns The WebSocket endpoint.
+ */
+export function websocketUrl(
+  location: Pick<Location, 'protocol' | 'host'>,
+  configuredUrl: string,
+): string {
+  if (configuredUrl) {
+    return configuredUrl;
+  }
+  const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  return `${protocol}//${location.host}/ws/v1/chat/`;
 }
 
 /**
@@ -73,7 +86,7 @@ export function useChatRealtime(
       }
       clearReconnect();
       setStatus(attemptsRef.current === 0 ? 'connecting' : 'reconnecting');
-      const socket = new WebSocket(websocketUrl());
+      const socket = new WebSocket(websocketUrl(window.location, Env.NEXT_PUBLIC_CHAT_WS_URL));
       socketRef.current = socket;
       socket.addEventListener('open', () => {
         socket.send(JSON.stringify({ type: 'chat.sync', after_event_id: cursorRef.current }));

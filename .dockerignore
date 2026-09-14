@@ -2,10 +2,14 @@ node_modules
 .next
 .git
 .github
+.env
+.env.*
+!.env.example
 coverage
 test-results
 storybook-static
 vitest-test-results
+.vitest-attachments
 playwright-report
 *.tar.gz
 npm-debug.log*

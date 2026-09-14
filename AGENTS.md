@@ -1,7 +1,7 @@
 # AGENTS
 
 ## Commands
-- `npm run build-local` — production build (starts temp Postgres, migrates, builds, shuts down)
+- `npm run build-local` — production build (`next build`; no frontend database or migrations)
 - `npm run lint` — oxlint via ultracite (`--type-aware --type-check`)
 - `npm run lint:fix` — auto-fix lint issues
 - `npm run check:types` — `tsc --noEmit --pretty`
@@ -11,6 +11,7 @@
 - `npm run test:e2e` — Playwright tests
 - `npm run dev` — Next.js dev server on port 3000
 - CI lint order: `npx next typegen && npm run lint`
+- Local setup: `docs/local-setup.md` (seeded Backend on 127.0.0.1:8010, Frontend on 127.0.0.1:3000)
 
 ## Pre-commit
 Lefthook runs on every commit:

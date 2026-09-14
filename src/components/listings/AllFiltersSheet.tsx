@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useListingParams } from '@/hooks/useListingParams';
+import { currencyForPriceFilter } from '@/libs/marketplace';
 import { cn } from '@/libs/utils';
 import type { Furnishing, PropertyType, Tariff } from '@/types/enums';
 import type { AmenityOption, DistrictOption } from '@/types/marketplace';
@@ -61,6 +62,7 @@ type Draft = {
   district_id: string;
   price_min: string;
   price_max: string;
+  currency: string;
   rooms_min: string;
   rooms_max: string;
   area_min: string;
@@ -148,6 +150,7 @@ export function AllFiltersSheet(props: {
     district_id: get('district_id'),
     price_min: get('price_min'),
     price_max: get('price_max'),
+    currency: get('currency'),
     rooms_min: get('rooms_min'),
     rooms_max: get('rooms_max'),
     area_min: get('area_min'),
@@ -196,6 +199,7 @@ export function AllFiltersSheet(props: {
       district_id: draft.district_id || undefined,
       price_min: draft.price_min || undefined,
       price_max: draft.price_max || undefined,
+      currency: currencyForPriceFilter(draft.currency, draft.price_min, draft.price_max),
       rooms_min: draft.rooms_min || undefined,
       rooms_max: draft.rooms_max || undefined,
       area_min: draft.area_min || undefined,
@@ -217,6 +221,7 @@ export function AllFiltersSheet(props: {
       district_id: '',
       price_min: '',
       price_max: '',
+      currency: '',
       rooms_min: '',
       rooms_max: '',
       area_min: '',
@@ -376,20 +381,40 @@ export function AllFiltersSheet(props: {
                 </select>
               </Field>
 
+              <ChoiceGroup
+                label={t('filter_currency')}
+                value={draft.currency}
+                options={[
+                  { value: 'USD', label: t('currency_usd') },
+                  { value: 'UZS', label: t('currency_uzs') },
+                ]}
+                onChange={(v) => upd({ currency: v, price_min: '', price_max: '' })}
+              />
+
               <TwoCol label={t('filter_price')}>
                 <input
                   className={INPUT}
                   placeholder={t('range_min')}
                   type="number"
                   value={draft.price_min}
-                  onChange={(e) => upd({ price_min: e.target.value })}
+                  onChange={(e) =>
+                    upd({
+                      price_min: e.target.value,
+                      currency: draft.currency || 'USD',
+                    })
+                  }
                 />
                 <input
                   className={INPUT}
                   placeholder={t('range_max')}
                   type="number"
                   value={draft.price_max}
-                  onChange={(e) => upd({ price_max: e.target.value })}
+                  onChange={(e) =>
+                    upd({
+                      price_max: e.target.value,
+                      currency: draft.currency || 'USD',
+                    })
+                  }
                 />
               </TwoCol>
 

@@ -67,7 +67,6 @@ export function roleVariant(role: string): BadgeVariant {
     owner: 'success',
     tenant: 'warning',
     agent: 'default',
-    listings: 'default',
   } satisfies Record<string, BadgeVariant>;
   // SAFETY: Fallback handles any unmapped role string
   return map[role.toLowerCase() as keyof typeof map] ?? 'default';

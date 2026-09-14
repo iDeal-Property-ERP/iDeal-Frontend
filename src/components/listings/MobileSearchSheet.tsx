@@ -22,10 +22,10 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { useListingParams } from '@/hooks/useListingParams';
+import { currencyForPriceFilter, formatFilterPrice, listingPriceSteps } from '@/libs/marketplace';
 import { cn } from '@/libs/utils';
 import type { AmenityOption, DistrictOption } from '@/types/marketplace';
 
-const PRICE_STEPS = ['', '200', '300', '400', '500', '700', '1000', '1500', '2000'];
 const ROOM_STEPS = ['', '1', '2', '3', '4', '5'];
 const SELECT =
   'w-full appearance-none rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none';
@@ -49,6 +49,7 @@ export function MobileSearchSheet(props: {
   const [districtId, setDistrictId] = useState('');
   const [priceMin, setPriceMin] = useState('');
   const [priceMax, setPriceMax] = useState('');
+  const [currency, setCurrency] = useState('USD');
   const [roomsMin, setRoomsMin] = useState('');
   const [roomsMax, setRoomsMax] = useState('');
 
@@ -56,6 +57,9 @@ export function MobileSearchSheet(props: {
     setDistrictId(get('district_id'));
     setPriceMin(get('price_min'));
     setPriceMax(get('price_max'));
+    setCurrency(
+      currencyForPriceFilter(get('currency'), get('price_min'), get('price_max')) ?? 'USD',
+    );
     setRoomsMin(get('rooms_min'));
     setRoomsMax(get('rooms_max'));
   };
@@ -65,6 +69,7 @@ export function MobileSearchSheet(props: {
       district_id: districtId || undefined,
       price_min: priceMin || undefined,
       price_max: priceMax || undefined,
+      currency: currencyForPriceFilter(currency, priceMin, priceMax),
       rooms_min: roomsMin || undefined,
       rooms_max: roomsMax || undefined,
     });
@@ -75,6 +80,7 @@ export function MobileSearchSheet(props: {
     setDistrictId('');
     setPriceMin('');
     setPriceMax('');
+    setCurrency('USD');
     setRoomsMin('');
     setRoomsMax('');
   };
@@ -83,16 +89,17 @@ export function MobileSearchSheet(props: {
   const districtName = districts.find((d) => String(d.id) === get('district_id'))?.name;
   const pMin = get('price_min');
   const pMax = get('price_max');
+  const pCurrency = currencyForPriceFilter(get('currency'), pMin, pMax) ?? 'USD';
   const rMin = get('rooms_min');
   const rMax = get('rooms_max');
   const priceText = (() => {
     if (pMin && pMax) {
-      return `$${pMin}–${pMax}`;
+      return `${formatFilterPrice(pMin, pCurrency)}–${formatFilterPrice(pMax, pCurrency)}`;
     }
     if (pMin) {
-      return `$${pMin}+`;
+      return `${formatFilterPrice(pMin, pCurrency)}+`;
     }
-    return pMax ? `${t('sb_up_to')} $${pMax}` : '';
+    return pMax ? `${t('sb_up_to')} ${formatFilterPrice(pMax, pCurrency)}` : '';
   })();
   const roomsText = (() => {
     if (rMin && rMax) {
@@ -177,6 +184,27 @@ export function MobileSearchSheet(props: {
 
             <div>
               <p className="mb-2 text-sm font-medium text-foreground">{t('sb_price')}</p>
+              <div className="mb-2 flex gap-2">
+                {(['USD', 'UZS'] as const).map((code) => (
+                  <button
+                    key={code}
+                    className={cn(
+                      'flex-1 rounded-lg border px-3 py-1.5 text-sm font-medium',
+                      currency === code
+                        ? 'border-primary bg-primary-subtle text-primary-subtle-foreground'
+                        : 'border-border text-muted-foreground hover:text-foreground',
+                    )}
+                    type="button"
+                    onClick={() => {
+                      setCurrency(code);
+                      setPriceMin('');
+                      setPriceMax('');
+                    }}
+                  >
+                    {code === 'USD' ? t('currency_usd') : t('currency_uzs')}
+                  </button>
+                ))}
+              </div>
               <div className="grid grid-cols-2 gap-2">
                 <select
                   aria-label={t('range_min')}
@@ -184,9 +212,9 @@ export function MobileSearchSheet(props: {
                   onChange={(e) => setPriceMin(e.target.value)}
                   value={priceMin}
                 >
-                  {PRICE_STEPS.map((s) => (
+                  {listingPriceSteps(currency).map((s) => (
                     <option key={s || 'any'} value={s}>
-                      {s ? `$${s}` : t('sb_no_min')}
+                      {s ? formatFilterPrice(s, currency) : t('sb_no_min')}
                     </option>
                   ))}
                 </select>
@@ -196,9 +224,9 @@ export function MobileSearchSheet(props: {
                   onChange={(e) => setPriceMax(e.target.value)}
                   value={priceMax}
                 >
-                  {PRICE_STEPS.map((s) => (
+                  {listingPriceSteps(currency).map((s) => (
                     <option key={s || 'any'} value={s}>
-                      {s ? `$${s}` : t('sb_no_max')}
+                      {s ? formatFilterPrice(s, currency) : t('sb_no_max')}
                     </option>
                   ))}
                 </select>

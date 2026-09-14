@@ -40,7 +40,7 @@
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
     "lucide-react": "^1.18.0",
-    "next": "^16.2.6",
+    "next": "^16.3.5",
     "next-intl": "^4.12.0",
     "next-themes": "^0.4.6",
     "radix-ui": "^1.6.0",
@@ -58,7 +58,7 @@
     "@commitlint/prompt-cli": "^21.0.1",
     "@commitlint/types": "^21.0.1",
     "@lingual/i18n-check": "^0.9.5",
-    "@next/bundle-analyzer": "^16.2.6",
+    "@next/bundle-analyzer": "^16.3.5",
     "@oxlint/plugins": "^1.69.0",
     "@playwright/test": "^1.60.0",
     "@storybook/addon-a11y": "^10.4.1",
@@ -89,6 +89,15 @@
     "ultracite": "^7.7.0",
     "vitest": "^4.1.7",
     "vitest-browser-react": "^2.2.0"
+  },
+  "overrides": {
+    "baseline-browser-mapping": "2.11.23",
+    "brace-expansion": "2.1.6",
+    "nanoid": "3.3.19",
+    "next": "$next",
+    "postcss": "8.5.28",
+    "sharp": "0.35.4",
+    "uuid": "11.1.1"
   },
   "engines": {
     "node": ">=24"

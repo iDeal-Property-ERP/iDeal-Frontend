@@ -1,12 +1,21 @@
 import type { Role } from '@/types/enums';
 
+/**
+ * Backend-issued roles. The API never issues a `listings` role.
+ */
+export const BACKEND_ROLES = [
+  'mgmt',
+  'owner',
+  'tenant',
+  'agent',
+] as const satisfies readonly Role[];
+
 /** Default landing route per role (post-login + role-mismatch redirects). */
 export const roleDashboardMap = {
   mgmt: '/management',
   owner: '/owner',
   tenant: '/tenant',
-  agent: '/agents',
-  listings: '/marketplace',
+  agent: '/marketplace',
 } satisfies Record<Role, string>;
 
 /** Which roles may access each protected route prefix. */
@@ -14,9 +23,9 @@ export const roleRouteMap: { path: string; roles: Role[] }[] = [
   { path: '/management', roles: ['mgmt'] },
   { path: '/owner', roles: ['owner'] },
   { path: '/tenant', roles: ['tenant'] },
-  { path: '/agents', roles: ['agent', 'mgmt'] },
-  { path: '/marketplace', roles: ['listings'] },
-  { path: '/properties', roles: ['mgmt', 'owner'] },
+  { path: '/agents', roles: ['mgmt'] },
+  { path: '/marketplace', roles: ['agent'] },
+  { path: '/properties', roles: ['mgmt'] },
   { path: '/contracts', roles: ['mgmt'] },
   { path: '/finance', roles: ['mgmt'] },
   { path: '/maintenance', roles: ['mgmt', 'tenant'] },

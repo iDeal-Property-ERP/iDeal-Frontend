@@ -14,6 +14,8 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { apiFetch } from '@/libs/api';
 import { createApiSubmit } from '@/libs/forms';
 import { useRouter } from '@/libs/I18nNavigation';
+import { fetchOwnerPublicOffer } from '@/libs/ownerListings';
+import { toOfferAcceptance } from '@/libs/publicListings';
 import type { OwnerOnboardingOutput, PublicOfferOutput } from '@/types/owner';
 
 const schema = z.object({
@@ -43,19 +45,25 @@ export default function OwnerOnboardingPage() {
   });
 
   useEffect(() => {
-    apiFetch<PublicOfferOutput>('/owner/public-offer/')
+    fetchOwnerPublicOffer()
       .then(setOffer)
       .catch(() => {
-        void 0;
+        setOffer(null);
       });
   }, []);
 
+  const offerFields = toOfferAcceptance(offer);
+
   const onSubmit = createApiSubmit(form, {
-    submit: async (values) =>
-      await apiFetch<OwnerOnboardingOutput>('/owner/onboarding/', {
+    submit: async (values) => {
+      if (!offerFields) {
+        throw new Error(t('onboarding_offer_unavailable'));
+      }
+      return await apiFetch<OwnerOnboardingOutput>('/owner/onboarding/', {
         method: 'POST',
-        body: { ...values, accept_offer: true },
-      }),
+        body: { ...values, accept_offer: true, ...offerFields },
+      });
+    },
     success: t('onboarding_submit'),
     error: t('onboarding_error'),
     onSuccess: () => router.push('/owner'),
@@ -155,7 +163,11 @@ export default function OwnerOnboardingPage() {
             </label>
           </div>
 
-          <Button type="submit" variant="default" disabled={isSubmitting || !accepted}>
+          <Button
+            type="submit"
+            variant="default"
+            disabled={isSubmitting || !accepted || !offerFields}
+          >
             {isSubmitting ? <Loader2Icon className="animate-spin" /> : null}
             {isSubmitting ? t('onboarding_submitting') : t('onboarding_submit')}
           </Button>
