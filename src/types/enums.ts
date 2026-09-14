@@ -16,13 +16,26 @@ export type ViewingTimeSlot = '10:00' | '13:00' | '15:00' | '18:00';
 
 export type PaymentStatus = 'pending' | 'paid' | 'overdue' | 'cancelled';
 
-export type PaymentMethod = 'cash' | 'bank_transfer' | 'online' | 'click' | 'payme' | 'uzum';
+export type PaymentMethod =
+  | 'cash'
+  | 'bank_transfer'
+  | 'online'
+  | 'click'
+  | 'payme'
+  | 'stripe'
+  | 'uzum';
 
 export type PayoutStatus = 'scheduled' | 'held' | 'paid' | 'cancelled';
 
 export type PayoutMethod = 'bank_transfer' | 'card' | 'cash';
 
-export type LeaseStatus = 'active' | 'expired' | 'renewed' | 'terminated';
+export type LeaseStatus =
+  | 'pending_signature'
+  | 'scheduled'
+  | 'active'
+  | 'expired'
+  | 'renewed'
+  | 'terminated';
 
 export type AgreementStatus = 'active' | 'expired' | 'terminated';
 
@@ -47,7 +60,17 @@ export type NotificationType =
   | 'service_order_status'
   | 'general';
 
-export type BookingStatus = 'requested' | 'approved' | 'rejected' | 'converted' | 'cancelled';
+export type BookingStatus =
+  | 'requested'
+  | 'approved'
+  | 'rejected'
+  | 'converted'
+  | 'cancelled'
+  | 'payment_pending'
+  | 'confirmed'
+  | 'payment_failed'
+  | 'payment_expired'
+  | 'reconciliation_required';
 
 export type OnboardingStatus = 'submitted' | 'offer_accepted' | 'approved' | 'rejected';
 
