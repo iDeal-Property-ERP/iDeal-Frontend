@@ -1869,7 +1869,7 @@
     "brokerage_status_closed_won": "Muvaffaqiyatli yopildi",
     "brokerage_status_closed_lost": "Bitimsiz yopildi",
     "brokerage_status_archived": "Arxivda",
-    "brokerage_delete_desc": "Ushbu bir martalik kelishuvni o‘chirib tashlashga ishonchingiz komilmi? Bu amalni bekor qilib bo‘lmaydi.",
+    "brokerage_archive_desc": "Ushbu bir martalik kelishuvni arxivlang va faol ish ro‘yxatidan olib tashlang.",
     "brokerage_keep_active": "Obyektni bozorda qoldirish",
     "brokerage_keep_active_desc": "Agar yoqilgan bo‘lsa, kelishuv yopilganidan keyin obyekt bozorda faol qoladi.",
     "action_details": "Batafsil",

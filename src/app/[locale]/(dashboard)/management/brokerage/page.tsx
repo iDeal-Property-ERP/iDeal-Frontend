@@ -43,13 +43,13 @@ import {
 import { useRowSelection } from '@/hooks/management/useRowSelection';
 import { useRouter } from '@/libs/I18nNavigation';
 import {
+  archiveOneOffDeal,
   getBrokerageCommissionStats,
   listOneOffDeals,
   closeOneOffDealLost,
   closeOneOffDealWon,
   recordOneOffReceipt,
   uploadOneOffReceiptAttachments,
-  deleteOneOffDeal,
 } from '@/libs/management/oneOffDealsAdapter';
 import type { BrokerageCommissionStats, OneOffDeal } from '@/types/management';
 
@@ -91,7 +91,7 @@ export default function BrokerageCommissionsPage() {
   const [loading, setLoading] = useState(true);
   const [receiptTarget, setReceiptTarget] = useState<OneOffDeal | null>(null);
   const [closeTarget, setCloseTarget] = useState<OneOffDeal | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<OneOffDeal | null>(null);
+  const [archiveTarget, setArchiveTarget] = useState<OneOffDeal | null>(null);
   const [closeOutcome, setCloseOutcome] = useState<'won' | 'lost'>('won');
   const [renterName, setRenterName] = useState('');
   const [renterPhone, setRenterPhone] = useState('');
@@ -330,9 +330,9 @@ export default function BrokerageCommissionsPage() {
         )}
         <DropdownMenuItem
           className="text-danger focus:bg-danger/10 focus:text-danger"
-          onClick={() => setDeleteTarget(row)}
+          onClick={() => setArchiveTarget(row)}
         >
-          {t('action_delete')}
+          {t('row_archive')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -458,7 +458,7 @@ export default function BrokerageCommissionsPage() {
                           try {
                             await Promise.all(
                               [...selection.selected].map(async (id) => {
-                                await deleteOneOffDeal(Number(id));
+                                await archiveOneOffDeal(Number(id));
                               }),
                             );
                             toast.success(t('archive_success'));
@@ -471,7 +471,7 @@ export default function BrokerageCommissionsPage() {
                       }}
                     >
                       <CheckCircle2 className="mr-2 size-4" />
-                      {t('action_delete')}
+                      {t('row_archive')}
                     </button>
                   }
                 />
@@ -653,20 +653,20 @@ export default function BrokerageCommissionsPage() {
         </DialogContent>
       </Dialog>
       <DangerConfirmDialog
-        open={deleteTarget !== null}
-        onOpenChange={(open) => !open && setDeleteTarget(null)}
-        title={t('action_delete')}
-        description={t('brokerage_delete_desc')}
-        confirmLabel={t('action_delete')}
+        open={archiveTarget !== null}
+        onOpenChange={(open) => !open && setArchiveTarget(null)}
+        title={t('row_archive')}
+        description={t('brokerage_archive_desc')}
+        confirmLabel={t('row_archive')}
         cancelLabel={t('action_cancel')}
         onConfirm={async () => {
-          if (!deleteTarget) {
+          if (!archiveTarget) {
             return;
           }
           try {
-            await deleteOneOffDeal(deleteTarget.id);
+            await archiveOneOffDeal(archiveTarget.id);
             toast.success(t('archive_success'));
-            setDeleteTarget(null);
+            setArchiveTarget(null);
             await load();
           } catch {
             toast.error(t('archive_failed'));

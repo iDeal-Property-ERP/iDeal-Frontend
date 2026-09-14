@@ -1869,7 +1869,7 @@
     "brokerage_status_closed_won": "Успешно закрыта",
     "brokerage_status_closed_lost": "Закрыта без сделки",
     "brokerage_status_archived": "В архиве",
-    "brokerage_delete_desc": "Вы уверены, что хотите удалить эту разовую сделку? Это действие нельзя отменить.",
+    "brokerage_archive_desc": "Архивировать эту разовую сделку и убрать её из активного рабочего списка.",
     "brokerage_keep_active": "Оставить объект на маркетплейсе",
     "brokerage_keep_active_desc": "Если включено, объект останется активным на маркетплейсе после закрытия сделки.",
     "action_details": "Подробнее",

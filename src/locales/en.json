@@ -1869,7 +1869,7 @@
     "brokerage_status_closed_won": "Closed won",
     "brokerage_status_closed_lost": "Closed lost",
     "brokerage_status_archived": "Archived",
-    "brokerage_delete_desc": "Are you sure you want to delete this one-off brokerage deal? This action cannot be undone.",
+    "brokerage_archive_desc": "Archive this one-off brokerage deal and remove it from the active workbench.",
     "brokerage_keep_active": "Keep property on marketplace",
     "brokerage_keep_active_desc": "If enabled, the property will remain active on the marketplace after closing the deal.",
     "action_details": "View details",

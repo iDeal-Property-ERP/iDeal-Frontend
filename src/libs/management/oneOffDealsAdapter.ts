@@ -169,13 +169,14 @@ export async function getBrokerageCommissionStats(): Promise<BrokerageCommission
 }
 
 /**
- * Deletes a one-off deal.
+ * Archives a one-off brokerage deal through the documented lifecycle action.
  *
  * @param id The deal ID.
- * @returns A promise that resolves when deleted.
+ * @returns The archived brokerage deal.
  */
-export async function deleteOneOffDeal(id: number): Promise<void> {
-  await apiFetch(`/management/one-off-deals/${id}/`, {
-    method: 'DELETE',
+export async function archiveOneOffDeal(id: number): Promise<OneOffDeal> {
+  return await apiFetch<OneOffDeal>(`/management/one-off-deals/${id}/archive/`, {
+    method: 'POST',
+    body: {},
   });
 }
