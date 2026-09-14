@@ -25,7 +25,7 @@ type Labels = {
 export function PropertiesPreview(props: { rows: ManagementPropertyOutput[]; labels: Labels }) {
   const { labels } = props;
   return (
-    <section className="flex-1 overflow-hidden rounded-[16px] border border-border bg-card shadow-sm">
+    <section className="flex-1 overflow-x-auto rounded-[16px] border border-border bg-card shadow-sm">
       <div className="flex items-center justify-between gap-3 px-5 py-[18px]">
         <h2 className="text-[18px] leading-[26px] font-semibold text-foreground">{labels.title}</h2>
         <Link
@@ -35,14 +35,14 @@ export function PropertiesPreview(props: { rows: ManagementPropertyOutput[]; lab
           {labels.viewAll}
         </Link>
       </div>
-      <div className="flex items-center gap-3 bg-muted px-5 py-2.5 text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
+      <div className="flex min-w-xl items-center gap-3 bg-muted px-5 py-2.5 text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
         <span className="min-w-0 flex-1">{labels.property}</span>
         <span className="w-[92px] shrink-0">{labels.district}</span>
         <span className="w-[104px] shrink-0">{labels.status}</span>
         <span className="w-[72px] shrink-0 text-right">{labels.rent}</span>
         <span className="hidden w-[104px] shrink-0 sm:block">{labels.occupancy}</span>
       </div>
-      <div>
+      <div className="min-w-xl">
         {props.rows.map((row, index) => (
           <div
             key={row.id}
