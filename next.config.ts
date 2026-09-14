@@ -53,6 +53,9 @@ const baseConfig: NextConfig = {
   // The Django API requires trailing slashes (and POST can't follow an
   // APPEND_SLASH redirect). Don't let Next strip the slash before the rewrite.
   skipTrailingSlashRedirect: true,
+  // Preserve loopback hosts in locale rewrites; normalizing 127.0.0.1 to
+  // localhost makes Next proxy back into itself and loop on the /en redirect.
+  skipProxyUrlNormalize: true,
   async headers() {
     const associationHeaders = await Promise.resolve([
       { key: 'Content-Type', value: 'application/json; charset=utf-8' },
