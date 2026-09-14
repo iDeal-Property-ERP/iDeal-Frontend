@@ -55,6 +55,7 @@ export type PublicOfferOutput = {
   id: number | null;
   version: string | null;
   body: string | null;
+  content_hash: string | null;
 };
 
 export type OwnerOnboardingOutput = {
@@ -83,4 +84,7 @@ export type OwnerOnboardingCreatePayload = {
   ask_price: string;
   ask_currency?: Currency;
   accept_offer: boolean;
+  offer_id: number;
+  offer_version: string;
+  offer_hash: string;
 };

@@ -2106,6 +2106,8 @@
     "error_generic": "Xatolik yuz berdi.",
     "error_upload": "Surat yuklanmadi.",
     "error_incomplete": "E'lon to'liq emas — 5 surat, narx va garov kerak.",
+    "error_account_exists": "Bu email yoki telefon raqami bilan hisob allaqachon mavjud.",
+    "error_offer_unavailable": "Hozircha ommaviy oferta mavjud emas.",
     "details_subtitle": "1-bosqich, 4 tadan — ijarachilar qidiradigan asosiy ma'lumotlar.",
     "photos_subtitle": "2-bosqich, 4 tadan — uy-joyni eng yaxshi tomondan ko'rsating.",
     "pricing_subtitle": "3-bosqich, 4 tadan — ijara va depozitni belgilang.",

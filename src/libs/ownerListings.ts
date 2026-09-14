@@ -1,5 +1,6 @@
 import { apiFetch, apiUpload } from '@/libs/api';
 import type { OwnerListing } from '@/types/marketplace';
+import type { PublicOfferOutput } from '@/types/owner';
 
 const BASE = '/owner/listings';
 
@@ -30,6 +31,9 @@ export type OwnerListingSubmitPayload = {
     phone?: string;
   };
   accept_offer: true;
+  offer_id: number;
+  offer_version: string;
+  offer_hash: string;
   content_locale?: string;
 };
 
@@ -124,4 +128,12 @@ export async function resubmitOwnerListing(
   return await apiUpload<OwnerListing>(`${BASE}/${id}/resubmit/`, form, {
     method: 'PUT',
   });
+}
+
+/**
+ * Fetches the active public offer for an authenticated owner.
+ * @returns The active offer, or a payload of nulls when none exists.
+ */
+export async function fetchOwnerPublicOffer(): Promise<PublicOfferOutput> {
+  return await apiFetch<PublicOfferOutput>('/owner/public-offer/');
 }

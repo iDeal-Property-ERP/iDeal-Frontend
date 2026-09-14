@@ -1,5 +1,15 @@
-import { describe, expect, it } from 'vitest';
-import { prepareOwnerListingUpload } from './ownerListings';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { fetchOwnerPublicOffer, prepareOwnerListingUpload } from './ownerListings';
+
+type JsonPrimitive = string | number | boolean | null | undefined;
+type JsonObject = Record<string, JsonPrimitive | JsonPrimitive[] | Record<string, JsonPrimitive>>;
+type JsonValue = JsonPrimitive | JsonValue[] | JsonObject;
+
+function jsonResponse(data: Record<string, JsonValue> | null, status = 200): Response {
+  return Response.json({ success: true, message: 'OK', data }, { status });
+}
+
+type Fetcher = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 
 describe('owner listing upload preparation helper', () => {
   it('aligns new submission captions to every uploaded file', () => {
@@ -38,5 +48,29 @@ describe('owner listing upload preparation helper', () => {
       images: [first, second],
       captions: ['New bedroom', 'New balcony'],
     });
+  });
+});
+
+describe('owner public offer fetch helper', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('fetches the owner public offer', async () => {
+    const offer = {
+      id: 2,
+      version: 'v1',
+      body: 'Owner terms',
+      content_hash: 'hash',
+    };
+    const fetchMock = vi.fn<Fetcher>(async () => await Promise.resolve(jsonResponse(offer)));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await fetchOwnerPublicOffer();
+    expect(result).toStrictEqual(offer);
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/v1/owner/public-offer/',
+      expect.objectContaining({ credentials: 'include' }),
+    );
   });
 });

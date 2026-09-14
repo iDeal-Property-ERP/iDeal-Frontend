@@ -2106,6 +2106,8 @@
     "error_generic": "Something went wrong. Please try again.",
     "error_upload": "Photo upload failed. Please try again.",
     "error_incomplete": "Listing is incomplete — add 5 photos, a price and a deposit.",
+    "error_account_exists": "An account with this email or phone already exists.",
+    "error_offer_unavailable": "No public offer is currently available.",
     "details_subtitle": "Step 1 of 4 — the basics renters search by.",
     "photos_subtitle": "Step 2 of 4 — show the place at its best.",
     "pricing_subtitle": "Step 3 of 4 — set your rent and deposit.",
