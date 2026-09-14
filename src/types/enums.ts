@@ -1,6 +1,6 @@
 /** Enum types matching backend Pydantic schemas */
 
-export type Role = 'mgmt' | 'owner' | 'tenant' | 'agent' | 'listings';
+export type Role = 'mgmt' | 'owner' | 'tenant' | 'agent';
 
 export type PropertyStatus = 'vacant' | 'rented' | 'maintenance';
 

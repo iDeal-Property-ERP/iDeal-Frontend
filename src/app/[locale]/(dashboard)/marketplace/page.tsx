@@ -5,10 +5,12 @@ import { useEffect, useState } from 'react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { apiFetch } from '@/libs/api';
 import { Link } from '@/libs/I18nNavigation';
+import { paginatedItems } from '@/libs/pagination';
+import type { PaginatedData } from '@/types/api';
 import type { ListingOutput } from '@/types/marketplace';
 
 /**
- * Marketplace listings grid for the listings role.
+ * Marketplace listings grid for the agent dashboard.
  * @returns Marketplace page.
  */
 export default function MarketplacePage() {
@@ -17,8 +19,10 @@ export default function MarketplacePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    apiFetch<ListingOutput[]>('/marketplace/listings/')
-      .then(setListings)
+    apiFetch<PaginatedData<ListingOutput>>('/marketplace/listings/')
+      .then((data) => {
+        setListings(paginatedItems(data));
+      })
       .catch(() => {
         void 0;
       })
