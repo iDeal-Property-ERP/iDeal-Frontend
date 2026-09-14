@@ -14,11 +14,11 @@ import {
 } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useListingParams } from '@/hooks/useListingParams';
+import { currencyForPriceFilter, formatFilterPrice, listingPriceSteps } from '@/libs/marketplace';
 import { cn } from '@/libs/utils';
 import type { DistrictOption } from '@/types/marketplace';
 import { MarketplaceDateRangePicker } from './MarketplaceDateRangePicker';
 
-const PRICE_STEPS = ['', '200', '300', '400', '500', '700', '1000', '1500', '2000'];
 const ROOM_STEPS = ['', '1', '2', '3', '4', '5'];
 
 const SELECT_CLASS =
@@ -68,18 +68,22 @@ export function DiscoverySearchBar(props: { districts: DistrictOption[] }) {
   const districtName = districts.find((d) => String(d.id) === districtId)?.name;
   const priceMin = get('price_min');
   const priceMax = get('price_max');
+  const currency = currencyForPriceFilter(get('currency'), priceMin, priceMax) ?? 'USD';
   const roomsMin = get('rooms_min');
   const roomsMax = get('rooms_max');
 
   const priceLabel = (() => {
     if (priceMin && priceMax) {
-      return `$${priceMin} – $${priceMax}`;
+      return `${formatFilterPrice(priceMin, currency)} – ${formatFilterPrice(priceMax, currency)}`;
     }
     if (priceMin) {
-      return `$${priceMin}+`;
+      return `${formatFilterPrice(priceMin, currency)}+`;
     }
     if (priceMax) {
-      return `${t('sb_up_to')} $${priceMax}`;
+      return `${t('sb_up_to')} ${formatFilterPrice(priceMax, currency)}`;
+    }
+    if (get('currency')) {
+      return get('currency');
     }
     return t('sb_any_price');
   })();
@@ -165,19 +169,44 @@ export function DiscoverySearchBar(props: { districts: DistrictOption[] }) {
           </button>
         </PopoverTrigger>
         <PopoverContent align="start" className="w-64 space-y-3 p-3">
+          <div className="flex gap-2">
+            {(['USD', 'UZS'] as const).map((code) => (
+              <button
+                key={code}
+                className={cn(
+                  'flex-1 rounded-lg border px-3 py-1.5 text-sm font-medium',
+                  currency === code
+                    ? 'border-primary bg-primary-subtle text-primary-subtle-foreground'
+                    : 'border-border text-muted-foreground hover:text-foreground',
+                )}
+                type="button"
+                onClick={() =>
+                  set({
+                    currency: code,
+                    price_min: undefined,
+                    price_max: undefined,
+                  })
+                }
+              >
+                {code === 'USD' ? t('currency_usd') : t('currency_uzs')}
+              </button>
+            ))}
+          </div>
           <RangeSelect
+            key={`${currency}-min`}
             label={t('range_min')}
             value={priceMin}
-            options={PRICE_STEPS}
-            onChange={(v) => set({ price_min: v || undefined })}
-            format={(v) => (v ? `$${v}` : t('sb_no_min'))}
+            options={listingPriceSteps(currency)}
+            onChange={(v) => set({ currency, price_min: v || undefined })}
+            format={(v) => (v ? formatFilterPrice(v, currency) : t('sb_no_min'))}
           />
           <RangeSelect
+            key={`${currency}-max`}
             label={t('range_max')}
             value={priceMax}
-            options={PRICE_STEPS}
-            onChange={(v) => set({ price_max: v || undefined })}
-            format={(v) => (v ? `$${v}` : t('sb_no_max'))}
+            options={listingPriceSteps(currency)}
+            onChange={(v) => set({ currency, price_max: v || undefined })}
+            format={(v) => (v ? formatFilterPrice(v, currency) : t('sb_no_max'))}
           />
         </PopoverContent>
       </Popover>

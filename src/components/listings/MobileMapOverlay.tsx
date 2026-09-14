@@ -59,8 +59,11 @@ export function MobileMapOverlay(props: MobileMapOverlayProps) {
     }
     const priceMin = params.get('price_min');
     const priceMax = params.get('price_max');
+    const currency = params.get('currency') ?? 'USD';
     if (priceMin || priceMax) {
-      parts.push(`$${priceMin ?? '0'}–$${priceMax ?? '∞'}`);
+      const minLabel = currency === 'UZS' ? `${priceMin ?? '0'} UZS` : `$${priceMin ?? '0'}`;
+      const maxLabel = currency === 'UZS' ? `${priceMax ?? '∞'} UZS` : `$${priceMax ?? '∞'}`;
+      parts.push(`${minLabel}–${maxLabel}`);
     }
     const roomsMin = params.get('rooms_min');
     const roomsMax = params.get('rooms_max');

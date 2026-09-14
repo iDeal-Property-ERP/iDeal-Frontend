@@ -53,6 +53,7 @@ const FILTER_KEYS = [
   'district_id',
   'price_min',
   'price_max',
+  'currency',
   'rooms',
   'rooms_min',
   'rooms_max',
@@ -371,4 +372,62 @@ export function formatPrice(price: string | null | undefined, currency: Currency
     return `$${price}`;
   }
   return `${price} UZS`;
+}
+
+const USD_PRICE_STEPS = ['', '200', '300', '400', '500', '700', '1000', '1500', '2000'];
+const UZS_PRICE_STEPS = [
+  '',
+  '2000000',
+  '4000000',
+  '6000000',
+  '8000000',
+  '10000000',
+  '15000000',
+  '20000000',
+];
+
+/**
+ * Returns discovery price steps for the selected listing currency.
+ *
+ * @param currency - USD or UZS.
+ * @returns Selectable min/max price values including an empty "any" option.
+ */
+export function listingPriceSteps(currency: string): string[] {
+  return currency === 'UZS' ? UZS_PRICE_STEPS : USD_PRICE_STEPS;
+}
+
+/**
+ * Formats a filter price value with its currency.
+ *
+ * @param value - The numeric price string.
+ * @param currency - USD or UZS.
+ * @returns The formatted price, or an empty string when value is empty.
+ */
+export function formatFilterPrice(value: string, currency: string): string {
+  if (!value) {
+    return '';
+  }
+  return currency === 'UZS' ? `${value} UZS` : `$${value}`;
+}
+
+/**
+ * Resolves the currency that must accompany price bounds.
+ *
+ * @param currency - The selected currency, if any.
+ * @param priceMin - The min price query value.
+ * @param priceMax - The max price query value.
+ * @returns A currency code, or undefined when neither currency nor price is set.
+ */
+export function currencyForPriceFilter(
+  currency: string,
+  priceMin: string,
+  priceMax: string,
+): string | undefined {
+  if (currency) {
+    return currency;
+  }
+  if (priceMin || priceMax) {
+    return 'USD';
+  }
+  return undefined;
 }

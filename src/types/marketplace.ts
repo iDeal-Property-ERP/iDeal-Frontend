@@ -124,6 +124,7 @@ export type ListingFilters = {
   district_id?: string;
   price_min?: string;
   price_max?: string;
+  currency?: string;
   rooms?: string;
   rooms_min?: string;
   rooms_max?: string;
