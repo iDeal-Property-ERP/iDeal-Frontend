@@ -1,16 +1,26 @@
 name: Build and Deploy (Production)
 
 on:
-  #  push:
-  #    branches: [production]
   repository_dispatch:
     types: [trigger-deploy]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-frontend-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
 
 jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
-    environment: production
+  quality:
+    uses: ./.github/workflows/ci.yml
 
+  build-and-deploy:
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: production
     env:
       CONTAINER_NAME: ${{ secrets.CONTAINER_NAME }}
       SSH_USER: ${{ secrets.SSH_USER }}
@@ -21,6 +31,7 @@ jobs:
       NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
       NEXT_PUBLIC_YANDEX_MAPS_API_KEY: ${{ vars.NEXT_PUBLIC_YANDEX_MAPS_API_KEY }}
       NEXT_PUBLIC_LOGGING_LEVEL: ${{ vars.NEXT_PUBLIC_LOGGING_LEVEL || 'info' }}
+      IMAGE_TAG: ${{ github.sha }}
 
     steps:
       - name: Checkout repository
@@ -29,20 +40,26 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build and save Docker image
+      - name: Build immutable image
         run: |
-          SHORT_SHA=$(git rev-parse --short HEAD)
-          echo "Tagging image with commit: $SHORT_SHA"
+          set -euo pipefail
           docker build \
             --build-arg "BACKEND_ORIGIN=$BACKEND_ORIGIN" \
             --build-arg "NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL" \
             --build-arg "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" \
             --build-arg "NEXT_PUBLIC_YANDEX_MAPS_API_KEY=$NEXT_PUBLIC_YANDEX_MAPS_API_KEY" \
             --build-arg "NEXT_PUBLIC_LOGGING_LEVEL=$NEXT_PUBLIC_LOGGING_LEVEL" \
-            -t $CONTAINER_NAME:latest \
-            -t $CONTAINER_NAME:$SHORT_SHA \
+            -t "$CONTAINER_NAME:$IMAGE_TAG" \
             .
-          docker save $CONTAINER_NAME:latest $CONTAINER_NAME:$SHORT_SHA | gzip > ${CONTAINER_NAME}-${SHORT_SHA}.tar.gz
+          docker save "$CONTAINER_NAME:$IMAGE_TAG" | gzip > "${CONTAINER_NAME}-${IMAGE_TAG}.tar.gz"
+
+      - name: Scan image
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ secrets.CONTAINER_NAME }}:${{ github.sha }}
+          severity: CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
 
       - name: Setup SSH
         env:
@@ -53,23 +70,36 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts
 
-      - name: Copy image to server
+      - name: Copy image and compose to server
         run: |
-          SHORT_SHA=$(git rev-parse --short HEAD)
-          scp ${CONTAINER_NAME}-${SHORT_SHA}.tar.gz \
-            $SSH_USER@$SSH_HOST:$LOCATION/images/
-
-      - name: Copy compose file to server
-        run: |
-          scp docker-compose.prod.yml \
-            $SSH_USER@$SSH_HOST:$LOCATION/docker-compose.yml
+          set -euo pipefail
+          scp "${CONTAINER_NAME}-${IMAGE_TAG}.tar.gz" "$SSH_USER@$SSH_HOST:$LOCATION/images/"
+          scp docker-compose.prod.yml "$SSH_USER@$SSH_HOST:$LOCATION/docker-compose.yml"
 
       - name: Deploy on server
         run: |
-          SHORT_SHA=$(git rev-parse --short HEAD)
-          ssh -T $SSH_USER@$SSH_HOST << EOF
-            set -ex
-            docker load -i $LOCATION/images/${CONTAINER_NAME}-${SHORT_SHA}.tar.gz
-            cd $LOCATION
-            docker compose up -d
+          set -euo pipefail
+          ssh -T "$SSH_USER@$SSH_HOST" "IMAGE_TAG='$IMAGE_TAG' LOCATION='$LOCATION' CONTAINER_NAME='$CONTAINER_NAME' bash -s" <<'EOF'
+            set -euo pipefail
+            PREVIOUS_TAG="$(cat "$LOCATION/.deployed-sha" 2>/dev/null || true)"
+            docker load -i "$LOCATION/images/${CONTAINER_NAME}-${IMAGE_TAG}.tar.gz"
+            cd "$LOCATION"
+            IMAGE_TAG="$IMAGE_TAG" docker compose up -d --remove-orphans
+            healthy=0
+            for _ in $(seq 1 36); do
+              if docker compose exec -T web node -e "fetch('http://localhost:3000/').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"; then
+                healthy=1
+                break
+              fi
+              sleep 5
+            done
+            if [ "$healthy" -ne 1 ]; then
+              echo "Readiness probe failed for $IMAGE_TAG"
+              if [ -n "${PREVIOUS_TAG:-}" ]; then
+                echo "Rolling back to $PREVIOUS_TAG"
+                IMAGE_TAG="$PREVIOUS_TAG" docker compose up -d --remove-orphans
+              fi
+              exit 1
+            fi
+            printf '%s\n' "$IMAGE_TAG" > "$LOCATION/.deployed-sha"
           EOF

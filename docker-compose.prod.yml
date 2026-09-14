@@ -1,7 +1,7 @@
 services:
   web:
     container_name: 'ideal-frontend-prod'
-    image: ideal-frontend-prod:latest
+    image: ideal-frontend-prod:${IMAGE_TAG:-latest}
     environment:
       NODE_ENV: production
     ports:
