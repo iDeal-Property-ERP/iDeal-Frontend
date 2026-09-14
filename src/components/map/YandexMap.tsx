@@ -11,19 +11,42 @@ import type { MapPoint } from '@/types/marketplace';
 const DEFAULT_ZOOM = 11;
 const SELECTED_ZOOM = 14;
 
-function balloonHtml(point: MapPoint, locale: string, viewLabel: string): string {
-  const href = `/${locale}/listings/${point.id}`;
-  const price = formatPrice(point.price, point.currency);
+/**
+ * Escapes a string for interpolation into HTML text or quoted attributes.
+ * @param value - The untrusted string.
+ * @returns The escaped string.
+ */
+export function escapeHtml(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+/**
+ * Builds the Yandex balloon inner HTML for a map point.
+ * @param point - The listing map point.
+ * @param locale - The active locale used in the details href.
+ * @param viewLabel - The translated view-details label.
+ * @returns The escaped balloon HTML.
+ */
+export function balloonHtml(point: MapPoint, locale: string, viewLabel: string): string {
+  const href = escapeHtml(`/${locale}/listings/${point.id}`);
+  const price = escapeHtml(formatPrice(point.price, point.currency));
+  const name = escapeHtml(point.name);
+  const address = escapeHtml(point.address);
   const image = point.image_url
-    ? `<img src="${point.image_url}" alt="" style="width:100%;height:120px;object-fit:cover;border-radius:8px;margin-bottom:8px" />`
+    ? `<img src="${escapeHtml(point.image_url)}" alt="" style="width:100%;height:120px;object-fit:cover;border-radius:8px;margin-bottom:8px" />`
     : '';
   return `
     <div style="max-width:220px">
       ${image}
-      <div style="font-weight:600;margin-bottom:2px">${point.name}</div>
-      <div style="color:var(--muted-foreground);font-size:12px;margin-bottom:6px">${point.address}</div>
+      <div style="font-weight:600;margin-bottom:2px">${name}</div>
+      <div style="color:var(--muted-foreground);font-size:12px;margin-bottom:6px">${address}</div>
       <div style="font-weight:700;margin-bottom:8px">${price}</div>
-      <a href="${href}" style="color:var(--primary);font-size:13px;font-weight:600;text-decoration:none">${viewLabel} →</a>
+      <a href="${href}" style="color:var(--primary);font-size:13px;font-weight:600;text-decoration:none">${escapeHtml(viewLabel)} →</a>
     </div>`;
 }
 

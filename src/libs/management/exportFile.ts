@@ -26,14 +26,37 @@ function downloadBlob(blob: Blob, filename: string): void {
   URL.revokeObjectURL(url);
 }
 
+const FORMULA_INJECTION_PREFIX = /^[=+\-@\t\r]/u;
+
 /**
- * Escapes one CSV cell (quotes when it contains a delimiter/quote/newline).
+ * Prefixes a spreadsheet cell that Excel would treat as a formula.
+ * @param value - The raw cell text.
+ * @returns The neutralized cell text.
+ */
+function neutralizeFormula(value: string): string {
+  return FORMULA_INJECTION_PREFIX.test(value) ? `'${value}` : value;
+}
+
+/**
+ * Escapes one CSV cell (formula prefix, then quotes when needed).
  * @param value - The raw value.
  * @returns The escaped cell.
  */
-function csvCell(value: string | number): string {
-  const text = String(value);
+export function csvCell(value: string | number): string {
+  const text = neutralizeFormula(String(value));
   return /["\n,]/u.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
+}
+
+/**
+ * Neutralizes an XLSX cell when Excel would interpret the string as a formula.
+ * @param value - The raw cell value.
+ * @returns The original number, or a prefixed string when it would be a formula.
+ */
+function xlsxCell(value: string | number): string | number {
+  if (value === Number(value)) {
+    return value;
+  }
+  return neutralizeFormula(`${value}`);
 }
 
 /**
@@ -59,10 +82,10 @@ async function exportXlsx(table: ExportTable, filename: string): Promise<void> {
   const ExcelJS = excel.default;
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet('Export');
-  const headerRow = sheet.addRow(table.headers);
+  const headerRow = sheet.addRow(table.headers.map(xlsxCell));
   headerRow.font = { bold: true };
   for (const row of table.rows) {
-    sheet.addRow(row);
+    sheet.addRow(row.map(xlsxCell));
   }
   for (const column of sheet.columns) {
     column.width = 18;
