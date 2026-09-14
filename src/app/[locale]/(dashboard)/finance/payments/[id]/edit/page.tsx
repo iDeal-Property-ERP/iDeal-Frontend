@@ -11,8 +11,8 @@ import { useEntityForm } from '@/hooks/useEntityForm';
 import { apiFetch } from '@/libs/api';
 import { createApiSubmit } from '@/libs/forms';
 import { useRouter } from '@/libs/I18nNavigation';
+import { CURRENCY_OPTIONS } from '@/libs/schemas/managementProperty';
 import { PAYMENT_METHOD_OPTIONS, paymentEditSchema } from '@/libs/schemas/payment';
-import { CURRENCY_OPTIONS } from '@/libs/schemas/property';
 import type { PaymentOutput } from '@/types/finance';
 
 /**

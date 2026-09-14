@@ -40,4 +40,11 @@ describe('role contracts', () => {
     ]);
     expect(protectedRouteFor('/management/agents')?.roles).toStrictEqual(['mgmt']);
   });
+
+  it('sends owners away from legacy property CRUD routes', () => {
+    expect(protectedRouteFor('/properties')?.roles).toStrictEqual(['mgmt']);
+    expect(protectedRouteFor('/properties/new')?.roles).toStrictEqual(['mgmt']);
+    expect(protectedRouteFor('/properties/9')?.roles).not.toContain('owner');
+    expect(protectedRouteFor('/owner/properties')?.roles).toStrictEqual(['owner']);
+  });
 });

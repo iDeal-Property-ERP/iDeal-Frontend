@@ -25,7 +25,7 @@ export const roleRouteMap: { path: string; roles: Role[] }[] = [
   { path: '/tenant', roles: ['tenant'] },
   { path: '/agents', roles: ['mgmt'] },
   { path: '/marketplace', roles: ['agent'] },
-  { path: '/properties', roles: ['mgmt', 'owner'] },
+  { path: '/properties', roles: ['mgmt'] },
   { path: '/contracts', roles: ['mgmt'] },
   { path: '/finance', roles: ['mgmt'] },
   { path: '/maintenance', roles: ['mgmt', 'tenant'] },
